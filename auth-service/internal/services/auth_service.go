@@ -22,6 +22,7 @@ func (s *AuthService) Register(email string, password string) (*models.User, err
 	user:=&models.User{
 		Email: email,
 		Password: string(hashedPswd),
+		Login: "",
 	}
 
 	if err := s.userRepo.Create(user); err != nil {
@@ -29,4 +30,14 @@ func (s *AuthService) Register(email string, password string) (*models.User, err
 	}
 
 	return user, nil
+}
+
+func (s *AuthService) Authorize(email string, password string) (bool, error) {
+	if user, err := s.userRepo.GetByEmail(email); err != nil {
+		return false, err
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+		return false, err
+	}
+	return true, err
 }

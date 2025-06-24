@@ -7,7 +7,9 @@ services:
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: mydb
+      POSTGRES_DB: tasksdb
+      LANG: en_US.UTF-8
+      LC_ALL: en_US.UTF-8
     ports:
       - "5432:5432"
     volumes:
