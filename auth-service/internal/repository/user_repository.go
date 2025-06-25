@@ -1,9 +1,13 @@
 package repository
 
 import (
-	_"gorm.io/gorm"
 	"auth-service/internal/models"
+	"database/sql"
+	_"errors"
+	"fmt"
+
 	"github.com/jmoiron/sqlx"
+	_ "gorm.io/gorm"
 )
 
 type UserRepository struct {
@@ -14,17 +18,16 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-func (r *UserRepository) Create(user *models.User) error {
+func (r *UserRepository) Create(user *models.User) (error) {
+	const op = "repository.user_repository.Create"
 	//вынести в отдельный файл
-	query := `
+	stmt, err := r.db.PrepareNamed(`
 		INSERT INTO users (login, email, password, created_at)
 		VALUES (:login, :email, :password, NOW())
 		RETURNING id, created_at
-	`
-
-	stmt, err := r.db.PrepareNamed(query)
+	`)
 	if err != nil {
-		return err
+		return fmt.Errorf("%s: %w", op, err)
 	}
 	defer stmt.Close()
 
@@ -32,17 +35,24 @@ func (r *UserRepository) Create(user *models.User) error {
 }
 
 
-func (r *UserRepository) GetByEmail(email string) *models.User, error {
-	query := `
-		SELECT FROM users (login, email, password, created_at)
-		WHERE email = ?
-	`
+func (r *UserRepository) GetByEmail(email string) (*models.User, error, bool) {
+	const op = "repository.user_repository.GetByEmail"
 
-	stmt, err := r.db.Query(query)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
+	query := (`
+		SELECT id, login, email, password, created_at FROM users
+		WHERE email = $1
+		LIMIT 1`)
 
-	return stmt.Get(user, user)
+	var user models.User
+
+	err := r.db.QueryRowx(query, email).StructScan(&user)
+    
+    if err != nil {
+        if err == sql.ErrNoRows {
+            return nil, fmt.Errorf("%s: user not found", op), false
+        }
+        return nil, fmt.Errorf("%s: %w", op, err), false
+    }
+
+	return &user, nil, true
 }

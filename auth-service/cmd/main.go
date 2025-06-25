@@ -38,13 +38,17 @@ func main() {
 	}
 
 	userRepo := repository.NewUserRepository(db)
-	authService := services.NewAuthService(userRepo)
+	tokenRepo := repository.NewTokenRepository(db)
+	authService := services.NewAuthService(userRepo, tokenRepo)
 	authController := controllers.NewAuthController(authService)
 
 	//перенести в отдельный файл
 	router := chi.NewRouter()
-	router.Post("/reg", authController.Register)
-	router.Post("/auth", authController.Authorize)
+	router.Post("/api/register", authController.Register)
+	router.Post("/api/login", authController.Authorize)
+	router.Post("/api/refresh", authController.Refresh)
+	// router.Post("/testJWT", authController.TestJWT)
+	// router.Get("/refresh", authController.RefreshToken)
 
 	log.Println("Starting server on :8080")
 	if err := http.ListenAndServe(":8080", router); err != nil {
