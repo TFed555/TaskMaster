@@ -12,11 +12,13 @@ import (
 	_ "time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	_"gorm.io/driver/postgres"
 	_ "gorm.io/gorm"
 	"auth-service/internal/migrations"
+	"auth-service/internal/middleware"
 )
 
 func main() {
@@ -44,11 +46,23 @@ func main() {
 
 	//перенести в отдельный файл
 	router := chi.NewRouter()
+
+	router.Use(cors.Handler(cors.Options{
+        AllowedOrigins:   []string{"http://localhost:3001", "http://127.0.0.1:3001"},
+        AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+        AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+        ExposedHeaders:   []string{"Link"},
+        AllowCredentials: true,
+        MaxAge:           300,
+    }))
+
+	// router.Post("/", middleware.AuthMiddleware(authController.Test))
 	router.Post("/api/register", authController.Register)
 	router.Post("/api/login", authController.Authorize)
 	router.Post("/api/refresh", authController.Refresh)
+
+	router.Get("/api/testSecure", middleware.AuthMiddleware(authController.Test))
 	// router.Post("/testJWT", authController.TestJWT)
-	// router.Get("/refresh", authController.RefreshToken)
 
 	log.Println("Starting server on :8080")
 	if err := http.ListenAndServe(":8080", router); err != nil {
