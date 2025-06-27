@@ -35,7 +35,7 @@ type RegResponse struct {
 }
 
 type AuthResponse struct {
-	// UserID uint `json:"id"`
+	UserID uint `json:"id"`
 	Email string `json:"email"`
 	Login string `json:"login"`
 }
@@ -58,6 +58,7 @@ func NewAuthController(authService *services.AuthService) *AuthController {
 
 func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 	var req RegRequest
+	// log.Println("DDDDDWWW")
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -79,8 +80,9 @@ func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 
 	//todo: создание токенов и запись в куки
 	
-	cookies_func.SetCookies(&w, "refresh_token", tokens.RefreshToken, time_expires_refresh)
+
 	cookies_func.SetCookies(&w, "access_token", tokens.AccessToken, time_expires_access)
+	cookies_func.SetCookies(&w, "refresh_token", tokens.RefreshToken, time_expires_refresh)
 
 
 	response := RegResponse{
@@ -98,6 +100,7 @@ var (
 
 func (c *AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 	var req LogRequest
+	log.Println("DDDDDWWW")
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -125,6 +128,7 @@ func (c *AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 	// }
 
 	response := AuthResponse{
+		UserID: user.ID,
 		Email: user.Email,
 		Login: user.Login,
 	}

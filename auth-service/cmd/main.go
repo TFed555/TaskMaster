@@ -8,28 +8,61 @@ import (
 	"log"
 	_ "net"
 	"net/http"
+	"os"
 	_ "os"
 	_ "time"
+
+	"auth-service/internal/middleware"
+	"auth-service/internal/migrations"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/jmoiron/sqlx"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-	_"gorm.io/driver/postgres"
+	_ "gorm.io/driver/postgres"
 	_ "gorm.io/gorm"
-	"auth-service/internal/migrations"
-	"auth-service/internal/middleware"
 )
+
+func initDb() (string, string, string, string, string) {
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("Can't load .env file")
+	}
+	dbUser, exists := os.LookupEnv("DB_USER")
+	if !exists {
+		log.Printf("Can't lookup for DB_USER")
+	}
+	dbPass, exists := os.LookupEnv("DB_PASSWORD")
+	if !exists {
+		log.Printf("Can't lookup for DB_USER")
+	}
+	dbHost, exists := os.LookupEnv("DB_HOST")
+	if !exists {
+		log.Printf("Can't lookup for DB_USER")
+	}
+	dbPort, exists := os.LookupEnv("DB_PORT")
+	if !exists {
+		log.Printf("Can't lookup for DB_USER")
+	}
+	dbName, exists := os.LookupEnv("DB_NAME")
+	if !exists {
+		log.Printf("Can't lookup for DB_USER")
+	}
+	return dbUser, dbPass, dbHost, dbPort, dbName
+}
 
 func main() {
 	//параметры будут подаваться из env или cfg (local.yaml)
-	// connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-	// 	 	os.Getenv("DB_HOST"),
-	// 		os.Getenv("DB_PORT"),
-	// 		os.Getenv("DB_USER"),
-	// 		os.Getenv("DB_PASSWORD"),
-	// 		os.Getenv("DB_NAME"))
-	conn := "postgres://user:password@localhost:5432/tasksdb?sslmode=disable"
+	// conn := "postgres://user:password@localhost:5432/tasksdb?sslmode=disable"
+	dbUser, dbPass, dbHost, dbPort, dbName := initDb()
+
+	conn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
+			dbUser,
+			dbPass,
+			dbHost,
+			dbPort,
+			dbName)
+
 	err := migrations.RunMigration(conn, "internal/migrations")
 	if err != nil {
 		log.Fatalf("Migration error: %v", err)
@@ -57,7 +90,7 @@ func main() {
     }))
 
 	// router.Post("/", middleware.AuthMiddleware(authController.Test))
-	router.Post("/api/register", authController.Register)
+	router.Post("/api/registration", authController.Register)
 	router.Post("/api/login", authController.Authorize)
 	router.Post("/api/refresh", authController.Refresh)
 
@@ -69,4 +102,3 @@ func main() {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
-
