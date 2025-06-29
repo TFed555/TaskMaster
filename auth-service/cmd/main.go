@@ -3,13 +3,15 @@ package main
 import (
 	"auth-service/internal/config/dbconfig"
 	"auth-service/internal/controllers"
+	"auth-service/internal/middleware"
+	"auth-service/internal/migrations"
 	"auth-service/internal/repository"
 	"auth-service/internal/router"
 	"auth-service/internal/services"
 	"fmt"
 	"log"
 	"net/http"
-	"auth-service/internal/migrations"
+
 	"github.com/jmoiron/sqlx"
 )
 
@@ -45,7 +47,9 @@ func main() {
 	authService := services.NewAuthService(userRepo, tokenRepo)
 	authController := controllers.NewAuthController(authService)
 
-	router := router.InitNewRouter(authController)
+	authMiddleware := middleware.NewAuthMiddleware(authService)
+
+	router := router.InitNewRouter(authController, authMiddleware)
 
 	log.Printf("Starting server on %s \n", router.Port)
 	if err := http.ListenAndServe(router.Port, router.ChiRouter); err != nil {

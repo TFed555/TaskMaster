@@ -1,5 +1,6 @@
 package services
 
+
 import (
 	"auth-service/internal/models"
 	"auth-service/internal/pkg/jwt"
@@ -14,16 +15,24 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type AuthService struct {
+type AuthService interface {
+    Register(login string, email string, password string) (*models.User, *models.Tokens, error)
+    Authorize(email string, password string) (*models.User, *models.Tokens, error, bool)
+    Refresh(refreshToken string) (string, string, error)
+    ValidateToken(tokenValue string) (bool, string)
+    Logout(refreshToken string) (bool, error)
+}
+
+type AuthServiceImpl struct {
 	userRepo *repository.UserRepository
 	tokenRepo *repository.TokenRepository
 }
 
-func NewAuthService(userRepo *repository.UserRepository, tokenRepo *repository.TokenRepository) *AuthService {
-	return &AuthService{userRepo: userRepo, tokenRepo: tokenRepo}
+func NewAuthService(userRepo *repository.UserRepository, tokenRepo *repository.TokenRepository) AuthService {
+	return &AuthServiceImpl{userRepo: userRepo, tokenRepo: tokenRepo}
 }
 
-func (s *AuthService) Register(login string, email string, password string) (*models.User, *models.Tokens, error) {
+func (s *AuthServiceImpl) Register(login string, email string, password string) (*models.User, *models.Tokens, error) {
 	hashedPswd, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, nil, err
@@ -60,7 +69,7 @@ func (s *AuthService) Register(login string, email string, password string) (*mo
 	return user, tokens, nil
 }
 
-func (s *AuthService) Authorize(email string, password string) (*models.User, *models.Tokens, error, bool) {
+func (s *AuthServiceImpl) Authorize(email string, password string) (*models.User, *models.Tokens, error, bool) {
 	
 	user, err, exists := s.userRepo.GetByEmail(email)
 	if err != nil {
@@ -92,7 +101,7 @@ func (s *AuthService) Authorize(email string, password string) (*models.User, *m
 	return user, tokens, err, exists
 }
 
-func (s *AuthService) Refresh(refreshToken string) (accesstoken string, refreshtoken string, err error) {
+func (s *AuthServiceImpl) Refresh(refreshToken string) (accesstoken string, refreshtoken string, err error) {
 	token, err :=s.tokenRepo.GetToken(refreshToken)
 	if err != nil {
 		return "", "", err
@@ -108,7 +117,7 @@ func (s *AuthService) Refresh(refreshToken string) (accesstoken string, refresht
 	return t1, t2, nil
 }
 
-func (s *AuthService) ValidateToken(tokenValue string) (bool, string) {
+func (s *AuthServiceImpl) ValidateToken(tokenValue string) (bool, string) {
 	if tokenValue == ""  {
 		return false, "Access denied"
 	}
@@ -148,4 +157,12 @@ func (s *AuthService) ValidateToken(tokenValue string) (bool, string) {
 	}
 
 	return true, ""
+}
+
+func (s *AuthServiceImpl) Logout(refreshToken string) (bool, error) {
+	success, err := s.tokenRepo.DeleteToken(refreshToken)
+	if err != nil {
+		return false, err
+	}
+	return success, nil
 }

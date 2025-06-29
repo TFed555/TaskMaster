@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
-	_ "gorm.io/gorm"
 )
 
 type UserRepository struct {
@@ -20,7 +19,6 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 
 func (r *UserRepository) Create(user *models.User) (error) {
 	const op = "repository.user_repository.Create"
-	//вынести в отдельный файл
 	stmt, err := r.db.PrepareNamed(`
 		INSERT INTO users (login, email, password, created_at)
 		VALUES (:login, :email, :password, NOW())

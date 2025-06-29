@@ -15,8 +15,10 @@ import (
 var time_expires_refresh = time.Now().Add(7 * 24 * time.Hour)
 var time_expires_access = time.Now().Add(15 * time.Minute)
 
+
+
 type AuthController struct {
-	authService *services.AuthService
+	authService services.AuthService
 }	
 
 type RegRequest struct {
@@ -50,7 +52,8 @@ type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
-func NewAuthController(authService *services.AuthService) *AuthController {
+//go:generate mockery --name=AuthService --dir=../services --output=./mocks --case=underscore
+func NewAuthController(authService services.AuthService) *AuthController {
 	return &AuthController{
 		authService: authService,
 	}
@@ -58,10 +61,20 @@ func NewAuthController(authService *services.AuthService) *AuthController {
 
 func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 	var req RegRequest
-	// log.Println("DDDDDWWW")
+	log.Println("DDDDDWWW")
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {	
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.Login == "" || req.Password == "" || req.Email == "" {
+		errMsg:=ErrorResponse{
+			Status: http.StatusInternalServerError,
+			Message: "Registration failed",
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(errMsg)
 		return
 	}
 
@@ -77,9 +90,6 @@ func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(errMsg)
 		return
 	}
-
-	//todo: создание токенов и запись в куки
-	
 
 	cookies_func.SetCookies(&w, "access_token", tokens.AccessToken, time_expires_access)
 	cookies_func.SetCookies(&w, "refresh_token", tokens.RefreshToken, time_expires_refresh)
@@ -173,13 +183,46 @@ func (c *AuthController) Refresh(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (s *AuthController) Test(w http.ResponseWriter, r *http.Request) {
+func (c *AuthController) Test(w http.ResponseWriter, r *http.Request) {
 	type Response struct {
 		Msg string `json:"msg"`
 	}
 	response:=Response {
 		Msg: "ok",
 	}
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(response)
+}
+
+
+func (c *AuthController) Logout(w http.ResponseWriter, r *http.Request) {
+	refreshCookie, err := r.Cookie("refresh_token")
+	if err != nil {
+		http.Error(w, "Missing token", http.StatusBadRequest)
+		return
+	}
+	//или User.Id
+	success, err := c.authService.Logout(refreshCookie.Value)
+
+	if !success && err != nil {
+		log.Printf("Logout failed: %v", err)
+        http.Error(w, "Logout failed", http.StatusInternalServerError)
+		return
+	}
+
+	cookies_func.SetCookies(&w, "refresh_token", "", time.Unix(0,0))
+	cookies_func.SetCookies(&w, "access_token", "", time.Unix(0,0))
+
+
+	type Response struct {
+		Msg string `json:"msg"`
+	}
+
+	response:=Response {
+		Msg: "ok",
+	}
+
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	json.NewEncoder(w).Encode(response)
