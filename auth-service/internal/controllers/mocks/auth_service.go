@@ -161,6 +161,41 @@ func (_m *AuthService) Register(login string, email string, password string) (*m
 	return r0, r1, r2
 }
 
+// UpdateAccessToken provides a mock function with given fields: refreshToken
+func (_m *AuthService) UpdateAccessToken(refreshToken string) (bool, string, error) {
+	ret := _m.Called(refreshToken)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateAccessToken")
+	}
+
+	var r0 bool
+	var r1 string
+	var r2 error
+	if rf, ok := ret.Get(0).(func(string) (bool, string, error)); ok {
+		return rf(refreshToken)
+	}
+	if rf, ok := ret.Get(0).(func(string) bool); ok {
+		r0 = rf(refreshToken)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(string) string); ok {
+		r1 = rf(refreshToken)
+	} else {
+		r1 = ret.Get(1).(string)
+	}
+
+	if rf, ok := ret.Get(2).(func(string) error); ok {
+		r2 = rf(refreshToken)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
 // ValidateToken provides a mock function with given fields: tokenValue
 func (_m *AuthService) ValidateToken(tokenValue string) (bool, string) {
 	ret := _m.Called(tokenValue)

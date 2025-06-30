@@ -233,7 +233,7 @@ func (c *AuthController) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *AuthController) TestCookie(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.Cookies())	
+	log.Println(r.Header.Get("set-cookie"))
 
 	type Response struct {
 		Msg string `json:"msg"`

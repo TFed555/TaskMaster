@@ -52,3 +52,12 @@ func (r *TokenRepository) DeleteToken(refreshToken string) (bool, error) {
     
     return rows > 0, nil
 }
+
+// func (r *TokenRepository) GetUserIdByToken(token string) (int, error) {
+// 	query := `SELECT user_id FROM refresh_tokens
+//         WHERE token = $1
+//         LIMIT 1`
+// 	var result int
+// 	err := r.db.Get(&result, query, token)
+// 	return result, err
+// }
