@@ -3,10 +3,12 @@ package middleware
 import (
 	// "auth-service/internal/repository"
 	// "auth-service/internal/models"
+	cookies_func "auth-service/internal/pkg/cookies"
 	"auth-service/internal/services"
 	"log"
 	"net/http"
-	_"strings"
+	_ "strings"
+	"time"
 
 	// "strings"
 	_ "time"
@@ -59,8 +61,16 @@ func (c *AuthMiddleware) SetAuthMiddleware(controller func(w http.ResponseWriter
 		result, errMsg = c.authService.ValidateToken(accessToken)
 
 		if !result {
-			w.WriteHeader(http.StatusForbidden)
-			w.Write([]byte(errMsg))
+			// w.WriteHeader(http.StatusForbidden)
+			// w.Write([]byte(errMsg))
+			success, newValue, err:=  c.authService.UpdateAccessToken(refreshToken)
+			if err != nil {
+				w.WriteHeader(http.StatusForbidden)
+				w.Write([]byte(errMsg))
+			}
+			if success {
+				cookies_func.SetCookies(&w, "access_token", newValue, time.Now().Add(15 * time.Minute))
+			}
 		}
 
 		controller(w, r)

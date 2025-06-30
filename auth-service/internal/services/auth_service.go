@@ -1,8 +1,8 @@
 package services
 
-
 import (
 	"auth-service/internal/models"
+	// cookies_func "auth-service/internal/pkg/cookies"
 	"auth-service/internal/pkg/jwt"
 	"auth-service/internal/repository"
 	"encoding/base64"
@@ -21,6 +21,7 @@ type AuthService interface {
     Refresh(refreshToken string) (string, string, error)
     ValidateToken(tokenValue string) (bool, string)
     Logout(refreshToken string) (bool, error)
+	UpdateAccessToken(refreshToken string) (bool, string, error)
 }
 
 type AuthServiceImpl struct {
@@ -165,4 +166,21 @@ func (s *AuthServiceImpl) Logout(refreshToken string) (bool, error) {
 		return false, err
 	}
 	return success, nil
+}
+
+
+func (s *AuthServiceImpl) UpdateAccessToken(refreshToken string) (bool, string, error) {
+	res, err := s.tokenRepo.GetToken(refreshToken)
+	if err != nil {
+		return false, "", err
+	}
+	if res.Token != "" {
+		newValue, err := jwt.GenerateJWTAccessToken(res.UserID)
+		if err != nil {
+			return false, "", err
+		}
+		return true, newValue, nil
+	}
+
+	return false, "", err
 }
