@@ -7,6 +7,7 @@ import (
 	"auth-service/internal/services"
 	"log"
 	"net/http"
+	"strings"
 	_ "strings"
 	"time"
 
@@ -31,20 +32,37 @@ func NewAuthMiddleware(authService services.AuthService) *AuthMiddleware{
 
 func (c *AuthMiddleware) SetAuthMiddleware(controller func(w http.ResponseWriter, r *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request){
-		refreshCookie, err := r.Cookie("refresh_token")
-		if err != nil {	
-			w.WriteHeader(http.StatusForbidden)
-			w.Write([]byte("Access denied"))
-			return
+		// refreshCookie, err := r.Cookie("refresh_token")
+		// if err != nil {	
+		// 	w.WriteHeader(http.StatusForbidden)
+		// 	w.Write([]byte("Access denied"))
+		// 	return
+		// }
+		// refreshToken:=refreshCookie.Value
+		// accessCookie, err := r.Cookie("access_token")
+		// if err != nil {
+		// 	w.WriteHeader(http.StatusForbidden)
+		// 	w.Write([]byte("Access denied"))
+		// 	return
+		// }
+		// accessToken:=accessCookie.Value
+
+		cookiesmas := r.Header.Get("set-cookie")
+		log.Print("cookies:", cookiesmas)
+		// var newString string
+		var refreshToken string
+		var accessToken string
+		newString := strings.Split(cookiesmas, "; ")
+		
+		for _, el := range newString {
+			newEl := strings.Split(el, "=")
+			if newEl[0] == "refresh_token" {
+				refreshToken = newEl[1]
+			}
+			if newEl[0] == "accesss_token" {
+				refreshToken = newEl[0]
+			}
 		}
-		refreshToken:=refreshCookie.Value
-		accessCookie, err := r.Cookie("access_token")
-		if err != nil {
-			w.WriteHeader(http.StatusForbidden)
-			w.Write([]byte("Access denied"))
-			return
-		}
-		accessToken:=accessCookie.Value
 
 		log.Println("Called from middleware %s", refreshToken)
 		log.Println("Called from middleware %s", accessToken)
