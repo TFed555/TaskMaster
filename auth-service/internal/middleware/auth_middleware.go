@@ -47,7 +47,7 @@ func (c *AuthMiddleware) SetAuthMiddleware(controller func(w http.ResponseWriter
 		// }
 		// accessToken:=accessCookie.Value
 
-		cookiesmas := r.Header.Get("set-cookie")
+		cookiesmas := r.Header.Get("Cookie")
 		log.Print("cookies:", cookiesmas)
 		// var newString string
 		var refreshToken string
@@ -59,8 +59,8 @@ func (c *AuthMiddleware) SetAuthMiddleware(controller func(w http.ResponseWriter
 			if newEl[0] == "refresh_token" {
 				refreshToken = newEl[1]
 			}
-			if newEl[0] == "accesss_token" {
-				refreshToken = newEl[0]
+			if newEl[0] == "access_token" {
+				refreshToken = newEl[1]
 			}
 		}
 
