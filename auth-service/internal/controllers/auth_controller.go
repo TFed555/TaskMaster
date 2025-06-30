@@ -22,7 +22,7 @@ type AuthController struct {
 }	
 
 type RegRequest struct {
-	Login    string `json:"login"`
+	Name    string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
@@ -39,7 +39,7 @@ type RegResponse struct {
 type AuthResponse struct {
 	UserID uint `json:"id"`
 	Email string `json:"email"`
-	Login string `json:"login"`
+	Name string `json:"name"`
 }
 
 type RefreshResponse struct {
@@ -68,21 +68,20 @@ func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Login == "" || req.Password == "" || req.Email == "" {
+	if req.Name == "" || req.Password == "" || req.Email == "" {
+		w.WriteHeader(http.StatusBadRequest)
 		errMsg:=ErrorResponse{
-			Status: http.StatusInternalServerError,
+			Status: http.StatusBadRequest,
 			Message: "Registration failed",
 		}
-		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(errMsg)
 		return
 	}
 
-	user, tokens, err := c.authService.Register(req.Login, req.Email, req.Password)
+	user, tokens, err := c.authService.Register(req.Name, req.Email, req.Password)
 	if err != nil {
 		log.Printf("Registration error: %v", err)
-		// http.Error(w, fmt.Sprintf("Registration failed: %v", err), http.StatusInternalServerError)
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusInternalServerError)
 		errMsg:=ErrorResponse{
 			Status: http.StatusInternalServerError,
 			Message: "Registration failed",
@@ -109,6 +108,7 @@ var (
 )
 
 func (c *AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
+		log.Println("Ale sukaaaaaaaaaaaaaaaa")
 	var req LogRequest
 	log.Println("DDDDDWWW")
 
@@ -140,7 +140,7 @@ func (c *AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 	response := AuthResponse{
 		UserID: user.ID,
 		Email: user.Email,
-		Login: user.Login,
+		Name: user.Login,
 	}
 
 	cookies_func.SetCookies(&w, "refresh_token", tokens.RefreshToken, time_expires_refresh)
@@ -184,15 +184,19 @@ func (c *AuthController) Refresh(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *AuthController) Test(w http.ResponseWriter, r *http.Request) {
-	type Response struct {
-		Msg string `json:"msg"`
-	}
-	response:=Response {
-		Msg: "ok",
-	}
+	// type Response struct {
+	// 	Msg string `json:"msg"`
+	// }
+	// response:=Response {
+	// 	Msg: "ok",
+	// }
+	log.Println("suka ")
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
-	json.NewEncoder(w).Encode(response)
+	// json.NewEncoder(w).Encode(res)
+	json.NewEncoder(w).Encode(map[string]string{
+        "message": "Test endpoint works!",
+    })
 }
 
 
@@ -214,6 +218,22 @@ func (c *AuthController) Logout(w http.ResponseWriter, r *http.Request) {
 	cookies_func.SetCookies(&w, "refresh_token", "", time.Unix(0,0))
 	cookies_func.SetCookies(&w, "access_token", "", time.Unix(0,0))
 
+
+	type Response struct {
+		Msg string `json:"msg"`
+	}
+
+	response:=Response {
+		Msg: "ok",
+	}
+
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (c *AuthController) TestCookie(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.Cookies())	
 
 	type Response struct {
 		Msg string `json:"msg"`

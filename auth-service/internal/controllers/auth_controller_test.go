@@ -27,7 +27,7 @@ func TestAuthController_Registration(t *testing.T) {
 		{
 			name: "Success",
 			requestBody: `{
-				"login": "testuser",
+				"name": "testuser",
 				"email": "user@example.com",
 				"password": "password123"
 			}`,
@@ -44,7 +44,7 @@ func TestAuthController_Registration(t *testing.T) {
 		{
 			name: "No password",
 			requestBody: `{
-				"login": "testuser",
+				"name": "testuser",
 				"email": "user@example.com"
 			}`,
 			mockSetup:    func(authMock *mocks.AuthService) {},
@@ -53,7 +53,7 @@ func TestAuthController_Registration(t *testing.T) {
 		{
 			name: "Constraint email",
 			requestBody: `{
-				"login": "testuser",
+				"name": "testuser",
 				"email": "user@example.com",
 				"password": "password123"
 			}`,
@@ -62,7 +62,7 @@ func TestAuthController_Registration(t *testing.T) {
 					Return(nil, nil, errors.New("some error")).
 					Once()
 			},
-			expectedCode:  http.StatusBadRequest,
+			expectedCode:  http.StatusInternalServerError,
 			expectedError: "Registration failed",
 		},
 
