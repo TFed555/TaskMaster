@@ -27,10 +27,11 @@ type AuthService interface {
 type AuthServiceImpl struct {
 	userRepo *repository.UserRepository
 	tokenRepo *repository.TokenRepository
+	jwtFunc *jwt.JWTFunctional
 }
 
-func NewAuthService(userRepo *repository.UserRepository, tokenRepo *repository.TokenRepository) AuthService {
-	return &AuthServiceImpl{userRepo: userRepo, tokenRepo: tokenRepo}
+func NewAuthService(userRepo *repository.UserRepository, tokenRepo *repository.TokenRepository, jwtFunc *jwt.JWTFunctional) AuthService {
+	return &AuthServiceImpl{userRepo: userRepo, tokenRepo: tokenRepo, jwtFunc: jwtFunc}
 }
 
 func (s *AuthServiceImpl) Register(login string, email string, password string) (*models.User, *models.Tokens, error) {
@@ -48,7 +49,7 @@ func (s *AuthServiceImpl) Register(login string, email string, password string) 
 		return nil, nil, err
 	}
 
-	accesstoken, refreshtoken, err := jwt.GenerateJWTRefreshTokens(user.ID)
+	accesstoken, refreshtoken, err := s.jwtFunc.GenerateJWTRefreshTokens(user.ID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -81,7 +82,7 @@ func (s *AuthServiceImpl) Authorize(email string, password string) (*models.User
 		return nil, nil, fmt.Errorf("Invalid password"), exists
 	}
 
-	accesstoken, refreshtoken, err := jwt.GenerateJWTRefreshTokens(user.ID)
+	accesstoken, refreshtoken, err := s.jwtFunc.GenerateJWTRefreshTokens(user.ID)
 	if err != nil {
 		return nil, nil, err, exists
 	}
@@ -111,7 +112,7 @@ func (s *AuthServiceImpl) Refresh(refreshToken string) (accesstoken string, refr
 		return "", "", fmt.Errorf("Token time expired")
 	}
 
-	t1, t2, err := jwt.GenerateJWTRefreshTokens(token.UserID)
+	t1, t2, err := s.jwtFunc.GenerateJWTRefreshTokens(token.UserID)
 	if err != nil {
 		return "","",err
 	}
@@ -123,16 +124,15 @@ func (s *AuthServiceImpl) ValidateToken(tokenValue string) (bool, string) {
 		return false, "Access denied"
 	}
 
-	//todo: проверка что это юзерский токен
-	// token, err := s.tokenRepo.GetToken(resfreshToken)
-	// if err!=nil {
-	// 	return false, ""
-	// }
+	verified, err := s.jwtFunc.VerifyKey(tokenValue)
+	if !verified || err != nil {
+		return false, "Access denied"
+	}
+
 
 	parts:=strings.Split(tokenValue, ".")
 	payload := parts[1]
 
-	// payload := tokenValue
 	dst := make([]byte, base64.RawURLEncoding.DecodedLen(len(payload)))
 	n, err := base64.RawURLEncoding.Decode(dst, []byte(payload))
 	payloadJson := dst[:n]
@@ -157,6 +157,11 @@ func (s *AuthServiceImpl) ValidateToken(tokenValue string) (bool, string) {
 			return false, "Time ran out"
 	}
 
+	if _, err := s.userRepo.GetUserByID(token.Sub); err != nil {
+		log.Print("Not found %d userID", token.Sub)
+		return false, "User not found"
+	}
+
 	return true, ""
 }
 
@@ -175,7 +180,7 @@ func (s *AuthServiceImpl) UpdateAccessToken(refreshToken string) (bool, string, 
 		return false, "", err
 	}
 	if res.Token != "" {
-		newValue, err := jwt.GenerateJWTAccessToken(res.UserID)
+		newValue, err := s.jwtFunc.GenerateJWTAccessToken(res.UserID)
 		if err != nil {
 			return false, "", err
 		}

@@ -105,7 +105,6 @@ var (
 )
 
 func (c *AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
-	log.Println("Ale sukaaaaaaaaaaaaaaaa")
 	var req LogRequest
 	log.Println("DDDDDWWW")
 
@@ -185,7 +184,6 @@ func (c *AuthController) Test(w http.ResponseWriter, r *http.Request) {
 	// response:=Response {
 	// 	Msg: "ok",
 	// }
-	log.Println("suka ")
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	// json.NewEncoder(w).Encode(res)

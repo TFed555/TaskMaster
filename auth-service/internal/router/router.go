@@ -34,10 +34,10 @@ func InitNewRouter(authController *controllers.AuthController, authMiddleware *m
 	router.Post("/api/login", authController.Authorize)
 	router.Post("/api/refresh", authController.Refresh)
 
-	router.Get("/api/testSecure", authController.Test)
+	// router.Get("/api/testSecure", authController.Test)
 	router.Get("/api/testCookie", authMiddleware.SetAuthMiddleware(authController.TestCookie))
 
-	// router.Get("/api/testSecure", authMiddleware.SetAuthMiddleware(authController.Test))
+	router.Get("/api/testSecure", authMiddleware.SetAuthMiddleware(authController.Test))
 	router.Delete("/api/logout", authMiddleware.SetAuthMiddleware(authController.Logout))
 	// router.Post("/testJWT", authController.TestJWT)
 

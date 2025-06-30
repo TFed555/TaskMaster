@@ -5,6 +5,7 @@ import (
 	"auth-service/internal/controllers"
 	"auth-service/internal/middleware"
 	"auth-service/internal/migrations"
+	"auth-service/internal/pkg/jwt"
 	"auth-service/internal/repository"
 	"auth-service/internal/router"
 	"auth-service/internal/services"
@@ -44,9 +45,9 @@ func main() {
 
 	userRepo := repository.NewUserRepository(db)
 	tokenRepo := repository.NewTokenRepository(db)
-	authService := services.NewAuthService(userRepo, tokenRepo)
+	jwtFunc := jwt.NewJWTFunctional()
+	authService := services.NewAuthService(userRepo, tokenRepo, jwtFunc)
 	authController := controllers.NewAuthController(authService)
-
 	authMiddleware := middleware.NewAuthMiddleware(authService)
 
 	router := router.InitNewRouter(authController, authMiddleware)

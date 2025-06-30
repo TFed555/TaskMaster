@@ -73,18 +73,17 @@ func (c *AuthMiddleware) SetAuthMiddleware(controller func(w http.ResponseWriter
 		if !result {
 			w.WriteHeader(http.StatusForbidden)
 			w.Write([]byte(errMsg))
-			//ну и выкинуть из сессии типо
+			return
 		}
 
 		result, errMsg = c.authService.ValidateToken(accessToken)
 
 		if !result {
-			// w.WriteHeader(http.StatusForbidden)
-			// w.Write([]byte(errMsg))
 			success, newValue, err:=  c.authService.UpdateAccessToken(refreshToken)
 			if err != nil {
 				w.WriteHeader(http.StatusForbidden)
 				w.Write([]byte(errMsg))
+				return
 			}
 			if success {
 				cookies_func.SetCookies(&w, "access_token", newValue, time.Now().Add(15 * time.Minute))
@@ -93,6 +92,4 @@ func (c *AuthMiddleware) SetAuthMiddleware(controller func(w http.ResponseWriter
 
 		controller(w, r)
 	}
-
-
 }

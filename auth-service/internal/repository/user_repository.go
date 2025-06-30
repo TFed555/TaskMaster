@@ -54,3 +54,25 @@ func (r *UserRepository) GetByEmail(email string) (*models.User, error, bool) {
 
 	return &user, nil, true
 }
+
+func (r *UserRepository) GetUserByID(userId uint) (*models.User, error) {
+	const op = "repository.user_repository.GetByID"
+
+	query := (`
+		SELECT id, login, email, password, created_at FROM users
+		WHERE id = $1
+		LIMIT 1`)
+
+	var user models.User
+
+	err := r.db.QueryRowx(query, userId).StructScan(&user)
+    
+    if err != nil {
+        if err == sql.ErrNoRows {
+            return nil, fmt.Errorf("%s: user not found", op)
+        }
+        return nil, fmt.Errorf("%s: %w", op, err)
+    }
+
+	return &user, nil
+}
