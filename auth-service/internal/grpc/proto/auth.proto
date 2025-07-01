@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+option go_package = "auth-service/internal/grpc/pkg";
+
+package auth;
+
+service AuthService {
+    rpc ValidateToken(TokenRequest) returns (TokenResponse) {}
+    rpc UpdateAccessToken(RefreshTokenRequest) returns (AccessTokenResponse) {}
+    rpc ParseUserId(RefreshTokenRequest) returns (UserIDResponse) {}
+}
+
+message TokenRequest {
+    string token = 1;
+}
+
+message TokenResponse {
+    bool valid = 1;
+    string error = 2;
+}
+
+message AccessTokenResponse {
+    bool success = 1;
+    string access_token = 2;
+    string error = 3;
+}
+
+message UserIDResponse {
+    int32 user_id = 1;
+    string error = 2;
+}
+
+message RefreshTokenRequest {
+    string refresh_token = 1;
+}
