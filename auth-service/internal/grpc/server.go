@@ -7,7 +7,7 @@ import (
 	"net"
 
 	"google.golang.org/grpc"
-	pb "auth-service/internal/grpc/pkg"
+	pb "shared/pkg"
 )
 
 type AuthServer struct {
@@ -29,10 +29,10 @@ func (s *AuthServer) UpdateAccessToken(ctx context.Context, req *pb.RefreshToken
 	}, nil
 }
 
-func StartGRPCServer(authService services.AuthService, port string) {
-	lis, err := net.Listen("tcp", ":"+port)
+func StartGRPCServer(authService services.AuthService, port string) error {
+	lis, err := net.Listen("tcp", port)
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		return err
 	}
 
 	s := grpc.NewServer()
@@ -40,6 +40,8 @@ func StartGRPCServer(authService services.AuthService, port string) {
 	
 	log.Printf("gRPC server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		return err
 	}
+
+	return nil
 }

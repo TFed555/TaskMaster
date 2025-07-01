@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"google.golang.org/grpc"
-	pb "auth-service/internal/grpc/pkg"
+	pb "shared/pkg"
 )
 
 type GRPCAuthService struct {
@@ -30,5 +30,14 @@ func (s *GRPCAuthService) UpdateAccessToken(refreshToken string) (bool, string, 
 	if err != nil {
 		return false, "", err
 	}
-	return resp.Success, resp.NewToken, nil
+	return resp.Success, resp.AccessToken, nil
+}
+
+
+func (s *GRPCAuthService) ParseUserId(refreshToken string) (uint, string) {
+	resp, err := s.client.ParseUserId(context.Background(), &pb.RefreshTokenRequest{RefreshToken: refreshToken})
+	if err != nil {
+		return 0, ""
+	}
+	return uint(resp.UserId), ""
 }

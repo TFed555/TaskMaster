@@ -2,10 +2,8 @@ module shared
 
 go 1.24.4
 
-require (
-	auth-service v0.0.0-00010101000000-000000000000
-	google.golang.org/grpc v1.73.0
-)
+// auth-service v0.0.0
+require google.golang.org/grpc v1.73.0
 
 require (
 	golang.org/x/net v0.38.0 // indirect
@@ -15,4 +13,4 @@ require (
 	google.golang.org/protobuf v1.36.6 // indirect
 )
 
-replace auth-service => ../auth-service
+// replace auth-service => ../auth-service

@@ -71,9 +71,6 @@ func (c *AuthMiddleware) SetAuthMiddleware(controller func(w http.ResponseWriter
 			}
 		}
 
-
-
-
 		userID, err := c.authService.ParseUserId(refreshToken)
 		if err != "" {
 			w.WriteHeader(http.StatusForbidden)

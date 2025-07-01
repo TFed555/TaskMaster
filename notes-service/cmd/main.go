@@ -10,8 +10,11 @@ import (
 	"notes-service/internal/repository"
 	"notes-service/internal/router"
 	"notes-service/internal/services"
+	"shared/middleware"
+	_ "shared/middleware"
+
 	"github.com/jmoiron/sqlx"
-	_"shared/middleware"
+	"google.golang.org/grpc"
 )
 
 
@@ -43,11 +46,19 @@ func main() {
 		log.Fatal("DB connection error: ", err)
 	}
 
+	authCon, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("Failed to connect to grpc server: %v", err)
+	}
+	defer authCon.Close()
+
+	grpcAuthService := middleware.NewGRPCAuthService(authCon)
+	authMiddleware := middleware.NewAuthMiddleware(grpcAuthService)
 	notesRepo := repository.NewNotesRepository(db)
 	notesService := services.NewNotesService(notesRepo)
 	notesController := controllers.NewNotesController(notesService)
-	// authMiddleware := middleware.NewAuthMiddleware()
-	router := router.InitNewRouter(notesController)
+
+	router := router.InitNewRouter(notesController, authMiddleware)
 
 	log.Printf("Starting server on %s \n", router.Port)
 	if err := http.ListenAndServe(router.Port, router.ChiRouter); err != nil {
