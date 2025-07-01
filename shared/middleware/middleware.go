@@ -25,6 +25,10 @@ func NewAuthMiddleware(authService AuthService) *AuthMiddleware{
 	}
 }
 
+type ContextKey string
+
+const UserIdKey	ContextKey = "userID"
+
 func (c *AuthMiddleware) SetAuthMiddleware(controller func(w http.ResponseWriter, r *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request){
 
@@ -80,9 +84,9 @@ func (c *AuthMiddleware) SetAuthMiddleware(controller func(w http.ResponseWriter
             return
         }
 
-        ctx := context.WithValue(r.Context(), "userID", userID)
+        ctx := context.WithValue(r.Context(), UserIdKey, userID)
 
-		log.Printf("CALLED FROM MDLWR %d \n", ctx.Value("userID"))
+		log.Printf("CALLED FROM MDLWR %d \n", ctx.Value(UserIdKey).(uint))
 
 		controller(w, r.WithContext(ctx))
 	}

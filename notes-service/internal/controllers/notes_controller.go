@@ -2,8 +2,10 @@ package controllers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"notes-service/internal/services"
+	"shared/middleware"
 )
 
 type NotesController struct {
@@ -16,6 +18,11 @@ func NewNotesController(notesService services.NotesService) *NotesController {
 	}
 }
 
+type TodoResponse struct {
+	UserID uint   `json:"userId"`
+	Title  string `json:"title"`
+}
+
 func (n *NotesController) Test(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
@@ -26,5 +33,25 @@ func (n *NotesController) Test(w http.ResponseWriter, r *http.Request) {
 
 func (n *NotesController) GetTodos(w http.ResponseWriter, r *http.Request) {
 	// /api/todos?createdAt=(date YYYY-MM-DD)&filter=(after | before)&offset=(int)&limit=(int)
-	// todo, err := n.notesService.GetTodos(r.)
+	ctx := r.Context()
+	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	log.Print("UserID:", userID)
+	if !ok {
+        http.Error(w, "Unauthorized", http.StatusUnauthorized)
+        return
+    }
+	log.Print(userID)
+	todo, err := n.notesService.GetTodos(userID)
+	if err != nil {
+		log.Println("D")
+	}
+	response := TodoResponse{
+		UserID: uint(todo.UserId),
+		Title: todo.Title,
+	}
+
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(response)
+
 }

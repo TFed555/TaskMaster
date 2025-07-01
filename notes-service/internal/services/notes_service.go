@@ -6,7 +6,7 @@ import (
 )
 
 type NotesService interface {
-	GetTodos(userId int) (*models.Todo, error)
+	GetTodos(userId uint) (*models.Todo, error)
 }
 
 type NotesServiceImpl struct {
@@ -19,7 +19,7 @@ func NewNotesService(notesRepository *repository.NotesRepository) NotesService {
 	}
 }
 
-func (s *NotesServiceImpl) GetTodos(userId int) (*models.Todo, error) {
+func (s *NotesServiceImpl) GetTodos(userId uint) (*models.Todo, error) {
 	task, err := s.notesRepository.GetTodos(userId)
 	if err != nil {
 		return nil, err

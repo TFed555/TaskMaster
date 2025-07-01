@@ -36,8 +36,9 @@ func InitNewRouter(notesController *controllers.NotesController, authMiddleware 
 	// router.Post("/api/registration", authController.Register)
 	// router.Post("/api/login", authController.Authorize)
 	// router.Post("/api/refresh", authController.Refresh)
+	
 	router.Get("/api/test", authMiddleware.SetAuthMiddleware(notesController.Test))
-	router.Get("/api/todos?createdAt=(date YYYY-MM-DD)&filter=(after | before)&offset=(int)&limit=(int)", notesController.GetTodos)
+	router.Get("/api/todos", authMiddleware.SetAuthMiddleware(notesController.GetTodos))
 
 	return &Router{
 		ChiRouter: router,

@@ -29,6 +29,14 @@ func (s *AuthServer) UpdateAccessToken(ctx context.Context, req *pb.RefreshToken
 	}, nil
 }
 
+func (s *AuthServer) ParseUserId(ctx context.Context, req *pb.RefreshTokenRequest) (*pb.UserIDResponse, error) {
+	userId, err := s.service.ParseUserId(req.RefreshToken)
+	return &pb.UserIDResponse{
+		UserId: int32(userId),
+		Error: err,
+	}, nil
+}
+
 func StartGRPCServer(authService services.AuthService, port string) error {
 	lis, err := net.Listen("tcp", port)
 	if err != nil {

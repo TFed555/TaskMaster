@@ -18,7 +18,7 @@ func NewNotesRepository(db *sqlx.DB) *NotesRepository {
 	}
 }
 
-func (n *NotesRepository) GetTodos(userId int) (*models.Todo, error) {
+func (n *NotesRepository) GetTodos(userId uint) (*models.Todo, error) {
 	const op = "repository.user_repository.GetTodos"
 
 	query := (`
