@@ -2,7 +2,8 @@ package router
 
 import (
 	"auth-service/internal/controllers"
-	"auth-service/internal/middleware"
+	"shared/middleware"
+	// "auth-service/internal/middleware"
 	// "log"
 	// "net/http"
 
@@ -36,7 +37,7 @@ func InitNewRouter(authController *controllers.AuthController, authMiddleware *m
 
 	// router.Get("/api/testSecure", authController.Test)
 	router.Get("/api/testCookie", authMiddleware.SetAuthMiddleware(authController.TestCookie))
-
+	// router.Get("api/todos?")
 	router.Get("/api/testSecure", authMiddleware.SetAuthMiddleware(authController.Test))
 	router.Delete("/api/logout", authMiddleware.SetAuthMiddleware(authController.Logout))
 	// router.Post("/testJWT", authController.TestJWT)

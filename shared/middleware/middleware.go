@@ -1,30 +1,25 @@
 package middleware
 
 import (
-	// "auth-service/internal/repository"
-	// "auth-service/internal/models"
-	cookies_func "auth-service/internal/pkg/cookies"
-	"auth-service/internal/services"
+	"context"
 	"log"
 	"net/http"
+	"shared/utils/cookies"
 	"strings"
-	_ "strings"
 	"time"
-
-	// "strings"
-	_ "time"
-
-	_ "encoding/base64"
-	_ "encoding/json"
-	// "github.com/golang-jwt/jwt/v5"
-	// "net/url"
 )
 
-type AuthMiddleware struct {
-	authService services.AuthService
+type AuthService interface{
+	ValidateToken(token string) (bool, string)
+	UpdateAccessToken(token string) (bool, string, error)
+	ParseUserId(token string) (uint, string)
 }
 
-func NewAuthMiddleware(authService services.AuthService) *AuthMiddleware{
+type AuthMiddleware struct {
+	authService AuthService
+}
+
+func NewAuthMiddleware(authService AuthService) *AuthMiddleware{
 	return &AuthMiddleware{
 		authService: authService,
 	}
@@ -32,20 +27,6 @@ func NewAuthMiddleware(authService services.AuthService) *AuthMiddleware{
 
 func (c *AuthMiddleware) SetAuthMiddleware(controller func(w http.ResponseWriter, r *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request){
-		// refreshCookie, err := r.Cookie("refresh_token")
-		// if err != nil {	
-		// 	w.WriteHeader(http.StatusForbidden)
-		// 	w.Write([]byte("Access denied"))
-		// 	return
-		// }
-		// refreshToken:=refreshCookie.Value
-		// accessCookie, err := r.Cookie("access_token")
-		// if err != nil {
-		// 	w.WriteHeader(http.StatusForbidden)
-		// 	w.Write([]byte("Access denied"))
-		// 	return
-		// }
-		// accessToken:=accessCookie.Value
 
 		cookiesmas := r.Header.Get("Cookie")
 		log.Print("cookies:", cookiesmas)
@@ -86,10 +67,26 @@ func (c *AuthMiddleware) SetAuthMiddleware(controller func(w http.ResponseWriter
 				return
 			}
 			if success {
-				cookies_func.SetCookies(&w, "access_token", newValue, time.Now().Add(15 * time.Minute))
+				cookies.SetCookies(&w, "access_token", newValue, time.Now().Add(15 * time.Minute))
 			}
 		}
 
-		controller(w, r)
+
+
+
+		userID, err := c.authService.ParseUserId(refreshToken)
+		if err != "" {
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte(err))
+            // http.Error(w, "Invalid token", http.StatusUnauthorized)
+
+            return
+        }
+
+        ctx := context.WithValue(r.Context(), "userID", userID)
+
+		log.Printf("CALLED FROM MDLWR %d \n", ctx.Value("userID"))
+
+		controller(w, r.WithContext(ctx))
 	}
 }

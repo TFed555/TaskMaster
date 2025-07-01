@@ -22,6 +22,7 @@ type AuthService interface {
     ValidateToken(tokenValue string) (bool, string)
     Logout(refreshToken string) (bool, error)
 	UpdateAccessToken(refreshToken string) (bool, string, error)
+	ParseUserId(token string) (uint, string)
 }
 
 type AuthServiceImpl struct {
@@ -188,4 +189,28 @@ func (s *AuthServiceImpl) UpdateAccessToken(refreshToken string) (bool, string, 
 	}
 
 	return false, "", err
+}
+
+func (s *AuthServiceImpl) ParseUserId(token string) (uint, string) {
+	tokenMas := strings.Split(token,".")
+	payload := tokenMas[1]
+	dst := make([]byte, base64.RawURLEncoding.DecodedLen(len(payload)))
+	n, err := base64.RawURLEncoding.Decode(dst, []byte(payload))
+	payloadJson := dst[:n]
+	if err != nil {
+		log.Println("decode error:", err)
+		return 0, err.Error()
+	}
+
+	type Token struct {
+			Sub uint `json:"sub"`
+			Exp int64 `json:"exp"`
+	}
+	var newToken Token
+	err = json.Unmarshal(payloadJson, &newToken)
+	if err != nil {
+			log.Println("Can't unmarshal")
+			return 0, err.Error()
+	}
+	return newToken.Sub, ""
 }

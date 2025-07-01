@@ -20,7 +20,7 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 func (r *UserRepository) Create(user *models.User) (error) {
 	const op = "repository.user_repository.Create"
 	stmt, err := r.db.PrepareNamed(`
-		INSERT INTO users (login, email, password, created_at)
+		INSERT INTO auth.users (login, email, password, created_at)
 		VALUES (:login, :email, :password, NOW())
 		RETURNING id, created_at
 	`)
@@ -37,7 +37,7 @@ func (r *UserRepository) GetByEmail(email string) (*models.User, error, bool) {
 	const op = "repository.user_repository.GetByEmail"
 
 	query := (`
-		SELECT id, login, email, password, created_at FROM users
+		SELECT id, login, email, password, created_at FROM auth.users
 		WHERE email = $1
 		LIMIT 1`)
 
@@ -59,7 +59,7 @@ func (r *UserRepository) GetUserByID(userId uint) (*models.User, error) {
 	const op = "repository.user_repository.GetByID"
 
 	query := (`
-		SELECT id, login, email, password, created_at FROM users
+		SELECT id, login, email, password, created_at FROM auth.users
 		WHERE id = $1
 		LIMIT 1`)
 

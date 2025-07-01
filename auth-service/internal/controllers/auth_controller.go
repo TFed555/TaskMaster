@@ -184,6 +184,9 @@ func (c *AuthController) Test(w http.ResponseWriter, r *http.Request) {
 	// response:=Response {
 	// 	Msg: "ok",
 	// }
+	userID := r.Context().Value("userID")
+    log.Printf("Controller received userID: %v", userID)
+
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	// json.NewEncoder(w).Encode(res)

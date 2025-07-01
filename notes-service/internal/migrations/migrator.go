@@ -3,6 +3,7 @@ package migrations
 import (
 	"fmt"
 	"log"
+	// "path/filepath"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -12,6 +13,8 @@ import (
 func RunMigration(dbURL string, migrationsPath string) error {
 	fmt.Println("Running migrations from:", migrationsPath)
 	fmt.Println("Connecting to DB:", dbURL)
+	// absPath := filepath.Join("notes-service", "internal", "migrations")
+	// path := filepath.ToSlash(filepath.Clean(absPath))
 	m, err := migrate.New(
 		fmt.Sprintf("file://%s", migrationsPath),
 		dbURL,

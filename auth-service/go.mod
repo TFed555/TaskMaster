@@ -29,3 +29,7 @@ require (
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/lib/pq v1.10.9 // indirect
 )
+
+require shared v0.0.0
+
+replace shared => ../shared

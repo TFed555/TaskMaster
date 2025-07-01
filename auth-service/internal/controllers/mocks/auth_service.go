@@ -87,6 +87,34 @@ func (_m *AuthService) Logout(refreshToken string) (bool, error) {
 	return r0, r1
 }
 
+// ParseUserId provides a mock function with given fields: token
+func (_m *AuthService) ParseUserId(token string) (uint, string) {
+	ret := _m.Called(token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ParseUserId")
+	}
+
+	var r0 uint
+	var r1 string
+	if rf, ok := ret.Get(0).(func(string) (uint, string)); ok {
+		return rf(token)
+	}
+	if rf, ok := ret.Get(0).(func(string) uint); ok {
+		r0 = rf(token)
+	} else {
+		r0 = ret.Get(0).(uint)
+	}
+
+	if rf, ok := ret.Get(1).(func(string) string); ok {
+		r1 = rf(token)
+	} else {
+		r1 = ret.Get(1).(string)
+	}
+
+	return r0, r1
+}
+
 // Refresh provides a mock function with given fields: refreshToken
 func (_m *AuthService) Refresh(refreshToken string) (string, string, error) {
 	ret := _m.Called(refreshToken)

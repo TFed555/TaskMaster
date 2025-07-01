@@ -17,7 +17,7 @@ func NewTokenRepository(db *sqlx.DB) *TokenRepository {
 func (r *TokenRepository) Create(token *models.RefreshToken) error {
 
 	stmt, err := r.db.PrepareNamed(`
-    INSERT INTO refresh_tokens (user_id, token, expires_at)
+    INSERT INTO auth.refresh_tokens (user_id, token, expires_at)
     VALUES (:user_id, :token, :expires_at)
     ON CONFLICT (user_id) DO UPDATE SET
         token = EXCLUDED.token,
@@ -32,7 +32,7 @@ func (r *TokenRepository) Create(token *models.RefreshToken) error {
 }
 
 func (r *TokenRepository) GetToken(token string) (*models.RefreshToken, error) {
-	query := `SELECT * FROM refresh_tokens
+	query := `SELECT * FROM auth.refresh_tokens
         WHERE token = $1
         LIMIT 1`
 	var result models.RefreshToken
@@ -41,7 +41,7 @@ func (r *TokenRepository) GetToken(token string) (*models.RefreshToken, error) {
 }
 
 func (r *TokenRepository) DeleteToken(refreshToken string) (bool, error) {
-	query := `DELETE FROM refresh_tokens WHERE token = $1`
+	query := `DELETE FROM auth.refresh_tokens WHERE token = $1`
 
 	res, err := r.db.Exec(query, refreshToken)
 

@@ -3,7 +3,8 @@ package main
 import (
 	"auth-service/internal/config/dbconfig"
 	"auth-service/internal/controllers"
-	"auth-service/internal/middleware"
+	// "auth-service/internal/middleware"
+	"shared/middleware"
 	"auth-service/internal/migrations"
 	"auth-service/internal/pkg/jwt"
 	"auth-service/internal/repository"
@@ -18,6 +19,8 @@ import (
 
 
 func main() {
+
+	//переделать инициализацию подключения к бд
 	dbconf := dbconfig.NewDBConfig()
 
 	conn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
