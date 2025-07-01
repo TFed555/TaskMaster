@@ -7,6 +7,7 @@ type Priority struct {
 }
 
 type Todo struct {
+  ID        int     `db:"id"`
   Title 		string		`db:"title"`
   Priority 		Priority	`db:"priority"`
   Category 		string		`db:"category"`

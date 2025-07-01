@@ -19,7 +19,7 @@ func NewNotesController(notesService services.NotesService) *NotesController {
 }
 
 type TodoResponse struct {
-	UserID uint   `json:"userId"`
+	// UserID uint   `json:"userId"`
 	Title  string `json:"title"`
 }
 
@@ -46,7 +46,7 @@ func (n *NotesController) GetTodos(w http.ResponseWriter, r *http.Request) {
 		log.Println("D")
 	}
 	response := TodoResponse{
-		UserID: uint(todo.UserId),
+		// UserID: uint(todo.UserId),
 		Title: todo.Title,
 	}
 

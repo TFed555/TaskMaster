@@ -22,8 +22,8 @@ func (n *NotesRepository) GetTodos(userId uint) (*models.Todo, error) {
 	const op = "repository.user_repository.GetTodos"
 
 	query := (`
-		SELECT * FROM notes.users
-		WHERE id = $1
+		SELECT title FROM notes.todos
+		WHERE userId = $1
 		LIMIT 1`)
 
 	var task models.Todo
