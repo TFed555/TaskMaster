@@ -8,7 +8,7 @@ import (
 )
 
 type NotesService interface {
-	GetTodos(userId uint, urlParams url.Values) (*models.Todo, error)
+	GetTodos(userId uint, urlParams url.Values) ([]models.Todo, error)
 }
 
 type NotesServiceImpl struct {
@@ -21,14 +21,10 @@ func NewNotesService(notesRepository *repository.NotesRepository) NotesService {
 	}
 }
 
-func (s *NotesServiceImpl) GetTodos(userId uint, urlParams url.Values) (*models.Todo, error) {
-	createdAt := urlParams.Get("createdAt")
-	filter := urlParams.Get("after")
-	limit := urlParams.Get("limit")
-	offset := urlParams.Get("offset")
-	task, err := s.notesRepository.GetTodos(userId, createdAt, filter, limit, offset)
+func (s *NotesServiceImpl) GetTodos(userId uint, urlParams url.Values) ([]models.Todo, error) {
+	todos, err := s.notesRepository.GetTodos(userId, urlParams)
 	if err != nil {
 		return nil, err
 	}
-	return task, nil
+	return todos, nil
 }

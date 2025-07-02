@@ -4,8 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net/url"
 	"notes-service/internal/models"
-	_"time"
+	_"strings"
+	_ "time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -20,31 +22,60 @@ func NewNotesRepository(db *sqlx.DB) *NotesRepository {
 	}
 }
 
-func (n *NotesRepository) GetTodos(userId uint, createdAt string, filter string, limit string, offset string) (*models.Todo, error) {
+func contains(slice []string, item string) bool {
+    for _, v := range slice {
+        if v == item {
+            return true
+        }
+    }
+    return false
+}
+
+func (n *NotesRepository) GetTodos(userId uint, urlParams url.Values) ([]models.Todo, error) {
 	const op = "repository.user_repository.GetTodos"
-
-	// var sqlFilter string
-
-	// if filter == "after" {
-	// 	sqlFilter = ">"
-	// } else {
-	// 	sqlFilter = "<"
-	// }
-
+	args := []interface{}{userId}
 	// parserCreatedAt, err := time.Parse(time.RFC3339, createdAt)
+	var sqlFilter string
+	if filter := urlParams.Get("filter"); filter != "" {
+		if filter == "after" {
+			sqlFilter = ">"
+		} else {
+			sqlFilter = "<"
+		}
+	} else {
+		sqlFilter = "="
+	}
 
-	log.Print(createdAt)
+	log.Printf("Filter: %s", sqlFilter)
 
 	query := (`
 		SELECT id, title, priority, category, description, createdat, completedat, userid FROM notes.todos
-		WHERE userid = $1 AND createdat > $2::TIMESTAMPTZ`)
+		WHERE userid = $1`)
 
-	var task models.Todo
-	// createdAtFormat, err := time.(createdAt, )
+	todos := []models.Todo{}
+	counter := 1
+	if createdAt := urlParams.Get("createdAt"); createdAt != "" {
+		counter ++
+		query += fmt.Sprintf(" AND createdat %s $%d::TIMESTAMPTZ ", sqlFilter, counter)
+		args = append(args, createdAt)
+		log.Printf("Data: %s", createdAt)
+	}
 
-	err := n.db.QueryRowx(query, userId, createdAt).StructScan(&task)
+	if offset := urlParams.Get("offset"); offset != "" {
+		counter ++
+		query += fmt.Sprintf(" OFFSET $%d", counter)
+		args = append(args, offset)
+		log.Printf("Offset: %s", offset)
+	}
 
-	log.Printf("Returned field of task: %d, %s, %s", task.ID, task.Title, task.Priority)
+	if limit := urlParams.Get("limit"); limit != "" {
+		counter ++
+		query += fmt.Sprintf(" LIMIT $%d ", counter)
+		args = append(args, limit)
+		log.Printf("Limit: %s", limit)
+	}
+
+	err := n.db.Select(&todos, query, args...)
     
     if err != nil {
         if err == sql.ErrNoRows {
@@ -53,5 +84,5 @@ func (n *NotesRepository) GetTodos(userId uint, createdAt string, filter string,
         return nil, fmt.Errorf("%s: %w", op, err)
     }
 
-	return &task, nil
+	return todos, nil
 }

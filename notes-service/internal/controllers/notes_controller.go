@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"notes-service/internal/models"
 	"notes-service/internal/services"
 	"shared/middleware"
 )
@@ -20,8 +21,7 @@ func NewNotesController(notesService services.NotesService) *NotesController {
 }
 
 type TodoResponse struct {
-	UserID uint   `json:"userId"`
-	Title  string `json:"title"`
+	Todos  []models.Todo  `json:"todos"`
 }
 
 func (n *NotesController) Test(w http.ResponseWriter, r *http.Request) {
@@ -49,15 +49,19 @@ func (n *NotesController) GetTodos(w http.ResponseWriter, r *http.Request) {
 		log.Print("Не удалось распарсить url")
 	}
 
-	todo, err := n.notesService.GetTodos(userID, urlParams)
+	todos, err := n.notesService.GetTodos(userID, urlParams)
 	if err != nil {
-		log.Println("D")
+		log.Println(err)
 	}
 
-	log.Println(todo.Title)
+	// log.Println(todos[0].Title)
+	for idx, el := range todos {
+		log.Println(idx, el)
+	}
 	response := TodoResponse{
-		UserID: uint(todo.UserId),
-		Title: todo.Title,
+		Todos: todos,
+		// UserID: uint(todo.UserId),
+		// Title: todo.Title,
 	}
 
 	w.Header().Set("Content-type", "application/json")
