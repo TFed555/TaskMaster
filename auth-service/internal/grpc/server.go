@@ -22,10 +22,14 @@ func (s *AuthServer) ValidateToken(ctx context.Context, req *pb.TokenRequest) (*
 
 func (s *AuthServer) UpdateAccessToken(ctx context.Context, req *pb.RefreshTokenRequest) (*pb.AccessTokenResponse, error) {
 	success, newToken, err := s.service.UpdateAccessToken(req.RefreshToken)
+	var errMsg string
+	if err != nil {
+		errMsg=err.Error()
+	}
 	return &pb.AccessTokenResponse{
 		Success:  success,
 		AccessToken: newToken,
-		Error:    err.Error(),
+		Error:    errMsg,
 	}, nil
 }
 

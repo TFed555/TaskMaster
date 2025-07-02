@@ -2,7 +2,6 @@ package services
 
 import (
 	"auth-service/internal/models"
-	// cookies_func "auth-service/internal/pkg/cookies"
 	"auth-service/internal/pkg/jwt"
 	"auth-service/internal/repository"
 	"encoding/base64"
@@ -101,6 +100,8 @@ func (s *AuthServiceImpl) Authorize(email string, password string) (*models.User
 		RefreshToken: refreshtoken,
 	}
 
+	log.Printf("Called from auth_service, access_token: %s", tokens.AccessToken)
+
 	return user, tokens, err, exists
 }
 
@@ -185,6 +186,8 @@ func (s *AuthServiceImpl) UpdateAccessToken(refreshToken string) (bool, string, 
 		if err != nil {
 			return false, "", err
 		}
+		//посмотреть падает ли сервер (вместо err был nil)
+		log.Printf("Called from UpdateAccessToken: %s", newValue)
 		return true, newValue, nil
 	}
 

@@ -2,7 +2,7 @@ package controllers
 
 import (
 	_ "auth-service/internal/models"
-	cookies_func "auth-service/internal/pkg/cookies"
+	cookies_func "shared/utils/cookies"
 	"auth-service/internal/services"
 	"encoding/json"
 	"errors"
@@ -10,10 +10,9 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"shared/middleware"
 )
 
-var time_expires_refresh = time.Now().Add(7 * 24 * time.Hour)
-var time_expires_access = time.Now().Add(15 * time.Minute)
 
 type AuthController struct {
 	authService services.AuthService
@@ -88,6 +87,9 @@ func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var time_expires_refresh = time.Now().Add(30 * 24 * time.Hour)
+	var time_expires_access = time.Now().Add(2 * time.Minute)
+
 	cookies_func.SetCookies(&w, "access_token", tokens.AccessToken, time_expires_access)
 	cookies_func.SetCookies(&w, "refresh_token", tokens.RefreshToken, time_expires_refresh)
 
@@ -112,6 +114,7 @@ func (c *AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
+
 
 	user, tokens, err, exists := c.authService.Authorize(req.Email, req.Password)
 	if err != nil {
@@ -139,8 +142,14 @@ func (c *AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 		Name:   user.Login,
 	}
 
+	log.Printf("Called from auth_controller, tokens: %s, %s", tokens.AccessToken, tokens.RefreshToken)
+
+	var time_expires_refresh = time.Now().Add(30 * 24 * time.Hour)
+	var time_expires_access = time.Now().Add(2 * time.Minute)
+
 	cookies_func.SetCookies(&w, "refresh_token", tokens.RefreshToken, time_expires_refresh)
 	cookies_func.SetCookies(&w, "access_token", tokens.AccessToken, time_expires_access)
+
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
@@ -163,6 +172,9 @@ func (c *AuthController) Refresh(w http.ResponseWriter, r *http.Request) {
 		log.Print(err)
 	}
 
+	var time_expires_refresh = time.Now().Add(30 * 24 * time.Hour)
+	var time_expires_access = time.Now().Add(2 * time.Minute)
+
 	cookies_func.SetCookies(&w, "refresh_token", refreshtoken, time_expires_refresh)
 	cookies_func.SetCookies(&w, "access_token", accesstoken, time_expires_access)
 
@@ -184,7 +196,7 @@ func (c *AuthController) Test(w http.ResponseWriter, r *http.Request) {
 	// response:=Response {
 	// 	Msg: "ok",
 	// }
-	userID := r.Context().Value("userID")
+	userID := r.Context().Value(middleware.UserIdKey).(uint)
     log.Printf("Controller received userID: %v", userID)
 
 	w.Header().Set("Content-type", "application/json")
@@ -228,7 +240,7 @@ func (c *AuthController) Logout(w http.ResponseWriter, r *http.Request) {
 
 func (c *AuthController) TestCookie(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Header.Get("set-cookie"))
-
+	log.Println(r.Cookies())
 	type Response struct {
 		Msg string `json:"msg"`
 	}

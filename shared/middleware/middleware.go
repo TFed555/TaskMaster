@@ -65,13 +65,14 @@ func (c *AuthMiddleware) SetAuthMiddleware(controller func(w http.ResponseWriter
 
 		if !result {
 			success, newValue, err:=  c.authService.UpdateAccessToken(refreshToken)
+			log.Printf("Called from middleware access token: %t, %s, %v", success, newValue, err)
 			if err != nil {
 				w.WriteHeader(http.StatusForbidden)
 				w.Write([]byte(errMsg))
 				return
 			}
 			if success {
-				cookies.SetCookies(&w, "access_token", newValue, time.Now().Add(15 * time.Minute))
+				cookies.SetCookies(&w, "access_token", newValue, time.Now().Add(2 * time.Minute))
 			}
 		}
 

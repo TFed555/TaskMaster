@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"net/url"
 	"notes-service/internal/services"
 	"shared/middleware"
 )
@@ -19,7 +20,7 @@ func NewNotesController(notesService services.NotesService) *NotesController {
 }
 
 type TodoResponse struct {
-	// UserID uint   `json:"userId"`
+	UserID uint   `json:"userId"`
 	Title  string `json:"title"`
 }
 
@@ -40,13 +41,22 @@ func (n *NotesController) GetTodos(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "Unauthorized", http.StatusUnauthorized)
         return
     }
-	log.Print(userID)
-	todo, err := n.notesService.GetTodos(userID)
+	log.Printf("Controller received userID: %v", userID)
+
+	log.Print(url.ParseQuery(r.URL.RawQuery))
+	urlParams, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		log.Print("Не удалось распарсить url")
+	}
+
+	todo, err := n.notesService.GetTodos(userID, urlParams)
 	if err != nil {
 		log.Println("D")
 	}
+
+	log.Println(todo.Title)
 	response := TodoResponse{
-		// UserID: uint(todo.UserId),
+		UserID: uint(todo.UserId),
 		Title: todo.Title,
 	}
 

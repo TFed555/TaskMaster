@@ -1,12 +1,14 @@
 package services
 
 import (
+	_"log"
+	"net/url"
 	"notes-service/internal/models"
 	"notes-service/internal/repository"
 )
 
 type NotesService interface {
-	GetTodos(userId uint) (*models.Todo, error)
+	GetTodos(userId uint, urlParams url.Values) (*models.Todo, error)
 }
 
 type NotesServiceImpl struct {
@@ -19,8 +21,12 @@ func NewNotesService(notesRepository *repository.NotesRepository) NotesService {
 	}
 }
 
-func (s *NotesServiceImpl) GetTodos(userId uint) (*models.Todo, error) {
-	task, err := s.notesRepository.GetTodos(userId)
+func (s *NotesServiceImpl) GetTodos(userId uint, urlParams url.Values) (*models.Todo, error) {
+	createdAt := urlParams.Get("createdAt")
+	filter := urlParams.Get("after")
+	limit := urlParams.Get("limit")
+	offset := urlParams.Get("offset")
+	task, err := s.notesRepository.GetTodos(userId, createdAt, filter, limit, offset)
 	if err != nil {
 		return nil, err
 	}
