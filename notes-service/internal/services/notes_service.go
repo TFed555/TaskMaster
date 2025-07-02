@@ -9,6 +9,8 @@ import (
 
 type NotesService interface {
 	GetTodos(userId uint, urlParams url.Values) ([]models.Todo, error)
+	CreateTask(userID uint, title string, priority string, description string,
+	 category string, createdAt string, completedAt string) (int, error)
 }
 
 type NotesServiceImpl struct {
@@ -27,4 +29,14 @@ func (s *NotesServiceImpl) GetTodos(userId uint, urlParams url.Values) ([]models
 		return nil, err
 	}
 	return todos, nil
+}
+
+func (s *NotesServiceImpl) CreateTask(userID uint, title string, priority string, description string,
+	 category string, createdAt string, completedAt string) (int, error) {
+		id, err := s.notesRepository.CreateTodo(userID uint, title string, priority string, description string,
+category string, createdAt string, completedAt string)
+	 if err != nil {
+		return nil, err
+	 }
+	 return id, nil
 }

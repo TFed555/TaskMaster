@@ -39,6 +39,7 @@ func InitNewRouter(notesController *controllers.NotesController, authMiddleware 
 	
 	router.Get("/api/test", authMiddleware.SetAuthMiddleware(notesController.Test))
 	router.Get("/api/todos", authMiddleware.SetAuthMiddleware(notesController.GetTodos))
+	router.Post("/api/createTodo", authMiddleware.SetAuthMiddleware(notesController.CreateTodo))
 
 	return &Router{
 		ChiRouter: router,

@@ -86,3 +86,18 @@ func (n *NotesRepository) GetTodos(userId uint, urlParams url.Values) ([]models.
 
 	return todos, nil
 }
+
+func (n *NotesRepository) CreateTodo(userID uint, title string, priority string, description string,
+	 category string, createdAt string, completedAt string) (int, error) {
+	args := []interface{}{userID, title, priority, description, category, createdAt}
+	const op = "repository.user_repository.CreateTodo"
+	counter := 6
+	query := (`INSERT INTO notes.todos (userid, title, priority, description, category, createdat`)
+	if completedAt != "" {
+		query += (`, completedat`)
+		args = append(args, completedAt)
+		counter ++
+	}
+	query += `) VALUES (?, ?, ?, ?, ?, NOW())
+			RETURNING id`
+}
