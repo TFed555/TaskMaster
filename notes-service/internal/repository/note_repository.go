@@ -88,16 +88,26 @@ func (n *NotesRepository) GetTodos(userId uint, urlParams url.Values) ([]models.
 }
 
 func (n *NotesRepository) CreateTodo(userID uint, title string, priority string, description string,
-	 category string, createdAt string, completedAt string) (int, error) {
-	args := []interface{}{userID, title, priority, description, category, createdAt}
-	const op = "repository.user_repository.CreateTodo"
-	counter := 6
-	query := (`INSERT INTO notes.todos (userid, title, priority, description, category, createdat`)
-	if completedAt != "" {
-		query += (`, completedat`)
-		args = append(args, completedAt)
-		counter ++
-	}
-	query += `) VALUES (?, ?, ?, ?, ?, NOW())
-			RETURNING id`
+    category string, createdAt string, completedAt string) (int, error) {
+    const op = "repository.user_repository.CreateTodo"
+
+    query := `INSERT INTO notes.todos (userid, title, priority, description, category, createdat`
+    values := `VALUES ($1, $2, $3, $4, $5, $6`
+    args := []interface{}{userID, title, priority, description, category, createdAt}
+    count := 6
+
+    if completedAt != "" {
+        query += `, completedat`
+        count++
+
+        values += fmt.Sprintf(`, $%d`, count)
+        args = append(args, completedAt)
+    }
+    query +=` )` + values + ` ) RETURNING id`
+    var id int
+    err := n.db.QueryRow(query, args...).Scan(&id)
+    if err != nil {
+        return 0, fmt.Errorf("%s: %w", op, err)
+    }
+    return id, nil
 }

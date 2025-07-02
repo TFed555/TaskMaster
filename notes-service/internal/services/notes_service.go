@@ -33,10 +33,10 @@ func (s *NotesServiceImpl) GetTodos(userId uint, urlParams url.Values) ([]models
 
 func (s *NotesServiceImpl) CreateTask(userID uint, title string, priority string, description string,
 	 category string, createdAt string, completedAt string) (int, error) {
-		id, err := s.notesRepository.CreateTodo(userID uint, title string, priority string, description string,
-category string, createdAt string, completedAt string)
+		id, err := s.notesRepository.CreateTodo(userID, title, priority, description,
+			category, createdAt, completedAt)
 	 if err != nil {
-		return nil, err
+		return -1, err
 	 }
 	 return id, nil
 }
