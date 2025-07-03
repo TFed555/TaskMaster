@@ -3,8 +3,9 @@ package repository
 import (
 	"auth-service/internal/models"
 	"database/sql"
-	_"errors"
+	_ "errors"
 	"fmt"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -75,4 +76,45 @@ func (r *UserRepository) GetUserByID(userId uint) (*models.User, error) {
     }
 
 	return &user, nil
+}
+
+func (r *UserRepository) UpdateUser(userID uint, email string, name string, password string, img_path string) (int, error) {
+	const op = "repository.user_repository.UpdateUser"
+
+	query := `UPDATE auth.users SET `
+	values := ``
+	args := []interface{}{}
+	count := 0
+
+	if email != "" {
+		count ++
+		values += fmt.Sprintf("EMAIL=$%d", count)
+		args = append(args, email)
+	}
+	if name != "" {
+		count ++ 
+		values += fmt.Sprintf(" LOGIN=$%d", count)
+		args = append(args, name)
+	}
+	if password != "" {
+		count ++
+		values += fmt.Sprintf(" PASSWORD=$%d", count)
+		args = append(args, password)
+	}
+	if img_path != "" {
+		count ++
+		values += fmt.Sprintf(" IMG_PATH=$%d", count)
+		args = append(args, img_path)
+	}
+	values = strings.ReplaceAll(values, " ", ",")
+	count ++
+	query += fmt.Sprintf(values + ` WHERE id = $%d RETURNING id`, count)
+	args = append(args, userID)
+
+	var dbId int
+    err := r.db.QueryRow(query, args...).Scan(&dbId)
+    if err != nil {
+        return 0, fmt.Errorf("%s: %w", op, err)
+    }
+    return dbId, nil
 }

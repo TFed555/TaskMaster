@@ -220,7 +220,9 @@ func (n *NotesRepository) UpdateTodo(id int, title string, priority string,
 		args = append(args, completedat)
 	}
 	values = strings.ReplaceAll(values, " ", ",")
-    query += values + ` RETURNING id`
+	count ++
+    query += fmt.Sprintf(values + ` WHERE id = $%d RETURNING id`, count)
+	args = append(args, id)
     var dbId int
     err := n.db.QueryRow(query, args...).Scan(&dbId)
     if err != nil {

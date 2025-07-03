@@ -22,6 +22,7 @@ type AuthService interface {
     Logout(refreshToken string) (bool, error)
 	UpdateAccessToken(refreshToken string) (bool, string, error)
 	ParseUserId(token string) (uint, string)
+	UpdateUser(userID uint, email string, name string, password string, img_path string) (int, error)
 }
 
 type AuthServiceImpl struct {
@@ -216,4 +217,12 @@ func (s *AuthServiceImpl) ParseUserId(token string) (uint, string) {
 			return 0, err.Error()
 	}
 	return newToken.Sub, ""
+}
+
+func (s *AuthServiceImpl) UpdateUser(userID uint, email string, name string, password string, img_path string) (int, error) {
+	id, err := s.userRepo.UpdateUser(userID, email, name, password, img_path)
+	if err != nil {
+		return -1, err
+	}
+	return id, nil
 }

@@ -41,6 +41,8 @@ func InitNewRouter(authController *controllers.AuthController, authMiddleware *m
 	router.Get("/api/testSecure", authMiddleware.SetAuthMiddleware(authController.Test))
 	router.Delete("/api/logout", authMiddleware.SetAuthMiddleware(authController.Logout))
 	// router.Post("/testJWT", authController.TestJWT)
+	router.Delete("/api/deleteUser", authMiddleware.SetAuthMiddleware(authController.DeleteUser))
+	router.Patch("/api/updateUser", authMiddleware.SetAuthMiddleware(authController.UpdateUser))
 
 	return &Router{
 		ChiRouter: router,

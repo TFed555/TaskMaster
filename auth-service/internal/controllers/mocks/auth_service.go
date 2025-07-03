@@ -224,6 +224,34 @@ func (_m *AuthService) UpdateAccessToken(refreshToken string) (bool, string, err
 	return r0, r1, r2
 }
 
+// UpdateUser provides a mock function with given fields: userID, email, name, password, img_path
+func (_m *AuthService) UpdateUser(userID uint, email string, name string, password string, img_path string) (int, error) {
+	ret := _m.Called(userID, email, name, password, img_path)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateUser")
+	}
+
+	var r0 int
+	var r1 error
+	if rf, ok := ret.Get(0).(func(uint, string, string, string, string) (int, error)); ok {
+		return rf(userID, email, name, password, img_path)
+	}
+	if rf, ok := ret.Get(0).(func(uint, string, string, string, string) int); ok {
+		r0 = rf(userID, email, name, password, img_path)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	if rf, ok := ret.Get(1).(func(uint, string, string, string, string) error); ok {
+		r1 = rf(userID, email, name, password, img_path)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ValidateToken provides a mock function with given fields: tokenValue
 func (_m *AuthService) ValidateToken(tokenValue string) (bool, string) {
 	ret := _m.Called(tokenValue)

@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"notes-service/internal/models"
+	_"notes-service/internal/models"
 	"notes-service/internal/services"
 	_ "shared/middleware"
 	"strconv"
@@ -25,7 +25,7 @@ func NewNotesController(notesService services.NotesService) *NotesController {
 
 //вынести в internal/pkg
 type TodoResponse struct {
-	Todos  []models.Todo  `json:"todos"`
+	Todos  *[]OneTodoResponse  `json:"todos"`
 }
 
 type CreateRequest struct {
@@ -63,7 +63,7 @@ type OneTodoResponse struct {
 	Category string `json:"category,omitempty"`
 	Description string `json:"description,omitempty"`
 	CreatedAt	string `json:"createdAt,omitempty"`
-	CompletedAt string	`json:"completedAt,omitempty"`
+	CompletedAt *string	`json:"completedAt,omitempty"`
 	ID		int		`json:"id"`
 }
 
@@ -102,10 +102,24 @@ func (n *NotesController) GetTodos(w http.ResponseWriter, r *http.Request) {
 	for idx, el := range todos {
 		log.Println(idx, el)
 	}
+
+	masTodos := make([]OneTodoResponse, 0)
+
+	for _, el := range todos {
+		todo := OneTodoResponse{
+			Title: el.Title,
+			Priority: el.Priority,
+			Category: el.Category,
+			Description: el.Description,
+			CreatedAt: el.CreatedAt,
+			CompletedAt: el.CompletedAt,
+			ID: el.ID,
+		}
+		masTodos = append(masTodos, todo)
+	}
+
 	response := TodoResponse{
-		Todos: todos,
-		// UserID: uint(todo.UserId),
-		// Title: todo.Title,
+		Todos: &masTodos,
 	}
 
 	w.Header().Set("Content-type", "application/json")
@@ -219,10 +233,24 @@ func (n *NotesController) GetArchivedTodos(w http.ResponseWriter, r *http.Reques
 	for idx, el := range todos {
 		log.Println(idx, el)
 	}
+
+	// var masTodos []OneTodoResponse
+	masTodos := make([]OneTodoResponse, 0)
+
+	for _, el := range todos {
+		todo := OneTodoResponse{
+			Title: el.Title,
+			Priority: el.Priority,
+			Category: el.Category,
+			Description: el.Description,
+			CreatedAt: el.CreatedAt,
+			CompletedAt: el.CompletedAt,
+			ID: el.ID,
+		}
+		masTodos = append(masTodos, todo)
+	}
 	response := TodoResponse{
-		Todos: todos,
-		// UserID: uint(todo.UserId),
-		// Title: todo.Title,
+		Todos: &masTodos,
 	}
 
 	w.Header().Set("Content-type", "application/json")
@@ -301,7 +329,7 @@ func (n *NotesController) GetOneTodo(w http.ResponseWriter, r *http.Request) {
 		Priority: todo.Priority,
 		Description: todo.Description,
 		CreatedAt: todo.CreatedAt,
-		CompletedAt: *todo.CompletedAt,
+		CompletedAt: todo.CompletedAt,
 	}
 
 	w.Header().Set("Content-type", "application/json")
