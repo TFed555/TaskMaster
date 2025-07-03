@@ -14,6 +14,7 @@ type User struct {
 	Login     string    `db:"login"`
 	Email     string    `db:"email"`
 	Password  string    `db:"password"`
+	ImgPath	  string	`db:"imp_path"`
 	CreatedAt time.Time `db:"created_at"`
 }
 

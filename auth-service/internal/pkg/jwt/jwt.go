@@ -36,7 +36,7 @@ func (j *JWTFunctional) GenerateJWTRefreshTokens(userID uint) (accessToken strin
 
 	payload := jwt.MapClaims {
 		"sub": userID,
-		"exp": jwt.NewNumericDate(time.Now().Add(2 * time.Minute)),
+		"exp": jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
 	}
 
 	AccessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
@@ -66,7 +66,7 @@ func (j *JWTFunctional) GenerateJWTAccessToken(userID uint) (refreshToken string
 
 	payload := jwt.MapClaims {
 		"sub": userID,
-		"exp": jwt.NewNumericDate(time.Now().Add(1 * time.Minute)),
+		"exp": jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
 	}
 
 	AccessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)

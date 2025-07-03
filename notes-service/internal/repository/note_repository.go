@@ -32,7 +32,7 @@ func NewNotesRepository(db *sqlx.DB) *NotesRepository {
 //     return false
 // }
 
-func (n *NotesRepository) GetTodos(urlParams url.Values) ([]models.Todo, error) {
+func (n *NotesRepository) GetTodos(urlParams url.Values, tableName string) ([]models.Todo, error) {
 	const op = "repository.user_repository.GetTodos"
 	args := []interface{}{}
 	// args := []interface{}{userId}
@@ -54,14 +54,17 @@ func (n *NotesRepository) GetTodos(urlParams url.Values) ([]models.Todo, error) 
 	// 	SELECT id, title, priority, category, description, createdat, completedat, userid FROM notes.todos
 	// 	WHERE userid = $1`)
 
-	query := (`
-		SELECT id, title, priority, category, description, createdat, completedat, userid FROM notes.todos `)
+	query := fmt.Sprintf(`
+		SELECT id, title, priority, category, description, createdat, completedat, userid FROM notes.%s `, tableName)
 
 	todos := []models.Todo{}
 	counter := 0
 
+	st := "WHERE"
+
 	if userID:=urlParams.Get("userID"); userID != "" {
 		counter ++
+		st = "AND"
 		query += fmt.Sprintf("WHERE userid = $%d ", counter)
 		args = append(args, userID)
 		log.Printf("UserID: %s", userID)
@@ -69,7 +72,8 @@ func (n *NotesRepository) GetTodos(urlParams url.Values) ([]models.Todo, error) 
 
 	if dataToFilter := urlParams.Get("createdAt"); dataToFilter != "" {
 		counter ++
-		query += fmt.Sprintf(" AND createdat %s $%d::TIMESTAMPTZ ", sqlFilter, counter)
+
+		query += fmt.Sprintf(" %s createdat %s $%d::TIMESTAMPTZ ", st, sqlFilter, counter)
 		args = append(args, dataToFilter)
 		log.Printf("Date: %s", dataToFilter)
 	}
@@ -100,9 +104,21 @@ func (n *NotesRepository) GetTodos(urlParams url.Values) ([]models.Todo, error) 
 	return todos, nil
 }
 
+func (n *NotesRepository) getTodoByID(ID int) (*models.Todo, error) {
+	const op = "repository.notes_repository.GetTodoByID"
+	query := `SELECT id, title, priority, category, description, createdat, completedat, userid
+			FROM notes.todos WHERE id = $1 LIMIT 1`
+	todo := models.Todo{}
+	err := n.db.QueryRowx(query, ID).StructScan(&todo)
+	if err != nil {
+        return nil, fmt.Errorf("%s: %w", op, err)
+    }
+	return &todo, nil
+}
+
 func (n *NotesRepository) CreateTodo(userID uint, title string, priority string, description string,
     category string, createdAt string, completedAt string) (int, error) {
-    const op = "repository.user_repository.CreateTodo"
+    const op = "repository.notes_repository.CreateTodo"
 
     query := `INSERT INTO notes.todos (userid, title, priority, description, category, createdat`
     values := `VALUES ($1, $2, $3, $4, $5, $6`
@@ -125,6 +141,49 @@ func (n *NotesRepository) CreateTodo(userID uint, title string, priority string,
     return id, nil
 }
 
+func (n *NotesRepository) ArchiveTodo(ID int) (int, error) {
+    const op = "repository.user_repository.ArchiveTodo"
+
+	todo, err := n.getTodoByID(ID)
+	if err != nil {
+		return -1, fmt.Errorf("%s: %w", op, err)
+	}
+
+    query := `INSERT INTO notes.archived_todos (userid, title, priority, description, category, createdat`
+    values := `VALUES ($1, $2, $3, $4, $5, $6`
+    args := []interface{}{todo.UserId, todo.Title, todo.Priority, todo.Description, todo.Category, todo.CreatedAt}
+    count := 6
+
+    if *todo.CompletedAt != "" {
+        query += `, completedat`
+        count++
+
+        values += fmt.Sprintf(`, $%d`, count)
+        args = append(args, todo.CompletedAt)
+    }
+    query +=` )` + values + ` ) RETURNING id`
+    var addedId int
+    err = n.db.QueryRow(query, args...).Scan(&addedId)
+    if err != nil {
+        return -1, fmt.Errorf("%s: %w", op, err)
+    }
+	nextQuery := `DELETE FROM notes.todos WHERE id = $1`
+	
+	res, err := n.db.Exec(nextQuery, ID)
+	if err != nil {
+    	return -1, fmt.Errorf("%s: %w", op, err)
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+    	return -1, fmt.Errorf("%s: %w", op, err)
+	}
+	if rowsAffected == 0 {
+		return -1, fmt.Errorf("%s: %w", op, err)
+	}
+
+    return addedId, nil
+}
+
 
 func (n *NotesRepository) UpdateTodo(id int, title string, priority string,
 	description string, category string, completedat string) (int, error) {
@@ -137,7 +196,7 @@ func (n *NotesRepository) UpdateTodo(id int, title string, priority string,
     count := 0
 	if title != "" {
 		count ++
-		values += fmt.Sprintf(" TITLE=$%d", count)
+		values += fmt.Sprintf("TITLE=$%d", count)
 		args = append(args, title)
 	}
 	if priority != "" {
@@ -147,18 +206,18 @@ func (n *NotesRepository) UpdateTodo(id int, title string, priority string,
 	}
 	if description != "" {
 		count ++
-		values += fmt.Sprintf(" DESCRIPTION=$%d", description)
+		values += fmt.Sprintf(" DESCRIPTION=$%d", count)
 		args = append(args, description)
 	}
 	if category != "" {
 		count ++
-		values += fmt.Sprintf(" CATEGORY=$%d", category)
+		values += fmt.Sprintf(" CATEGORY=$%d", count)
 		args = append(args, category)
 	}
 	if completedat != "" {
 		count ++
-		values += fmt.Sprintf(" COMPLETEDAT=$%d", completedat)
-		args = append(args, category)
+		values += fmt.Sprintf(" COMPLETEDAT=$%d", count)
+		args = append(args, completedat)
 	}
 	values = strings.ReplaceAll(values, " ", ",")
     query += values + ` RETURNING id`

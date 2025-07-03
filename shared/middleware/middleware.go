@@ -72,7 +72,7 @@ func (c *AuthMiddleware) SetAuthMiddleware(controller func(w http.ResponseWriter
 				return
 			}
 			if success {
-				cookies.SetCookies(&w, "access_token", newValue, time.Now().Add(2 * time.Minute))
+				cookies.SetCookies(&w, "access_token", newValue, time.Now().Add(15 * time.Minute))
 			}
 		}
 
