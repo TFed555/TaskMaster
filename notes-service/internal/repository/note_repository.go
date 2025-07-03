@@ -6,7 +6,8 @@ import (
 	"log"
 	"net/url"
 	"notes-service/internal/models"
-	_"strings"
+	"strings"
+	_ "strings"
 	_ "time"
 
 	"github.com/jmoiron/sqlx"
@@ -22,18 +23,19 @@ func NewNotesRepository(db *sqlx.DB) *NotesRepository {
 	}
 }
 
-func contains(slice []string, item string) bool {
-    for _, v := range slice {
-        if v == item {
-            return true
-        }
-    }
-    return false
-}
+// func contains(slice []string, item string) bool {
+//     for _, v := range slice {
+//         if v == item {
+//             return true
+//         }
+//     }
+//     return false
+// }
 
-func (n *NotesRepository) GetTodos(userId uint, urlParams url.Values) ([]models.Todo, error) {
+func (n *NotesRepository) GetTodos(urlParams url.Values) ([]models.Todo, error) {
 	const op = "repository.user_repository.GetTodos"
-	args := []interface{}{userId}
+	args := []interface{}{}
+	// args := []interface{}{userId}
 	// parserCreatedAt, err := time.Parse(time.RFC3339, createdAt)
 	var sqlFilter string
 	if filter := urlParams.Get("filter"); filter != "" {
@@ -48,17 +50,28 @@ func (n *NotesRepository) GetTodos(userId uint, urlParams url.Values) ([]models.
 
 	log.Printf("Filter: %s", sqlFilter)
 
+	// query := (`
+	// 	SELECT id, title, priority, category, description, createdat, completedat, userid FROM notes.todos
+	// 	WHERE userid = $1`)
+
 	query := (`
-		SELECT id, title, priority, category, description, createdat, completedat, userid FROM notes.todos
-		WHERE userid = $1`)
+		SELECT id, title, priority, category, description, createdat, completedat, userid FROM notes.todos `)
 
 	todos := []models.Todo{}
-	counter := 1
-	if createdAt := urlParams.Get("createdAt"); createdAt != "" {
+	counter := 0
+
+	if userID:=urlParams.Get("userID"); userID != "" {
+		counter ++
+		query += fmt.Sprintf("WHERE userid = $%d ", counter)
+		args = append(args, userID)
+		log.Printf("UserID: %s", userID)
+	}
+
+	if dataToFilter := urlParams.Get("createdAt"); dataToFilter != "" {
 		counter ++
 		query += fmt.Sprintf(" AND createdat %s $%d::TIMESTAMPTZ ", sqlFilter, counter)
-		args = append(args, createdAt)
-		log.Printf("Data: %s", createdAt)
+		args = append(args, dataToFilter)
+		log.Printf("Date: %s", dataToFilter)
 	}
 
 	if offset := urlParams.Get("offset"); offset != "" {
@@ -110,4 +123,49 @@ func (n *NotesRepository) CreateTodo(userID uint, title string, priority string,
         return 0, fmt.Errorf("%s: %w", op, err)
     }
     return id, nil
+}
+
+
+func (n *NotesRepository) UpdateTodo(id int, title string, priority string,
+	description string, category string, completedat string) (int, error) {
+	
+    const op = "repository.user_repository.UpdateTodo"
+
+    query := `UPDATE notes.todos SET `
+	values := ``
+    args := []interface{}{}
+    count := 0
+	if title != "" {
+		count ++
+		values += fmt.Sprintf(" TITLE=$%d", count)
+		args = append(args, title)
+	}
+	if priority != "" {
+		count ++
+		values += fmt.Sprintf(" PRIORITY=$%d", count)
+		args = append(args, priority)
+	}
+	if description != "" {
+		count ++
+		values += fmt.Sprintf(" DESCRIPTION=$%d", description)
+		args = append(args, description)
+	}
+	if category != "" {
+		count ++
+		values += fmt.Sprintf(" CATEGORY=$%d", category)
+		args = append(args, category)
+	}
+	if completedat != "" {
+		count ++
+		values += fmt.Sprintf(" COMPLETEDAT=$%d", completedat)
+		args = append(args, category)
+	}
+	values = strings.ReplaceAll(values, " ", ",")
+    query += values + ` RETURNING id`
+    var dbId int
+    err := n.db.QueryRow(query, args...).Scan(&dbId)
+    if err != nil {
+        return 0, fmt.Errorf("%s: %w", op, err)
+    }
+    return dbId, nil
 }

@@ -13,6 +13,6 @@ type Todo struct {
   Category 		string		`db:"category"`
   Description 	string		`db:"description"`
   CreatedAt 	string		`db:"createdat"`
-  CompletedAt 	string		`db:"completedat"`
+  CompletedAt *string	`db:"completedat"` //т.к. может быть null
   UserId        int       `db:"userid"`
 }

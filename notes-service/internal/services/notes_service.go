@@ -8,9 +8,11 @@ import (
 )
 
 type NotesService interface {
-	GetTodos(userId uint, urlParams url.Values) ([]models.Todo, error)
+	GetTodos(urlParams url.Values) ([]models.Todo, error)
 	CreateTask(userID uint, title string, priority string, description string,
 	 category string, createdAt string, completedAt string) (int, error)
+	UpdateTask(ID int, title string, priority string,
+	description string, category string, completedat string) (int, error)
 }
 
 type NotesServiceImpl struct {
@@ -23,8 +25,8 @@ func NewNotesService(notesRepository *repository.NotesRepository) NotesService {
 	}
 }
 
-func (s *NotesServiceImpl) GetTodos(userId uint, urlParams url.Values) ([]models.Todo, error) {
-	todos, err := s.notesRepository.GetTodos(userId, urlParams)
+func (s *NotesServiceImpl) GetTodos(urlParams url.Values) ([]models.Todo, error) {
+	todos, err := s.notesRepository.GetTodos(urlParams)
 	if err != nil {
 		return nil, err
 	}
@@ -39,4 +41,13 @@ func (s *NotesServiceImpl) CreateTask(userID uint, title string, priority string
 		return -1, err
 	 }
 	 return id, nil
+}
+
+func (s *NotesServiceImpl) UpdateTask(ID int, title string, priority string,
+	description string, category string, completedat string) (int, error) {
+	id, err := s.notesRepository.UpdateTodo(ID, title, priority, description, category, completedat)
+	if err != nil {
+		return -1, err
+	}
+	return id, nil
 }

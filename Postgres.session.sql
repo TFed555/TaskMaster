@@ -11,4 +11,10 @@
 --         WHERE token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTIwNDQ4NDIsInN1YiI6MX0.YEaXpkpn7usHHCezBA4hC2MEyvrfxqfo_L9shGAnVOY'
 --         LIMIT 1
 
-INSERT INTO notes.todos (userid, title, priority, description, category, createdat) VALUES (1, 'a', 'v', 'v', 'c', NOW())
+-- INSERT INTO notes.todos (userid, title, priority, description, category, createdat) VALUES (1, 'a', 'v', 'v', 'c', NOW())
+
+-- DELETE FROM notes.todos where completedat is null
+
+-- UPDATE notes.todos SET title = 'йоу', CATEGORY = 'э' where id = 1
+
+select * from notes.todos
