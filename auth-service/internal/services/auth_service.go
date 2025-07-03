@@ -23,6 +23,7 @@ type AuthService interface {
 	UpdateAccessToken(refreshToken string) (bool, string, error)
 	ParseUserId(token string) (uint, string)
 	UpdateUser(userID uint, email string, name string, password string, img_path string) (int, error)
+	DeleteUser(userID uint) (bool, error)
 }
 
 type AuthServiceImpl struct {
@@ -225,4 +226,12 @@ func (s *AuthServiceImpl) UpdateUser(userID uint, email string, name string, pas
 		return -1, err
 	}
 	return id, nil
+}
+
+func (s *AuthServiceImpl) DeleteUser(userID uint) (bool, error) {
+	answer, err := s.userRepo.DeleteUser(userID)
+	if err != nil {
+		return answer, err
+	}
+	return answer, nil
 }

@@ -17,6 +17,7 @@ type NotesController struct {
 	notesService services.NotesService
 }
 
+//go:generate mockery --name=NotesService --dir=../services --output=./mocks --case=underscore
 func NewNotesController(notesService services.NotesService) *NotesController {
 	return &NotesController{
 		notesService: notesService,
@@ -66,6 +67,12 @@ type OneTodoResponse struct {
 	CompletedAt *string	`json:"completedAt,omitempty"`
 	ID		int		`json:"id"`
 }
+
+type ErrorResponse struct {
+	Status  uint   `json:"code"`
+	Message string `json:"message"`
+}
+
 
 func (n *NotesController) Test(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "application/json")

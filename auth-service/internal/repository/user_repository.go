@@ -118,3 +118,18 @@ func (r *UserRepository) UpdateUser(userID uint, email string, name string, pass
     }
     return dbId, nil
 }
+
+func (r *UserRepository) DeleteUser(userID uint) (bool, error) {
+	const op = "repository.user_repository.DeleteUser"
+
+	query := `DELETE FROM AUTH.USERS WHERE id = $1`
+
+	res, err := r.db.Exec(query, userID)
+	if err != nil {
+		return false, fmt.Errorf("%s: %w", op, err)
+	}
+	if rowsAffected, err := res.RowsAffected(); rowsAffected < 0 {
+		return false, fmt.Errorf("%s: %w", op, err)
+	}
+	return true, nil
+}

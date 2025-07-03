@@ -303,5 +303,40 @@ func (c *AuthController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *AuthController) DeleteUser(w http.ResponseWriter, r *http.Request){
-	
+	ctx := r.Context()
+	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	log.Print("UserID:", userID)
+	if !ok {
+        http.Error(w, "Unauthorized", http.StatusUnauthorized)
+        return
+    }
+
+	log.Printf("Controller received userID: %v", userID)
+	var req UpdateRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	answer, err := c.authService.DeleteUser(userID)
+
+	if err != nil {
+		log.Printf("%s", err)
+		return
+	}
+
+	if !answer {
+		w.WriteHeader(http.StatusBadRequest)
+		errMsg := ErrorResponse{
+			Status:  http.StatusInternalServerError,
+			Message: "Can't update user info",
+		}
+		json.NewEncoder(w).Encode(errMsg)
+		return
+	}
+
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(answer)
 }
