@@ -7,7 +7,10 @@ import (
 	"net/url"
 	"notes-service/internal/models"
 	"notes-service/internal/services"
-	_"shared/middleware"
+	_ "shared/middleware"
+	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type NotesController struct {
@@ -45,6 +48,16 @@ type CreateResponse struct {
 }
 
 type UpdateRequest struct {
+	Title string `json:"title,omitempty"`
+	Priority string  `json:"priority,omitempty"`
+	Category string `json:"category,omitempty"`
+	Description string `json:"description,omitempty"`
+	CreatedAt	string `json:"createdAt,omitempty"`
+	CompletedAt string	`json:"completedAt,omitempty"`
+	ID		int		`json:"id"`
+}
+
+type OneTodoResponse struct {
 	Title string `json:"title,omitempty"`
 	Priority string  `json:"priority,omitempty"`
 	Category string `json:"category,omitempty"`
@@ -250,6 +263,45 @@ func (n *NotesController) ArchiveTodo(w http.ResponseWriter, r *http.Request) {
 
 	response := CreateResponse {
 		ID: id,
+	}
+
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (n *NotesController) GetOneTodo(w http.ResponseWriter, r *http.Request) {
+	// ctx := r.Context()
+	// 	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	// log.Print("UserID:", userID)
+	// if !ok {
+    //     http.Error(w, "Unauthorized", http.StatusUnauthorized)
+    //     return
+    // }
+	// log.Printf("Controller received userID: %v", userID)
+
+	taskId:=chi.URLParam(r, "id")
+	if taskId == "" {
+		log.Print("Не удалось получить id задачи")
+	}
+	id, err := strconv.Atoi(taskId)
+	if err != nil {
+		log.Print("Не удалось преобразовать id задачи")
+	}
+	todo, err := n.notesService.GetOneTodo(id)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Can't get task info", http.StatusBadRequest)
+		return
+	}
+
+	response := OneTodoResponse{
+		ID: todo.ID,
+		Title: todo.Title,
+		Priority: todo.Priority,
+		Description: todo.Description,
+		CreatedAt: todo.CreatedAt,
+		CompletedAt: *todo.CompletedAt,
 	}
 
 	w.Header().Set("Content-type", "application/json")

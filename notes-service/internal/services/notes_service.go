@@ -15,6 +15,7 @@ type NotesService interface {
 	UpdateTask(ID int, title string, priority string,
 	description string, category string, completedat string) (int, error)
 	ArchiveTask(ID int) (int, error)
+	GetOneTodo(taskId int) (*models.Todo, error)
 }
 
 type NotesServiceImpl struct {
@@ -70,4 +71,12 @@ func (s *NotesServiceImpl) GetArchivedTodos(urlParams url.Values) ([]models.Todo
 		return nil, err
 	}
 	return todos, nil
+}
+
+func (s *NotesServiceImpl) GetOneTodo(taskId int) (*models.Todo, error) {
+	todo, err := s.notesRepository.GetTodoByID(taskId)
+	if err != nil {
+		return nil, err
+	}
+	return todo, nil
 }

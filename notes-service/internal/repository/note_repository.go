@@ -104,7 +104,7 @@ func (n *NotesRepository) GetTodos(urlParams url.Values, tableName string) ([]mo
 	return todos, nil
 }
 
-func (n *NotesRepository) getTodoByID(ID int) (*models.Todo, error) {
+func (n *NotesRepository) GetTodoByID(ID int) (*models.Todo, error) {
 	const op = "repository.notes_repository.GetTodoByID"
 	query := `SELECT id, title, priority, category, description, createdat, completedat, userid
 			FROM notes.todos WHERE id = $1 LIMIT 1`
@@ -144,7 +144,7 @@ func (n *NotesRepository) CreateTodo(userID uint, title string, priority string,
 func (n *NotesRepository) ArchiveTodo(ID int) (int, error) {
     const op = "repository.user_repository.ArchiveTodo"
 
-	todo, err := n.getTodoByID(ID)
+	todo, err := n.GetTodoByID(ID)
 	if err != nil {
 		return -1, fmt.Errorf("%s: %w", op, err)
 	}
