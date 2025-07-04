@@ -14,6 +14,22 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio
+    container_name: minio
+    entrypoint: sh
+    command: >
+      -c 'mkdir -p /data/test-bucket && minio server /data'
+    volumes:
+      - ./minio-data:/data
+    env_file:
+      - .env
+    ports:
+      - 9000:9000
+      - 9001:9001
+    depends_on: 
+      - db
       
   # auth_service:
   #   build: ./auth-service
