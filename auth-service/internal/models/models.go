@@ -4,17 +4,12 @@ import (
 	"time"
 )
 
-type Tokens struct {
-	AccessToken  string  `db:"accesstoken"`
-	RefreshToken string  `db:"refreshtoken"`
-}
-
 type User struct {
 	ID        uint      `db:"id"`
 	Login     string    `db:"login"`
 	Email     string    `db:"email"`
 	Password  string    `db:"password"`
-	ImgPath	  string	`db:"imp_path"`
+	ImgPath	  string	`db:"img_path"`
 	CreatedAt time.Time `db:"created_at"`
 }
 

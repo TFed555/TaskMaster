@@ -18,7 +18,7 @@ type Router struct {
 	Port string
 }
 
-func InitNewRouter(notesController *controllers.NotesController, authMiddleware *middleware.AuthMiddleware) (*Router) {
+func InitNewRouter(notesController controllers.NotesController, authMiddleware middleware.AuthMiddleware) (Router) {
 
 	router := chi.NewRouter()
 
@@ -48,7 +48,7 @@ func InitNewRouter(notesController *controllers.NotesController, authMiddleware 
 	router.Patch("/api/updateTodo", notesController.UpdateTodo)	
 	router.Get("/api/todos/{id}", notesController.GetOneTodo)
 
-	return &Router{
+	return Router{
 		ChiRouter: router,
 		Port: ":8082",
 	}
