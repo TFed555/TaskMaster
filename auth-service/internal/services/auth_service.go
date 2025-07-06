@@ -4,6 +4,7 @@ import (
 	"auth-service/internal/models"
 	"auth-service/internal/pkg/jwt"
 	"auth-service/internal/repository"
+	"auth-service/internal/services/domain_models"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -15,14 +16,14 @@ import (
 )
 
 type AuthService interface {
-    Register(login string, email string, password string) (*models.User, *models.Tokens, error)
-    Authorize(email string, password string) (*models.User, *models.Tokens, error, bool)
+    Register(params domain_models.RegisterParams) (int, domain_models.Tokens, error)
+    Authorize(params domain_models.AuthorizeParams) (models.User, domain_models.Tokens, error)
     Refresh(refreshToken string) (string, string, error)
     ValidateToken(tokenValue string) (bool, string)
     Logout(refreshToken string) (bool, error)
 	UpdateAccessToken(refreshToken string) (bool, string, error)
 	ParseUserId(token string) (uint, string)
-	UpdateUser(userID uint, email string, name string, password string, img_path string) (int, error)
+	UpdateUser(domain_models.UpdateUserParams) (int, error)
 	DeleteUser(userID uint) (bool, error)
 }
 
@@ -36,24 +37,24 @@ func NewAuthService(userRepo *repository.UserRepository, tokenRepo *repository.T
 	return &AuthServiceImpl{userRepo: userRepo, tokenRepo: tokenRepo, jwtFunc: jwtFunc}
 }
 
-func (s *AuthServiceImpl) Register(login string, email string, password string) (*models.User, *models.Tokens, error) {
-	hashedPswd, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+func (s AuthServiceImpl) Register(params domain_models.RegisterParams) (int, domain_models.Tokens, error) {
+	hashedPswd, err := bcrypt.GenerateFromPassword([]byte(params.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, nil, err
+		return -1, domain_models.Tokens{}, err
 	}
 	user:=&models.User{
-		Email: email,
+		Email: params.Email,
 		Password: string(hashedPswd),
-		Login: login,
+		Login: params.Name,
 	}
 
 	if err := s.userRepo.Create(user); err != nil {
-		return nil, nil, err
+		return -1, domain_models.Tokens{}, err
 	}
 
 	accesstoken, refreshtoken, err := s.jwtFunc.GenerateJWTRefreshTokens(user.ID)
 	if err != nil {
-		return nil, nil, err
+		return -1, domain_models.Tokens{}, err
 	}
 	refreshToken := &models.RefreshToken{
 		UserID: user.ID,
@@ -62,31 +63,29 @@ func (s *AuthServiceImpl) Register(login string, email string, password string) 
 	}
 
 	if err := s.tokenRepo.Create(refreshToken); err != nil {
-		return nil, nil, fmt.Errorf("failed to save refresh token: %w", err)
+		return -1, domain_models.Tokens{}, fmt.Errorf("failed to save refresh token: %w", err)
 	}
 
-	tokens := &models.Tokens{
+	tokens := domain_models.Tokens{
 		AccessToken: accesstoken,
 		RefreshToken: refreshtoken,
 	}
 
-	return user, tokens, nil
+	return int(user.ID), tokens, nil
 }
 
-func (s *AuthServiceImpl) Authorize(email string, password string) (*models.User, *models.Tokens, error, bool) {
-	
-	user, err, exists := s.userRepo.GetByEmail(email)
+func (s AuthServiceImpl) Authorize(params domain_models.AuthorizeParams) (models.User, domain_models.Tokens, error) {
+	user, err := s.userRepo.GetByEmail(params.Email)
 	if err != nil {
-		return nil, nil, err, exists
+		return models.User{}, domain_models.Tokens{}, fmt.Errorf("User not found")
 	}
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		//реализовать решение лучше
-		return nil, nil, fmt.Errorf("Invalid password"), exists
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(params.Password)); err != nil {
+		return models.User{}, domain_models.Tokens{}, fmt.Errorf("Invalid password")
 	}
 
 	accesstoken, refreshtoken, err := s.jwtFunc.GenerateJWTRefreshTokens(user.ID)
 	if err != nil {
-		return nil, nil, err, exists
+		return models.User{}, domain_models.Tokens{}, err
 	}
 	refreshToken := &models.RefreshToken{
 		UserID: user.ID,
@@ -94,20 +93,20 @@ func (s *AuthServiceImpl) Authorize(email string, password string) (*models.User
 		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
 	}
 	if err := s.tokenRepo.Create(refreshToken); err != nil {
-		return nil, nil, fmt.Errorf("failed to save refresh token: %w", err), exists
+		return models.User{}, domain_models.Tokens{}, fmt.Errorf("Failed to save refresh token: %w", err)
 	}
 
-	tokens := &models.Tokens{
+	tokens := domain_models.Tokens{
 		AccessToken: accesstoken,
 		RefreshToken: refreshtoken,
 	}
 
 	log.Printf("Called from auth_service, access_token: %s", tokens.AccessToken)
 
-	return user, tokens, err, exists
+	return user, tokens, err
 }
 
-func (s *AuthServiceImpl) Refresh(refreshToken string) (accesstoken string, refreshtoken string, err error) {
+func (s AuthServiceImpl) Refresh(refreshToken string) (accesstoken string, refreshtoken string, err error) {
 	token, err :=s.tokenRepo.GetToken(refreshToken)
 	if err != nil {
 		return "", "", err
@@ -123,7 +122,7 @@ func (s *AuthServiceImpl) Refresh(refreshToken string) (accesstoken string, refr
 	return t1, t2, nil
 }
 
-func (s *AuthServiceImpl) ValidateToken(tokenValue string) (bool, string) {
+func (s AuthServiceImpl) ValidateToken(tokenValue string) (bool, string) {
 	if tokenValue == ""  {
 		return false, "Access denied"
 	}
@@ -132,7 +131,6 @@ func (s *AuthServiceImpl) ValidateToken(tokenValue string) (bool, string) {
 	if !verified || err != nil {
 		return false, "Access denied"
 	}
-
 
 	parts:=strings.Split(tokenValue, ".")
 	payload := parts[1]
@@ -169,7 +167,7 @@ func (s *AuthServiceImpl) ValidateToken(tokenValue string) (bool, string) {
 	return true, ""
 }
 
-func (s *AuthServiceImpl) Logout(refreshToken string) (bool, error) {
+func (s AuthServiceImpl) Logout(refreshToken string) (bool, error) {
 	success, err := s.tokenRepo.DeleteToken(refreshToken)
 	if err != nil {
 		return false, err
@@ -178,7 +176,7 @@ func (s *AuthServiceImpl) Logout(refreshToken string) (bool, error) {
 }
 
 
-func (s *AuthServiceImpl) UpdateAccessToken(refreshToken string) (bool, string, error) {
+func (s AuthServiceImpl) UpdateAccessToken(refreshToken string) (bool, string, error) {
 	res, err := s.tokenRepo.GetToken(refreshToken)
 	if err != nil {
 		return false, "", err
@@ -188,7 +186,7 @@ func (s *AuthServiceImpl) UpdateAccessToken(refreshToken string) (bool, string, 
 		if err != nil {
 			return false, "", err
 		}
-		//посмотреть падает ли сервер (вместо err был nil)
+
 		log.Printf("Called from UpdateAccessToken: %s", newValue)
 		return true, newValue, nil
 	}
@@ -196,7 +194,7 @@ func (s *AuthServiceImpl) UpdateAccessToken(refreshToken string) (bool, string, 
 	return false, "", err
 }
 
-func (s *AuthServiceImpl) ParseUserId(token string) (uint, string) {
+func (s AuthServiceImpl) ParseUserId(token string) (uint, string) {
 	tokenMas := strings.Split(token,".")
 	payload := tokenMas[1]
 	dst := make([]byte, base64.RawURLEncoding.DecodedLen(len(payload)))
@@ -220,15 +218,25 @@ func (s *AuthServiceImpl) ParseUserId(token string) (uint, string) {
 	return newToken.Sub, ""
 }
 
-func (s *AuthServiceImpl) UpdateUser(userID uint, email string, name string, password string, img_path string) (int, error) {
-	id, err := s.userRepo.UpdateUser(userID, email, name, password, img_path)
+func (s AuthServiceImpl) UpdateUser(params domain_models.UpdateUserParams) (int, error) {
+	userData := domain_models.User{ID: params.ID}
+	if params.Email != nil {
+        userData.Email = *params.Email
+    }
+    if params.Name != nil {
+        userData.Name = *params.Name
+    }
+    if params.Password != nil {
+        userData.Password = *params.Password
+    }
+	id, err := s.userRepo.UpdateUser(userData)
 	if err != nil {
 		return -1, err
 	}
 	return id, nil
 }
 
-func (s *AuthServiceImpl) DeleteUser(userID uint) (bool, error) {
+func (s AuthServiceImpl) DeleteUser(userID uint) (bool, error) {
 	answer, err := s.userRepo.DeleteUser(userID)
 	if err != nil {
 		return answer, err

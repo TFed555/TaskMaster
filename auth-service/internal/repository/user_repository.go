@@ -2,6 +2,7 @@ package repository
 
 import (
 	"auth-service/internal/models"
+	"auth-service/internal/services/domain_models"
 	"database/sql"
 	_ "errors"
 	"fmt"
@@ -34,7 +35,7 @@ func (r *UserRepository) Create(user *models.User) (error) {
 }
 
 
-func (r *UserRepository) GetByEmail(email string) (*models.User, error, bool) {
+func (r *UserRepository) GetByEmail(email string) (models.User, error) {
 	const op = "repository.user_repository.GetByEmail"
 
 	query := (`
@@ -48,12 +49,12 @@ func (r *UserRepository) GetByEmail(email string) (*models.User, error, bool) {
     
     if err != nil {
         if err == sql.ErrNoRows {
-            return nil, fmt.Errorf("%s: user not found", op), false
+            return user, fmt.Errorf("%s: user not found", op)
         }
-        return nil, fmt.Errorf("%s: %w", op, err), false
+        return user, fmt.Errorf("%s: %w", op, err)
     }
 
-	return &user, nil, true
+	return user, nil
 }
 
 func (r *UserRepository) GetUserByID(userId uint) (*models.User, error) {
@@ -78,38 +79,34 @@ func (r *UserRepository) GetUserByID(userId uint) (*models.User, error) {
 	return &user, nil
 }
 
-func (r *UserRepository) UpdateUser(userID uint, email string, name string, password string, img_path string) (int, error) {
+func (r *UserRepository) UpdateUser(user domain_models.User) (int, error) {
 	const op = "repository.user_repository.UpdateUser"
 
 	query := `UPDATE auth.users SET `
-	values := ``
+	values := []string{}
 	args := []interface{}{}
 	count := 0
 
-	if email != "" {
+	if user.Email != "" {
 		count ++
-		values += fmt.Sprintf("EMAIL=$%d", count)
-		args = append(args, email)
+		values = append(values, fmt.Sprintf("EMAIL=$%d", count))
+		args = append(args, user.Email)
 	}
-	if name != "" {
+	if user.Name != "" {
 		count ++ 
-		values += fmt.Sprintf(" LOGIN=$%d", count)
-		args = append(args, name)
+		values = append(values, fmt.Sprintf("LOGIN=$%d", count))
+		args = append(args, user.Name)
 	}
-	if password != "" {
+	if user.Password != "" {
 		count ++
-		values += fmt.Sprintf(" PASSWORD=$%d", count)
-		args = append(args, password)
+		values = append(values, fmt.Sprintf("PASSWORD=$%d", count))
+		args = append(args, user.Password)
 	}
-	if img_path != "" {
-		count ++
-		values += fmt.Sprintf(" IMG_PATH=$%d", count)
-		args = append(args, img_path)
-	}
-	values = strings.ReplaceAll(values, " ", ",")
+
+	query += strings.Join(values, ", ")
 	count ++
-	query += fmt.Sprintf(values + ` WHERE id = $%d RETURNING id`, count)
-	args = append(args, userID)
+	query += fmt.Sprintf(` WHERE id = $%d RETURNING id`, count)
+	args = append(args, user.ID)
 
 	var dbId int
     err := r.db.QueryRow(query, args...).Scan(&dbId)
