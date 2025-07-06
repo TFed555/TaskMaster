@@ -8,11 +8,11 @@ import (
 	"notes-service/internal/repository"
 	"notes-service/internal/router"
 	"notes-service/internal/services"
-	"shared/middleware"
 	"shared/config/dbconfig"
+	"shared/middleware"
+
 	"google.golang.org/grpc"
 )
-
 
 func main() {
 	dbconf := dbconfig.NewDBConfig()
