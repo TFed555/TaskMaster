@@ -6,6 +6,8 @@ go 1.24.4
 require google.golang.org/grpc v1.73.0
 
 require (
+	github.com/jmoiron/sqlx v1.4.0
+	github.com/joho/godotenv v1.5.1
 	golang.org/x/net v0.38.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.26.0 // indirect

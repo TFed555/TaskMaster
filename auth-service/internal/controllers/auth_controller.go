@@ -2,15 +2,16 @@ package controllers
 
 import (
 	_ "auth-service/internal/models"
-	cookies_func "shared/utils/cookies"
 	"auth-service/internal/services"
+	"auth-service/internal/services/domain_models"
 	"encoding/json"
 	"errors"
 	_ "fmt"
 	"log"
 	"net/http"
-	"time"
 	"shared/middleware"
+	cookies_func "shared/utils/cookies"
+	"time"
 )
 
 
@@ -37,7 +38,7 @@ type UpdateRequest struct {
 }
 
 type RegResponse struct {
-	UserID uint `json:"id"`
+	UserID int `json:"id"`
 }
 
 type AuthResponse struct {
@@ -52,18 +53,18 @@ type RefreshResponse struct {
 }
 
 type ErrorResponse struct {
-	Status  uint   `json:"code"`
+	Status  int   `json:"code"`
 	Message string `json:"message"`
 }
 
 //go:generate mockery --name=AuthService --dir=../services --output=./mocks --case=underscore
-func NewAuthController(authService services.AuthService) *AuthController {
-	return &AuthController{
+func NewAuthController(authService services.AuthService) AuthController {
+	return AuthController{
 		authService: authService,
 	}
 }
 
-func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) {
+func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
 	var req RegRequest
 	log.Println("DDDDDWWW")
 
@@ -81,8 +82,13 @@ func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(errMsg)
 		return
 	}
-
-	user, tokens, err := c.authService.Register(req.Name, req.Email, req.Password)
+	
+	params := domain_models.RegisterParams{
+		Name: req.Name,
+		Email: req.Email,
+		Password: req.Password,
+	}
+	user, tokens, err := c.authService.Register(params)
 	if err != nil {
 		log.Printf("Registration error: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -101,7 +107,7 @@ func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 	cookies_func.SetCookies(&w, "refresh_token", tokens.RefreshToken, time_expires_refresh)
 
 	response := RegResponse{
-		UserID: user.ID,
+		UserID: user,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -113,7 +119,7 @@ var (
 	errInvalidData = errors.New("email or password is incorrect")
 )
 
-func (c *AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
+func (c AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 	var req LogRequest
 	log.Println("DDDDDWWW")
 
@@ -121,27 +127,32 @@ func (c *AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-
-
-	user, tokens, err, exists := c.authService.Authorize(req.Email, req.Password)
-	if err != nil {
-		log.Printf("%s", err)
+	params := domain_models.AuthorizeParams{
+		Email: req.Email,
+		Password: req.Password,
 	}
+	user, tokens, err := c.authService.Authorize(params)
 
-	if !exists {
-		w.WriteHeader(http.StatusBadRequest)
+	if err != nil {
+		statusCode := http.StatusInternalServerError
+		errorMessage := "Internal Server Error"
+		switch err.Error() {
+			case "User not found":
+				statusCode = http.StatusNotFound
+				errorMessage = "User not found"
+			
+			case "Invalid password":
+				statusCode = http.StatusBadRequest
+				errorMessage = "Invalid password or email"
+		}
+		w.WriteHeader(statusCode)
 		errMsg := ErrorResponse{
-			Status:  http.StatusInternalServerError,
-			Message: "User does not exists",
+			Status:  statusCode,
+			Message: errorMessage,
 		}
 		json.NewEncoder(w).Encode(errMsg)
 		return
 	}
-
-	// if err.Error() == "Invalid password" {
-	// 	http.Error(w, errInvalidData.Error(), http.StatusBadRequest)
-	// 	return
-	// }
 
 	response := AuthResponse{
 		UserID: user.ID,
@@ -164,7 +175,7 @@ func (c *AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (c *AuthController) Refresh(w http.ResponseWriter, r *http.Request) {
+func (c AuthController) Refresh(w http.ResponseWriter, r *http.Request) {
 
 	refresh_token, err := r.Cookie("refresh_token")
 
@@ -196,7 +207,7 @@ func (c *AuthController) Refresh(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (c *AuthController) Test(w http.ResponseWriter, r *http.Request) {
+func (c AuthController) Test(w http.ResponseWriter, r *http.Request) {
 	// type Response struct {
 	// 	Msg string `json:"msg"`
 	// }
@@ -214,7 +225,7 @@ func (c *AuthController) Test(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (c *AuthController) Logout(w http.ResponseWriter, r *http.Request) {
+func (c AuthController) Logout(w http.ResponseWriter, r *http.Request) {
 	refreshCookie, err := r.Cookie("refresh_token")
 	if err != nil {
 		http.Error(w, "Missing token", http.StatusBadRequest)
@@ -245,7 +256,7 @@ func (c *AuthController) Logout(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func (c *AuthController) TestCookie(w http.ResponseWriter, r *http.Request) {
+func (c AuthController) TestCookie(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Header.Get("set-cookie"))
 	log.Println(r.Cookies())
 	type Response struct {
@@ -261,7 +272,7 @@ func (c *AuthController) TestCookie(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func (c *AuthController) UpdateUser(w http.ResponseWriter, r *http.Request) {
+func (c AuthController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
 	log.Print("UserID:", userID)
@@ -278,8 +289,23 @@ func (c *AuthController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	answer, err := c.authService.UpdateUser(userID,
-		req.Email, req.Name, req.Password, req.ImgPath)
+	params := domain_models.UpdateUserParams{
+		ID: userID,
+	}
+
+	if req.Email != "" {
+		params.Email = &req.Email
+	}
+
+	if req.Name != "" {
+		params.Name = &req.Name
+	}
+
+	if req.Password != "" {
+		params.Password = &req.Password
+	}
+
+	answer, err := c.authService.UpdateUser(params)
 
 	if err != nil {
 		log.Printf("%s", err)
@@ -302,7 +328,7 @@ func (c *AuthController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (c *AuthController) DeleteUser(w http.ResponseWriter, r *http.Request){
+func (c AuthController) DeleteUser(w http.ResponseWriter, r *http.Request){
 	ctx := r.Context()
 	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
 	log.Print("UserID:", userID)

@@ -14,7 +14,7 @@ func NewTokenRepository(db *sqlx.DB) *TokenRepository {
 	return &TokenRepository{db: db}
 }
 
-func (r *TokenRepository) Create(token *models.RefreshToken) error {
+func (r TokenRepository) Create(token *models.RefreshToken) error {
 
 	stmt, err := r.db.PrepareNamed(`
     INSERT INTO auth.refresh_tokens (user_id, token, expires_at)
@@ -31,19 +31,22 @@ func (r *TokenRepository) Create(token *models.RefreshToken) error {
 	return stmt.Get(token, token)
 }
 
-func (r *TokenRepository) GetToken(token string) (*models.RefreshToken, error) {
+func (r TokenRepository) GetToken(token string) (models.RefreshToken, error) {
 	query := `SELECT * FROM auth.refresh_tokens
         WHERE token = $1
         LIMIT 1`
 	var result models.RefreshToken
 	err := r.db.Get(&result, query, token)
-	return &result, err
+	return result, err
 }
 
-func (r *TokenRepository) DeleteToken(refreshToken string) (bool, error) {
+func (r TokenRepository) DeleteToken(refreshToken string) (bool, error) {
 	query := `DELETE FROM auth.refresh_tokens WHERE token = $1`
 
 	res, err := r.db.Exec(query, refreshToken)
+	if err != nil {
+		return false, err
+	}
 
 	rows, err := res.RowsAffected()
     if err != nil {

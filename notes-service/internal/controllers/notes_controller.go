@@ -18,8 +18,8 @@ type NotesController struct {
 }
 
 //go:generate mockery --name=NotesService --dir=../services --output=./mocks --case=underscore
-func NewNotesController(notesService services.NotesService) *NotesController {
-	return &NotesController{
+func NewNotesController(notesService services.NotesService) NotesController {
+	return NotesController{
 		notesService: notesService,
 	}
 }

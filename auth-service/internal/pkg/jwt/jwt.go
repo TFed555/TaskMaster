@@ -20,7 +20,7 @@ func NewJWTFunctional() *JWTFunctional {
 }
 
 func GetJWTSecretKey() []byte {
-	if err := godotenv.Load(); err != nil {
+	if err := godotenv.Load(".env.local"); err != nil {
         log.Println("No .env file found, using system environment variables")
     }
 	key:=os.Getenv("JWT_SECRET_KEY")

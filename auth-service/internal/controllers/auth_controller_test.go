@@ -11,6 +11,7 @@ import (
 	"auth-service/internal/controllers"
 	"auth-service/internal/controllers/mocks"
 	"auth-service/internal/models"
+	"auth-service/internal/services/domain_models"
 
 	// "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -32,8 +33,8 @@ func TestAuthController_Registration(t *testing.T) {
 				"password": "password123"
 			}`,
 			mockSetup: func(authMock *mocks.AuthService) {
-				authMock.On("Register", "testuser", "user@example.com", "password123").
-					Return(&models.User{ID: 1}, &models.Tokens{
+				authMock.On("Register", domain_models.RegisterParams{Name:"testuser", Email:"user@example.com", Password:"password123"}).
+					Return(1, domain_models.Tokens{
 						AccessToken:  "access_token_example",
 						RefreshToken: "refresh_token_example",
 					}, nil).
@@ -58,8 +59,8 @@ func TestAuthController_Registration(t *testing.T) {
 				"password": "password123"
 			}`,
 			mockSetup: func(authMock *mocks.AuthService) {
-				authMock.On("Register", "testuser", "user@example.com", "password123").
-					Return(nil, nil, errors.New("some error")).
+				authMock.On("Register", domain_models.RegisterParams{Name:"testuser", Email:"user@example.com", Password:"password123"}).
+					Return(1, domain_models.Tokens{}, errors.New("some error")).
 					Once()
 			},
 			expectedCode:  http.StatusInternalServerError,
@@ -104,8 +105,8 @@ func TestAuthController_Login(t *testing.T) {
 				"password": "password123"
 			}`,
 			mockSetup: func(authMock *mocks.AuthService) {
-				authMock.On("Authorize", "user@example.com", "password123").
-					Return(&models.User{ID: 1, Email: "user@example.com", Login: "user"}, &models.Tokens{
+				authMock.On("Authorize", domain_models.AuthorizeParams{Email: "user@example.com", Password: "password123"}).
+					Return(models.User{ID: 1, Email: "user@example.com", Login: "user"}, domain_models.Tokens{
 						AccessToken:  "access_token_example",
 						RefreshToken: "refresh_token_example",
 					}, 
@@ -122,15 +123,15 @@ func TestAuthController_Login(t *testing.T) {
 				"password": "password123"
 			}`,
 			mockSetup: func(authMock *mocks.AuthService) {
-				authMock.On("Authorize", "user@example.com", "password123").
-					Return(nil,
-					nil,
-					nil,
+				authMock.On("Authorize", domain_models.AuthorizeParams{Email: "user@example.com", Password: "password123"}).
+					Return(models.User{},
+					domain_models.Tokens{},
+					errors.New("User not found"),
 					false).
 					Once()
 			},
-			expectedCode: http.StatusBadRequest,
-			expectedError: "User does not exists",
+			expectedCode: http.StatusNotFound,
+			expectedError: "User not found",
 		}, 
 		// {
 
