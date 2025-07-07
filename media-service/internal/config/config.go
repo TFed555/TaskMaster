@@ -45,10 +45,37 @@ func NewMinioClient() (MinioClient, error) {
 	minioClient, err := minio.New(endpoint, &minio.Options{
 		Creds: credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
 		Secure: useSSL,
+		Region: "us-east-1",
 	})
 
 	if err != nil {
 		log.Fatalln(err)
+		return MinioClient{}, err
+	}
+
+	ctx := context.Background()
+
+	bucketName := "new-bucket"
+    location := "us-east-1"
+
+    err = minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{Region: location})
+    if err != nil {
+                // Check to see if we already own this bucket (which happens if you run this twice)
+    exists, errBucketExists := minioClient.BucketExists(ctx, bucketName)
+    if errBucketExists == nil && exists {
+        log.Printf("We already own %s\n", bucketName)
+    } else {
+            log.Fatalln(err)
+    }
+    } else {
+            log.Printf("Successfully created %s\n", bucketName)
+   }
+
+   	policy := `{"Version": "2012-10-17","Statement": [{"Action": ["s3:PutObject"],"Effect": "Allow","Principal": {"AWS": ["*"]},"Resource": ["arn:aws:s3:::new-bucket/*"],"Sid": ""}]}`
+
+	err = minioClient.SetBucketPolicy(context.Background(), "new-bucket", policy)
+	if err != nil {
+		log.Println(err)
 		return MinioClient{}, err
 	}
 
@@ -71,12 +98,12 @@ func (m MinioClient) UploadImage(file string) (string, error) {
                 // Check to see if we already own this bucket (which happens if you run this twice)
     exists, errBucketExists := m.minioClient.BucketExists(ctx, bucketName)
     if errBucketExists == nil && exists {
-               log.Printf("We already own %s\n", bucketName)
+        log.Printf("We already own %s\n", bucketName)
     } else {
-                        log.Fatalln(err)
+            log.Fatalln(err)
     }
     } else {
-                log.Printf("Successfully created %s\n", bucketName)
+            log.Printf("Successfully created %s\n", bucketName)
    }
 
         objectName := "pidor.jpg"
@@ -109,7 +136,7 @@ func (m MinioClient) UploadImage(file string) (string, error) {
 }
 
 func (m MinioClient) GenerateLink(file string) (url.URL, error) {
-	exists, err := m.minioClient.BucketExists(context.Background(), "test-bucket")
+	exists, err := m.minioClient.BucketExists(context.Background(), "new-bucket")
 	if err != nil {
 		return url.URL{}, errors.New("bucket check failed")
 	}
@@ -120,7 +147,7 @@ func (m MinioClient) GenerateLink(file string) (url.URL, error) {
 	expiry := time.Second * 24 * 60 * 60
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	length := 14
+	length := 10
 	ran_str := make([]byte, length)
 	
 	for i := 0; i < length; i++ {
@@ -132,7 +159,7 @@ func (m MinioClient) GenerateLink(file string) (url.URL, error) {
 	}
 
 	objectname := string(ran_str)
-	presignedURL, err := m.minioClient.PresignedPutObject(context.Background(), "test-bucket", objectname, expiry)
+	presignedURL, err := m.minioClient.PresignedPutObject(context.Background(), "new-bucket", objectname, expiry)
 	if err != nil {
     	log.Println(err)
     	return url.URL{}, err

@@ -44,7 +44,7 @@ func main() {
 	mediaController := controllers.NewMediaController(mediaService)
 
 	router := router.InitNewRouter(mediaController, authMiddleware)
-
+	// minioClient.UploadImage("yebok")
 	// config.ConnectToMinio()
 
 	log.Printf("Starting server on %s \n", router.Port)
