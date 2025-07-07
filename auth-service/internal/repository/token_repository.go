@@ -10,8 +10,8 @@ type TokenRepository struct {
 	db *sqlx.DB
 }
 
-func NewTokenRepository(db *sqlx.DB) *TokenRepository {
-	return &TokenRepository{db: db}
+func NewTokenRepository(db *sqlx.DB) TokenRepository {
+	return TokenRepository{db: db}
 }
 
 func (r TokenRepository) Create(token *models.RefreshToken) error {

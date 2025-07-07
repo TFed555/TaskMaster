@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	domain_models "auth-service/internal/services/domain_models"
+	domain_models "auth-service/internal/pkg/domain_models"
 
 	mock "github.com/stretchr/testify/mock"
 

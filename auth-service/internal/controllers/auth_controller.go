@@ -1,9 +1,8 @@
 package controllers
 
 import (
-	_ "auth-service/internal/models"
 	"auth-service/internal/services"
-	"auth-service/internal/services/domain_models"
+	"auth-service/internal/pkg/domain_models"
 	"encoding/json"
 	"errors"
 	_ "fmt"
@@ -12,49 +11,12 @@ import (
 	"shared/middleware"
 	cookies_func "shared/utils/cookies"
 	"time"
+	"auth-service/internal/pkg/responses"
 )
 
 
 type AuthController struct {
 	authService services.AuthService
-}
-
-type RegRequest struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-type LogRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-type UpdateRequest struct {
-	Email	string	`json:"email,omitempty"`
-	Name	string 	`json:"name,omitempty"`
-	Password string `json:"password,omitempty"`
-	ImgPath	 string `json:"img_path,omitempty"`	
-}
-
-type RegResponse struct {
-	UserID int `json:"id"`
-}
-
-type AuthResponse struct {
-	UserID uint   `json:"id"`
-	Email  string `json:"email"`
-	Name   string `json:"name"`
-}
-
-type RefreshResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-}
-
-type ErrorResponse struct {
-	Status  int   `json:"code"`
-	Message string `json:"message"`
 }
 
 //go:generate mockery --name=AuthService --dir=../services --output=./mocks --case=underscore
@@ -65,7 +27,7 @@ func NewAuthController(authService services.AuthService) AuthController {
 }
 
 func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
-	var req RegRequest
+	var req responses.RegRequest
 	log.Println("DDDDDWWW")
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -75,7 +37,7 @@ func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
 
 	if req.Name == "" || req.Password == "" || req.Email == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		errMsg := ErrorResponse{
+		errMsg := responses.ErrorResponse{
 			Status:  http.StatusBadRequest,
 			Message: "Registration failed",
 		}
@@ -92,7 +54,7 @@ func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Registration error: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		errMsg := ErrorResponse{
+		errMsg := responses.ErrorResponse{
 			Status:  http.StatusInternalServerError,
 			Message: "Registration failed",
 		}
@@ -106,7 +68,7 @@ func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
 	cookies_func.SetCookies(&w, "access_token", tokens.AccessToken, time_expires_access)
 	cookies_func.SetCookies(&w, "refresh_token", tokens.RefreshToken, time_expires_refresh)
 
-	response := RegResponse{
+	response := responses.RegResponse{
 		UserID: user,
 	}
 
@@ -120,7 +82,7 @@ var (
 )
 
 func (c AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
-	var req LogRequest
+	var req responses.LogRequest
 	log.Println("DDDDDWWW")
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -146,7 +108,7 @@ func (c AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 				errorMessage = "Invalid password or email"
 		}
 		w.WriteHeader(statusCode)
-		errMsg := ErrorResponse{
+		errMsg := responses.ErrorResponse{
 			Status:  statusCode,
 			Message: errorMessage,
 		}
@@ -154,7 +116,7 @@ func (c AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := AuthResponse{
+	response := responses.AuthResponse{
 		UserID: user.ID,
 		Email:  user.Email,
 		Name:   user.Login,
@@ -196,7 +158,7 @@ func (c AuthController) Refresh(w http.ResponseWriter, r *http.Request) {
 	cookies_func.SetCookies(&w, "refresh_token", refreshtoken, time_expires_refresh)
 	cookies_func.SetCookies(&w, "access_token", accesstoken, time_expires_access)
 
-	response := RefreshResponse{
+	response := responses.RefreshResponse{
 		AccessToken:  accesstoken,
 		RefreshToken: refreshtoken,
 	}
@@ -282,7 +244,7 @@ func (c AuthController) UpdateUser(w http.ResponseWriter, r *http.Request) {
     }
 
 	log.Printf("Controller received userID: %v", userID)
-	var req UpdateRequest
+	var req responses.UpdateRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -314,7 +276,7 @@ func (c AuthController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	if answer < 0 {
 		w.WriteHeader(http.StatusBadRequest)
-		errMsg := ErrorResponse{
+		errMsg := responses.ErrorResponse{
 			Status:  http.StatusInternalServerError,
 			Message: "Can't update user info",
 		}
@@ -338,7 +300,7 @@ func (c AuthController) DeleteUser(w http.ResponseWriter, r *http.Request){
     }
 
 	log.Printf("Controller received userID: %v", userID)
-	var req UpdateRequest
+	var req responses.UpdateRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -354,7 +316,7 @@ func (c AuthController) DeleteUser(w http.ResponseWriter, r *http.Request){
 
 	if !answer {
 		w.WriteHeader(http.StatusBadRequest)
-		errMsg := ErrorResponse{
+		errMsg := responses.ErrorResponse{
 			Status:  http.StatusInternalServerError,
 			Message: "Can't update user info",
 		}

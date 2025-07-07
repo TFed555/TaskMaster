@@ -11,7 +11,8 @@ import (
 	"auth-service/internal/controllers"
 	"auth-service/internal/controllers/mocks"
 	"auth-service/internal/models"
-	"auth-service/internal/services/domain_models"
+	"auth-service/internal/pkg/domain_models"
+	"auth-service/internal/pkg/responses"
 
 	// "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -81,7 +82,7 @@ func TestAuthController_Registration(t *testing.T) {
 			require.Equal(t, tc.expectedCode, rr.Code)
 
 			if tc.expectedError != "" {
-				var resp controllers.ErrorResponse
+				var resp responses.ErrorResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &resp)
 				require.NoError(t, err)
 				require.Contains(t, resp.Message, tc.expectedError)
@@ -150,7 +151,7 @@ func TestAuthController_Login(t *testing.T) {
 			require.Equal(t, tc.expectedCode, rr.Code)
 
 			if tc.expectedError != "" {
-				var resp controllers.ErrorResponse
+				var resp responses.ErrorResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &resp)
 				require.NoError(t, err)
 				require.Contains(t, resp.Message, tc.expectedError)

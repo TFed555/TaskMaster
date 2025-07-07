@@ -3,6 +3,7 @@ package controllers_test
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	_ "errors"
 	"net/http"
 	"net/http/httptest"
@@ -10,6 +11,7 @@ import (
 	"notes-service/internal/controllers"
 	"notes-service/internal/controllers/mocks"
 	"notes-service/internal/models"
+	"notes-service/internal/pkg/responses"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -31,6 +33,14 @@ func TestNotesController_GetTodos(t *testing.T) {
 			},
 			expectedCode: http.StatusAccepted,
 		},
+		{
+			name: "Fail",
+			requestBody:  ``,
+			mockSetup: func(notesMock *mocks.NotesService){
+				notesMock.On("GetTodos", url.Values{}).Return(nil, errors.New("can't fetch data")).Once()
+			},
+			expectedCode: http.StatusNotFound,
+		},
 		
 	}
 
@@ -46,7 +56,7 @@ func TestNotesController_GetTodos(t *testing.T) {
 			require.Equal(t, tc.expectedCode, rr.Code)
 
 			if tc.expectedError != "" {
-				var resp controllers.ErrorResponse
+				var resp responses.ErrorResponse
 				err := json.Unmarshal(rr.Body.Bytes(), &resp)
 				require.NoError(t, err)
 				require.Contains(t, resp.Message, tc.expectedError)

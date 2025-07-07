@@ -1,34 +1,34 @@
 package services
 
 import (
-	_"log"
+	"log"
+	_ "log"
 	"net/url"
 	"notes-service/internal/models"
+	"notes-service/internal/pkg/domain_models"
 	"notes-service/internal/repository"
 )
 
 type NotesService interface {
 	GetTodos(urlParams url.Values) ([]models.Todo, error)
 	GetArchivedTodos(urlParams url.Values) ([]models.Todo, error)
-	CreateTask(userID uint, title string, priority string, description string,
-	 category string, createdAt string, completedAt string) (int, error)
-	UpdateTask(ID int, title string, priority string,
-	description string, category string, completedat string) (int, error)
+	CreateTask(todoBody domain_models.Todo) (int, error)
+	UpdateTask(todoBody domain_models.Todo) (int, error)
 	ArchiveTask(ID int) (int, error)
 	GetOneTodo(taskId int) (*models.Todo, error)
 }
 
 type NotesServiceImpl struct {
-	notesRepository *repository.NotesRepository
+	notesRepository repository.NotesRepository
 }
 
-func NewNotesService(notesRepository *repository.NotesRepository) NotesService {
+func NewNotesService(notesRepository repository.NotesRepository) NotesService {
 	return &NotesServiceImpl{
 		notesRepository: notesRepository,
 	}
 }
 
-func (s *NotesServiceImpl) GetTodos(urlParams url.Values) ([]models.Todo, error) {
+func (s NotesServiceImpl) GetTodos(urlParams url.Values) ([]models.Todo, error) {
 	todos, err := s.notesRepository.GetTodos(urlParams, "todos")
 	if err != nil {
 		return nil, err
@@ -36,18 +36,25 @@ func (s *NotesServiceImpl) GetTodos(urlParams url.Values) ([]models.Todo, error)
 	return todos, nil
 }
 
-func (s *NotesServiceImpl) CreateTask(userID uint, title string, priority string, description string,
-	 category string, createdAt string, completedAt string) (int, error) {
-
-	id, err := s.notesRepository.CreateTodo(userID, title, priority, description,
-			category, createdAt, completedAt)
+func (s NotesServiceImpl) CreateTask(todoBody domain_models.Todo) (int, error) {
+	todo := models.Todo{
+		Title: todoBody.Title,
+		Priority: todoBody.Priority,
+		Category: todoBody.Category,
+		Description: todoBody.Description,
+		CreatedAt: todoBody.CreatedAt,
+		CompletedAt: todoBody.CompletedAt,
+		UserId: todoBody.UserId,
+	}
+	log.Print("NotesService:", todo)
+	id, err := s.notesRepository.CreateTodo(todo)
 	 if err != nil {
 		return -1, err
 	 }
 	 return id, nil
 }
 
-func (s *NotesServiceImpl) ArchiveTask(ID int) (int, error) {
+func (s NotesServiceImpl) ArchiveTask(ID int) (int, error) {
 
 	id, err := s.notesRepository.ArchiveTodo(ID)
 	 if err != nil {
@@ -56,16 +63,24 @@ func (s *NotesServiceImpl) ArchiveTask(ID int) (int, error) {
 	 return id, nil
 }
 
-func (s *NotesServiceImpl) UpdateTask(ID int, title string, priority string,
-	description string, category string, completedat string) (int, error) {
-	id, err := s.notesRepository.UpdateTodo(ID, title, priority, description, category, completedat)
+func (s NotesServiceImpl) UpdateTask(todoBody domain_models.Todo) (int, error) {
+	todo := models.Todo{
+		ID: todoBody.ID,
+		Title: todoBody.Title,
+		Priority: todoBody.Priority,
+		Category: todoBody.Category,
+		Description: todoBody.Description,
+		CreatedAt: todoBody.CreatedAt,
+		CompletedAt: todoBody.CompletedAt,
+	}
+	id, err := s.notesRepository.UpdateTodo(todo)
 	if err != nil {
 		return -1, err
 	}
 	return id, nil
 }
 
-func (s *NotesServiceImpl) GetArchivedTodos(urlParams url.Values) ([]models.Todo, error) {
+func (s NotesServiceImpl) GetArchivedTodos(urlParams url.Values) ([]models.Todo, error) {
 	todos, err := s.notesRepository.GetTodos(urlParams, "archived_todos")
 	if err != nil {
 		return nil, err
@@ -73,7 +88,7 @@ func (s *NotesServiceImpl) GetArchivedTodos(urlParams url.Values) ([]models.Todo
 	return todos, nil
 }
 
-func (s *NotesServiceImpl) GetOneTodo(taskId int) (*models.Todo, error) {
+func (s NotesServiceImpl) GetOneTodo(taskId int) (*models.Todo, error) {
 	todo, err := s.notesRepository.GetTodoByID(taskId)
 	if err != nil {
 		return nil, err

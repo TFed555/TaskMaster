@@ -18,4 +18,4 @@
 -- UPDATE notes.todos SET title = 'йоу', CATEGORY = 'э' where id = 1
 
 -- select * from notes.todos
-select * from notes.todos
+select * from auth.users

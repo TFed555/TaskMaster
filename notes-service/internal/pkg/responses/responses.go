@@ -1,0 +1,48 @@
+package responses
+
+type TodoResponse struct {
+	Todos *[]OneTodoResponse `json:"todos"`
+}
+
+type CreateRequest struct {
+	Title       string `json:"title"`
+	Priority    string `json:"priority"`
+	Category    string `json:"category"`
+	Description string `json:"description"`
+	CreatedAt   string `json:"createdAt"`
+	CompletedAt *string `json:"completedAt,omitempty"`
+	UserID      *int    `json:"userID"`
+}
+
+type ArchiveRequest struct {
+	ID int `json:"id"`
+}
+
+type CreateResponse struct {
+	ID int `json:"id"`
+}
+
+type UpdateRequest struct {
+	Title       string `json:"title,omitempty"`
+	Priority    string `json:"priority,omitempty"`
+	Category    string `json:"category,omitempty"`
+	Description string `json:"description,omitempty"`
+	CreatedAt   string `json:"createdAt,omitempty"`
+	CompletedAt *string `json:"completedAt,omitempty"`
+	ID          int    `json:"id"`
+}
+
+type OneTodoResponse struct {
+	Title       string  `json:"title,omitempty"`
+	Priority    string  `json:"priority,omitempty"`
+	Category    string  `json:"category,omitempty"`
+	Description string  `json:"description,omitempty"`
+	CreatedAt   string  `json:"createdAt,omitempty"`
+	CompletedAt *string `json:"completedAt,omitempty"`
+	ID          int     `json:"id"`
+}
+
+type ErrorResponse struct {
+	Status  uint   `json:"code"`
+	Message string `json:"message"`
+}

@@ -17,23 +17,14 @@ type NotesRepository struct {
 	db *sqlx.DB
 }
 
-func NewNotesRepository(db *sqlx.DB) *NotesRepository {
-	return &NotesRepository{
+func NewNotesRepository(db *sqlx.DB) NotesRepository {
+	return NotesRepository{
 		db: db,
 	}
 }
 
-// func contains(slice []string, item string) bool {
-//     for _, v := range slice {
-//         if v == item {
-//             return true
-//         }
-//     }
-//     return false
-// }
-
-func (n *NotesRepository) GetTodos(urlParams url.Values, tableName string) ([]models.Todo, error) {
-	const op = "repository.user_repository.GetTodos"
+func (n NotesRepository) GetTodos(urlParams url.Values, tableName string) ([]models.Todo, error) {
+	const op = "repository.notes_repository.GetTodos"
 	args := []interface{}{}
 	// args := []interface{}{userId}
 	// parserCreatedAt, err := time.Parse(time.RFC3339, createdAt)
@@ -104,7 +95,7 @@ func (n *NotesRepository) GetTodos(urlParams url.Values, tableName string) ([]mo
 	return todos, nil
 }
 
-func (n *NotesRepository) GetTodoByID(ID int) (*models.Todo, error) {
+func (n NotesRepository) GetTodoByID(ID int) (*models.Todo, error) {
 	const op = "repository.notes_repository.GetTodoByID"
 	query := `SELECT id, title, priority, category, description, createdat, completedat, userid
 			FROM notes.todos WHERE id = $1 LIMIT 1`
@@ -116,21 +107,21 @@ func (n *NotesRepository) GetTodoByID(ID int) (*models.Todo, error) {
 	return &todo, nil
 }
 
-func (n *NotesRepository) CreateTodo(userID uint, title string, priority string, description string,
-    category string, createdAt string, completedAt string) (int, error) {
+func (n NotesRepository) CreateTodo(todo models.Todo) (int, error) {
     const op = "repository.notes_repository.CreateTodo"
 
     query := `INSERT INTO notes.todos (userid, title, priority, description, category, createdat`
     values := `VALUES ($1, $2, $3, $4, $5, $6`
-    args := []interface{}{userID, title, priority, description, category, createdAt}
+    args := []any{todo.UserId, todo.Title, todo.Priority, todo.Description, todo.Category, todo.CreatedAt}
     count := 6
+	log.Printf("%s, %s", op, todo.CreatedAt)
 
-    if completedAt != "" {
+    if todo.CompletedAt != nil {
         query += `, completedat`
         count++
-
+		log.Printf("%s %s", op, *todo.CompletedAt)
         values += fmt.Sprintf(`, $%d`, count)
-        args = append(args, completedAt)
+        args = append(args, todo.CompletedAt)
     }
     query +=` )` + values + ` ) RETURNING id`
     var id int
@@ -141,8 +132,8 @@ func (n *NotesRepository) CreateTodo(userID uint, title string, priority string,
     return id, nil
 }
 
-func (n *NotesRepository) ArchiveTodo(ID int) (int, error) {
-    const op = "repository.user_repository.ArchiveTodo"
+func (n NotesRepository) ArchiveTodo(ID int) (int, error) {
+    const op = "repository.notes_repository.ArchiveTodo"
 
 	todo, err := n.GetTodoByID(ID)
 	if err != nil {
@@ -185,44 +176,44 @@ func (n *NotesRepository) ArchiveTodo(ID int) (int, error) {
 }
 
 
-func (n *NotesRepository) UpdateTodo(id int, title string, priority string,
-	description string, category string, completedat string) (int, error) {
+func (n NotesRepository) UpdateTodo(todo models.Todo) (int, error) {
 	
-    const op = "repository.user_repository.UpdateTodo"
+    const op = "repository.notes_repository.UpdateTodo"
 
     query := `UPDATE notes.todos SET `
 	values := ``
-    args := []interface{}{}
+    args := []any{}
     count := 0
-	if title != "" {
+	if todo.Title != "" {
 		count ++
 		values += fmt.Sprintf("TITLE=$%d", count)
-		args = append(args, title)
+		args = append(args, todo.Title)
 	}
-	if priority != "" {
+	if todo.Priority != "" {
 		count ++
 		values += fmt.Sprintf(" PRIORITY=$%d", count)
-		args = append(args, priority)
+		args = append(args, todo.Priority)
 	}
-	if description != "" {
+	if todo.Description != "" {
 		count ++
 		values += fmt.Sprintf(" DESCRIPTION=$%d", count)
-		args = append(args, description)
+		args = append(args, todo.Description)
 	}
-	if category != "" {
+	if todo.Category != "" {
 		count ++
 		values += fmt.Sprintf(" CATEGORY=$%d", count)
-		args = append(args, category)
+		args = append(args, todo.Category)
 	}
-	if completedat != "" {
+	if todo.CompletedAt != nil {
 		count ++
 		values += fmt.Sprintf(" COMPLETEDAT=$%d", count)
-		args = append(args, completedat)
+		args = append(args, todo.CompletedAt)
 	}
 	values = strings.ReplaceAll(values, " ", ",")
 	count ++
     query += fmt.Sprintf(values + ` WHERE id = $%d RETURNING id`, count)
-	args = append(args, id)
+	args = append(args, todo.ID)
+	log.Printf("%s, %s", op, todo.ID)
     var dbId int
     err := n.db.QueryRow(query, args...).Scan(&dbId)
     if err != nil {

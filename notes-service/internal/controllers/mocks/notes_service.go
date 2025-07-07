@@ -3,9 +3,11 @@
 package mocks
 
 import (
-	models "notes-service/internal/models"
+	domain_models "notes-service/internal/pkg/domain_models"
 
 	mock "github.com/stretchr/testify/mock"
+
+	models "notes-service/internal/models"
 
 	url "net/url"
 )
@@ -43,9 +45,9 @@ func (_m *NotesService) ArchiveTask(ID int) (int, error) {
 	return r0, r1
 }
 
-// CreateTask provides a mock function with given fields: userID, title, priority, description, category, createdAt, completedAt
-func (_m *NotesService) CreateTask(userID uint, title string, priority string, description string, category string, createdAt string, completedAt string) (int, error) {
-	ret := _m.Called(userID, title, priority, description, category, createdAt, completedAt)
+// CreateTask provides a mock function with given fields: todoBody
+func (_m *NotesService) CreateTask(todoBody domain_models.Todo) (int, error) {
+	ret := _m.Called(todoBody)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateTask")
@@ -53,17 +55,17 @@ func (_m *NotesService) CreateTask(userID uint, title string, priority string, d
 
 	var r0 int
 	var r1 error
-	if rf, ok := ret.Get(0).(func(uint, string, string, string, string, string, string) (int, error)); ok {
-		return rf(userID, title, priority, description, category, createdAt, completedAt)
+	if rf, ok := ret.Get(0).(func(domain_models.Todo) (int, error)); ok {
+		return rf(todoBody)
 	}
-	if rf, ok := ret.Get(0).(func(uint, string, string, string, string, string, string) int); ok {
-		r0 = rf(userID, title, priority, description, category, createdAt, completedAt)
+	if rf, ok := ret.Get(0).(func(domain_models.Todo) int); ok {
+		r0 = rf(todoBody)
 	} else {
 		r0 = ret.Get(0).(int)
 	}
 
-	if rf, ok := ret.Get(1).(func(uint, string, string, string, string, string, string) error); ok {
-		r1 = rf(userID, title, priority, description, category, createdAt, completedAt)
+	if rf, ok := ret.Get(1).(func(domain_models.Todo) error); ok {
+		r1 = rf(todoBody)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -161,9 +163,9 @@ func (_m *NotesService) GetTodos(urlParams url.Values) ([]models.Todo, error) {
 	return r0, r1
 }
 
-// UpdateTask provides a mock function with given fields: ID, title, priority, description, category, completedat
-func (_m *NotesService) UpdateTask(ID int, title string, priority string, description string, category string, completedat string) (int, error) {
-	ret := _m.Called(ID, title, priority, description, category, completedat)
+// UpdateTask provides a mock function with given fields: todoBody
+func (_m *NotesService) UpdateTask(todoBody domain_models.Todo) (int, error) {
+	ret := _m.Called(todoBody)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateTask")
@@ -171,17 +173,17 @@ func (_m *NotesService) UpdateTask(ID int, title string, priority string, descri
 
 	var r0 int
 	var r1 error
-	if rf, ok := ret.Get(0).(func(int, string, string, string, string, string) (int, error)); ok {
-		return rf(ID, title, priority, description, category, completedat)
+	if rf, ok := ret.Get(0).(func(domain_models.Todo) (int, error)); ok {
+		return rf(todoBody)
 	}
-	if rf, ok := ret.Get(0).(func(int, string, string, string, string, string) int); ok {
-		r0 = rf(ID, title, priority, description, category, completedat)
+	if rf, ok := ret.Get(0).(func(domain_models.Todo) int); ok {
+		r0 = rf(todoBody)
 	} else {
 		r0 = ret.Get(0).(int)
 	}
 
-	if rf, ok := ret.Get(1).(func(int, string, string, string, string, string) error); ok {
-		r1 = rf(ID, title, priority, description, category, completedat)
+	if rf, ok := ret.Get(1).(func(domain_models.Todo) error); ok {
+		r1 = rf(todoBody)
 	} else {
 		r1 = ret.Error(1)
 	}

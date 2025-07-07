@@ -14,9 +14,9 @@ type JWTFunctional struct {
 	secretKey []byte
 }
 
-func NewJWTFunctional() *JWTFunctional {
+func NewJWTFunctional() JWTFunctional {
 	secretKey := GetJWTSecretKey()
-	return &JWTFunctional{secretKey: secretKey}
+	return JWTFunctional{secretKey: secretKey}
 }
 
 func GetJWTSecretKey() []byte {

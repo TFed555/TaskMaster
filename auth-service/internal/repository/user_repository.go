@@ -2,7 +2,7 @@ package repository
 
 import (
 	"auth-service/internal/models"
-	"auth-service/internal/services/domain_models"
+	"auth-service/internal/pkg/domain_models"
 	"database/sql"
 	_ "errors"
 	"fmt"
@@ -15,11 +15,11 @@ type UserRepository struct {
 	db *sqlx.DB
 }	
 
-func NewUserRepository(db *sqlx.DB) *UserRepository {
-	return &UserRepository{db: db}
+func NewUserRepository(db *sqlx.DB) UserRepository {
+	return UserRepository{db: db}
 }
 
-func (r *UserRepository) Create(user *models.User) (error) {
+func (r UserRepository) Create(user *models.User) (error) {
 	const op = "repository.user_repository.Create"
 	stmt, err := r.db.PrepareNamed(`
 		INSERT INTO auth.users (login, email, password, created_at)
@@ -35,7 +35,7 @@ func (r *UserRepository) Create(user *models.User) (error) {
 }
 
 
-func (r *UserRepository) GetByEmail(email string) (models.User, error) {
+func (r UserRepository) GetByEmail(email string) (models.User, error) {
 	const op = "repository.user_repository.GetByEmail"
 
 	query := (`
@@ -57,7 +57,7 @@ func (r *UserRepository) GetByEmail(email string) (models.User, error) {
 	return user, nil
 }
 
-func (r *UserRepository) GetUserByID(userId uint) (*models.User, error) {
+func (r UserRepository) GetUserByID(userId uint) (*models.User, error) {
 	const op = "repository.user_repository.GetByID"
 
 	query := (`
@@ -79,7 +79,7 @@ func (r *UserRepository) GetUserByID(userId uint) (*models.User, error) {
 	return &user, nil
 }
 
-func (r *UserRepository) UpdateUser(user domain_models.User) (int, error) {
+func (r UserRepository) UpdateUser(user domain_models.User) (int, error) {
 	const op = "repository.user_repository.UpdateUser"
 
 	query := `UPDATE auth.users SET `
@@ -116,7 +116,7 @@ func (r *UserRepository) UpdateUser(user domain_models.User) (int, error) {
     return dbId, nil
 }
 
-func (r *UserRepository) DeleteUser(userID uint) (bool, error) {
+func (r UserRepository) DeleteUser(userID uint) (bool, error) {
 	const op = "repository.user_repository.DeleteUser"
 
 	query := `DELETE FROM AUTH.USERS WHERE id = $1`

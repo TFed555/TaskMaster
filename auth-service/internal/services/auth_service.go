@@ -4,7 +4,7 @@ import (
 	"auth-service/internal/models"
 	"auth-service/internal/pkg/jwt"
 	"auth-service/internal/repository"
-	"auth-service/internal/services/domain_models"
+	"auth-service/internal/pkg/domain_models"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -28,12 +28,12 @@ type AuthService interface {
 }
 
 type AuthServiceImpl struct {
-	userRepo *repository.UserRepository
-	tokenRepo *repository.TokenRepository
-	jwtFunc *jwt.JWTFunctional
+	userRepo repository.UserRepository
+	tokenRepo repository.TokenRepository
+	jwtFunc jwt.JWTFunctional
 }
 
-func NewAuthService(userRepo *repository.UserRepository, tokenRepo *repository.TokenRepository, jwtFunc *jwt.JWTFunctional) AuthService {
+func NewAuthService(userRepo repository.UserRepository, tokenRepo repository.TokenRepository, jwtFunc jwt.JWTFunctional) AuthService {
 	return &AuthServiceImpl{userRepo: userRepo, tokenRepo: tokenRepo, jwtFunc: jwtFunc}
 }
 

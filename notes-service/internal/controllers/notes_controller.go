@@ -5,7 +5,8 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	_ "notes-service/internal/models"
+	"notes-service/internal/pkg/domain_models"
+	"notes-service/internal/pkg/responses"
 	"notes-service/internal/services"
 	_ "shared/middleware"
 	"strconv"
@@ -24,55 +25,8 @@ func NewNotesController(notesService services.NotesService) NotesController {
 	}
 }
 
-// вынести в internal/pkg
-type TodoResponse struct {
-	Todos *[]OneTodoResponse `json:"todos"`
-}
 
-type CreateRequest struct {
-	Title       string `json:"title"`
-	Priority    string `json:"priority"`
-	Category    string `json:"category"`
-	Description string `json:"description"`
-	CreatedAt   string `json:"createdAt"`
-	CompletedAt string `json:"completedAt,omitempty"`
-	UserID      int    `json:"userID"`
-}
-
-type ArchiveRequest struct {
-	ID int `json:"id"`
-}
-
-type CreateResponse struct {
-	ID int `json:"id"`
-}
-
-type UpdateRequest struct {
-	Title       string `json:"title,omitempty"`
-	Priority    string `json:"priority,omitempty"`
-	Category    string `json:"category,omitempty"`
-	Description string `json:"description,omitempty"`
-	CreatedAt   string `json:"createdAt,omitempty"`
-	CompletedAt string `json:"completedAt,omitempty"`
-	ID          int    `json:"id"`
-}
-
-type OneTodoResponse struct {
-	Title       string  `json:"title,omitempty"`
-	Priority    string  `json:"priority,omitempty"`
-	Category    string  `json:"category,omitempty"`
-	Description string  `json:"description,omitempty"`
-	CreatedAt   string  `json:"createdAt,omitempty"`
-	CompletedAt *string `json:"completedAt,omitempty"`
-	ID          int     `json:"id"`
-}
-
-type ErrorResponse struct {
-	Status  uint   `json:"code"`
-	Message string `json:"message"`
-}
-
-func (n *NotesController) Test(w http.ResponseWriter, r *http.Request) {
+func (n NotesController) Test(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	json.NewEncoder(w).Encode(map[string]string{
@@ -80,7 +34,7 @@ func (n *NotesController) Test(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (n *NotesController) GetTodos(w http.ResponseWriter, r *http.Request) {
+func (n NotesController) GetTodos(w http.ResponseWriter, r *http.Request) {
 	// /api/todos?createdAt=(date YYYY-MM-DD)&filter=(after | before)&offset=(int)&limit=(int)
 	// ctx := r.Context()
 	// userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
@@ -102,28 +56,33 @@ func (n *NotesController) GetTodos(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		log.Println(err)
+		w.Header().Set("Content-type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": "Не удалось получить данные",
+		})
 	}
 
 	for idx, el := range todos {
 		log.Println(idx, el)
 	}
 
-	masTodos := make([]OneTodoResponse, 0)
+	masTodos := make([]responses.OneTodoResponse, 0)
 
 	for _, el := range todos {
-		todo := OneTodoResponse{
+		todo := responses.OneTodoResponse{
 			Title:       el.Title,
 			Priority:    el.Priority,
 			Category:    el.Category,
 			Description: el.Description,
 			CreatedAt:   el.CreatedAt,
 			CompletedAt: el.CompletedAt,
-			ID:          el.ID,
+			ID:          *el.ID,
 		}
 		masTodos = append(masTodos, todo)
 	}
 
-	response := TodoResponse{
+	response := responses.TodoResponse{
 		Todos: &masTodos,
 	}
 
@@ -133,7 +92,7 @@ func (n *NotesController) GetTodos(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (n *NotesController) CreateTodo(w http.ResponseWriter, r *http.Request) {
+func (n NotesController) CreateTodo(w http.ResponseWriter, r *http.Request) {
 	// ctx := r.Context()
 	// 	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
 	// log.Print("UserID:", userID)
@@ -143,14 +102,24 @@ func (n *NotesController) CreateTodo(w http.ResponseWriter, r *http.Request) {
 	// }
 	// log.Printf("Controller received userID: %v", userID)
 
-	var req CreateRequest
+	var req responses.CreateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
+	log.Printf("NotesController: %v", req)
+	todoBody := domain_models.Todo{
+		UserId: req.UserID,
+		Title: req.Title,
+		Priority: req.Priority,
+		Description: req.Description,
+		Category: req.Category,
+		CreatedAt: req.CreatedAt,
+		CompletedAt: req.CompletedAt,
+	}
 
-	//передавать в модели
-	id, err := n.notesService.CreateTask(uint(req.UserID), req.Title, req.Priority, req.Description, req.Category, req.CreatedAt, req.CompletedAt)
+	log.Print("NotesController:", todoBody)
+	id, err := n.notesService.CreateTask(todoBody)
 
 	if err != nil {
 		log.Printf("%s", err)
@@ -163,7 +132,7 @@ func (n *NotesController) CreateTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := CreateResponse{
+	response := responses.CreateResponse{
 		ID: id,
 	}
 
@@ -172,7 +141,7 @@ func (n *NotesController) CreateTodo(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func (n *NotesController) UpdateTodo(w http.ResponseWriter, r *http.Request) {
+func (n NotesController) UpdateTodo(w http.ResponseWriter, r *http.Request) {
 	// ctx := r.Context()
 	// 	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
 	// log.Print("UserID:", userID)
@@ -182,13 +151,22 @@ func (n *NotesController) UpdateTodo(w http.ResponseWriter, r *http.Request) {
 	// }
 	// log.Printf("Controller received userID: %v", userID)
 
-	var req UpdateRequest
+	var req responses.UpdateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
+	todoBody := domain_models.Todo{
+		ID: &req.ID,
+		Title: req.Title,
+		Priority: req.Priority,
+		Description: req.Description,
+		Category: req.Category,
+		CreatedAt: req.CreatedAt,
+		CompletedAt: req.CompletedAt,
+	}
 
-	id, err := n.notesService.UpdateTask(req.ID, req.Title, req.Priority, req.Description, req.Category, req.CompletedAt)
+	id, err := n.notesService.UpdateTask(todoBody)
 
 	if err != nil {
 		log.Printf("%s", err)
@@ -201,7 +179,7 @@ func (n *NotesController) UpdateTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := CreateResponse{
+	response := responses.CreateResponse{
 		ID: id,
 	}
 
@@ -210,7 +188,7 @@ func (n *NotesController) UpdateTodo(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func (n *NotesController) GetArchivedTodos(w http.ResponseWriter, r *http.Request) {
+func (n NotesController) GetArchivedTodos(w http.ResponseWriter, r *http.Request) {
 	// /api/archivedtodos?createdAt=(date YYYY-MM-DD)&filter=(after | before)&offset=(int)&limit=(int)
 	// ctx := r.Context()
 	// userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
@@ -239,21 +217,21 @@ func (n *NotesController) GetArchivedTodos(w http.ResponseWriter, r *http.Reques
 	}
 
 	// var masTodos []OneTodoResponse
-	masTodos := make([]OneTodoResponse, 0)
+	masTodos := make([]responses.OneTodoResponse, 0)
 
 	for _, el := range todos {
-		todo := OneTodoResponse{
+		todo := responses.OneTodoResponse{
 			Title:       el.Title,
 			Priority:    el.Priority,
 			Category:    el.Category,
 			Description: el.Description,
 			CreatedAt:   el.CreatedAt,
 			CompletedAt: el.CompletedAt,
-			ID:          el.ID,
+			ID:          *el.ID,
 		}
 		masTodos = append(masTodos, todo)
 	}
-	response := TodoResponse{
+	response := responses.TodoResponse{
 		Todos: &masTodos,
 	}
 
@@ -263,7 +241,7 @@ func (n *NotesController) GetArchivedTodos(w http.ResponseWriter, r *http.Reques
 
 }
 
-func (n *NotesController) ArchiveTodo(w http.ResponseWriter, r *http.Request) {
+func (n NotesController) ArchiveTodo(w http.ResponseWriter, r *http.Request) {
 	// ctx := r.Context()
 	// 	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
 	// log.Print("UserID:", userID)
@@ -297,7 +275,7 @@ func (n *NotesController) ArchiveTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := CreateResponse{
+	response := responses.CreateResponse{
 		ID: id,
 	}
 
@@ -306,7 +284,7 @@ func (n *NotesController) ArchiveTodo(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func (n *NotesController) GetOneTodo(w http.ResponseWriter, r *http.Request) {
+func (n NotesController) GetOneTodo(w http.ResponseWriter, r *http.Request) {
 	// ctx := r.Context()
 	// 	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
 	// log.Print("UserID:", userID)
@@ -331,8 +309,8 @@ func (n *NotesController) GetOneTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := OneTodoResponse{
-		ID:          todo.ID,
+	response := responses.OneTodoResponse{
+		ID:          *todo.ID,
 		Title:       todo.Title,
 		Priority:    todo.Priority,
 		Description: todo.Description,
