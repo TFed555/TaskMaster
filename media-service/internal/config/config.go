@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
-	"math/rand"
+	_"math/rand"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -71,7 +71,8 @@ func NewMinioClient() (MinioClient, error) {
             log.Printf("Successfully created %s\n", bucketName)
    }
 
-   	policy := `{"Version": "2012-10-17","Statement": [{"Action": ["s3:PutObject"],"Effect": "Allow","Principal": {"AWS": ["*"]},"Resource": ["arn:aws:s3:::new-bucket/*"],"Sid": ""}]}`
+   	policy := `{"Version": "2012-10-17","Statement": [{"Action": ["s3:PutObject"],"Effect": "Allow","Principal":
+	 {"AWS": ["*"]},"Resource": ["arn:aws:s3:::new-bucket/*"],"Sid": ""}]}`
 
 	err = minioClient.SetBucketPolicy(context.Background(), "new-bucket", policy)
 	if err != nil {
@@ -135,36 +136,24 @@ func (m MinioClient) UploadImage(file string) (string, error) {
 		return "Success", nil
 }
 
-func (m MinioClient) GenerateLink(file string) (url.URL, error) {
+func (m MinioClient) GenerateLink(uuidString string) (string, url.URL, error) {
 	exists, err := m.minioClient.BucketExists(context.Background(), "new-bucket")
 	if err != nil {
-		return url.URL{}, errors.New("bucket check failed")
+		return "", url.URL{}, errors.New("bucket check failed")
 	}
 	if !exists {
-		return url.URL{}, errors.New("bucket does not exist")
+		return "", url.URL{}, errors.New("bucket does not exist")
 	}
 
 	expiry := time.Second * 24 * 60 * 60
 
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	length := 10
-	ran_str := make([]byte, length)
-	
-	for i := 0; i < length; i++ {
-		if r.Intn(2) == 0 {
-			ran_str[i] = byte(65 + r.Intn(26))
-		} else {
-			ran_str[i] = byte(97 + r.Intn(26))
-		}
-	}
-
-	objectname := string(ran_str)
+	objectname := string(uuidString)
 	presignedURL, err := m.minioClient.PresignedPutObject(context.Background(), "new-bucket", objectname, expiry)
 	if err != nil {
     	log.Println(err)
-    	return url.URL{}, err
+    	return "", url.URL{}, err
 	}
 	log.Println("Successfully generated presigned URL", presignedURL)
 
-	return *presignedURL, nil
+	return objectname, *presignedURL, nil
 }

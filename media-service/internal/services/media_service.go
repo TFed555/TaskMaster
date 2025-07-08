@@ -8,7 +8,8 @@ import (
 )
 
 type MediaService interface {
-	SavePic(params domain_models.SavePicParams) (string, error)
+	GenerateLinkPic() (domain_models.File, error)
+	SaveAvatarPic(params domain_models.ConfirmSaveParams) (bool, error)
 }
 
 type MediaServiceImpl struct {
@@ -21,11 +22,23 @@ func NewMediaService(mediaRepository repository.MediaRepository) MediaService {
 	}
 }
 
-func (m MediaServiceImpl) SavePic(params domain_models.SavePicParams) (string, error) {
-	file := params.File
-	generatedUrl, err := m.mediaRepository.SavePic(file)
+func (m MediaServiceImpl) GenerateLinkPic() (domain_models.File, error) {
+	name, generatedUrl, err := m.mediaRepository.GenerateLink()
 	if err != nil {
-		return "", err
+		return domain_models.File{}, err
 	}
-	return generatedUrl.String(), nil
+	newFile := domain_models.File{
+		Name: name,
+		Link: generatedUrl.String(),
+	}
+	return newFile, nil
 }
+
+func (m MediaServiceImpl) SaveAvatarPic(params domain_models.ConfirmSaveParams) (bool, error) {
+	name, id := params.Name, params.UserID
+	success, err := m.mediaRepository.SaveAvatarPic(name, id)
+	if err != nil {
+		return false, err
+	}
+	return success>0, nil
+}	
