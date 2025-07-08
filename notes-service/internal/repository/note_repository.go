@@ -181,39 +181,39 @@ func (n NotesRepository) UpdateTodo(todo models.Todo) (int, error) {
     const op = "repository.notes_repository.UpdateTodo"
 
     query := `UPDATE notes.todos SET `
-	values := ``
+	values := []string{}
     args := []any{}
     count := 0
 	if todo.Title != "" {
 		count ++
-		values += fmt.Sprintf("TITLE=$%d", count)
+		values = append(values, fmt.Sprintf("TITLE=$%d", count))
 		args = append(args, todo.Title)
 	}
 	if todo.Priority != "" {
 		count ++
-		values += fmt.Sprintf(" PRIORITY=$%d", count)
+		values = append(values, fmt.Sprintf("PRIORITY=$%d", count))
 		args = append(args, todo.Priority)
 	}
 	if todo.Description != "" {
 		count ++
-		values += fmt.Sprintf(" DESCRIPTION=$%d", count)
+		values = append(values, fmt.Sprintf("DESCRIPTION=$%d", count))
 		args = append(args, todo.Description)
 	}
 	if todo.Category != "" {
 		count ++
-		values += fmt.Sprintf(" CATEGORY=$%d", count)
+		values = append(values, fmt.Sprintf("CATEGORY=$%d", count))
 		args = append(args, todo.Category)
 	}
 	if todo.CompletedAt != nil {
 		count ++
-		values += fmt.Sprintf(" COMPLETEDAT=$%d", count)
+		values = append(values, fmt.Sprintf(" COMPLETEDAT=$%d", count))
 		args = append(args, todo.CompletedAt)
 	}
-	values = strings.ReplaceAll(values, " ", ",")
+	query += strings.Join(values, ", ")
 	count ++
-    query += fmt.Sprintf(values + ` WHERE id = $%d RETURNING id`, count)
+    query += fmt.Sprintf(` WHERE id = $%d RETURNING id`, count)
 	args = append(args, todo.ID)
-	log.Printf("%s, %s", op, todo.ID)
+	log.Printf("%s, %d", op, todo.ID)
     var dbId int
     err := n.db.QueryRow(query, args...).Scan(&dbId)
     if err != nil {
