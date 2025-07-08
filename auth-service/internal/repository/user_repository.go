@@ -39,7 +39,7 @@ func (r UserRepository) GetByEmail(email string) (models.User, error) {
 	const op = "repository.user_repository.GetByEmail"
 
 	query := (`
-		SELECT id, login, email, password, created_at FROM auth.users
+		SELECT id, login, email, password, created_at, img_path FROM auth.users
 		WHERE email = $1
 		LIMIT 1`)
 

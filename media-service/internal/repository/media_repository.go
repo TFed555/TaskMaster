@@ -35,8 +35,10 @@ func (r MediaRepository) GenerateLink() (string, url.URL, error) {
 	return name, generatedUrl, nil
 }
 
+
+//подумать как изолировать в auth-service
 func (r MediaRepository) SaveAvatarPic(name string, id uint) (int, error) {
-	const op ="repisitory.media_repository.SaveAvatarPic"
+	const op ="repository.media_repository.SaveAvatarPic"
 	
 	query := `UPDATE auth.users SET img_path = $1 
 				WHERE ID = $2 RETURNING ID`
@@ -46,4 +48,15 @@ func (r MediaRepository) SaveAvatarPic(name string, id uint) (int, error) {
 		return -1, fmt.Errorf("%s: %w", op, err)
 	}
 	return updatedId, nil
+}
+
+func (r MediaRepository) GetAvatarPic(img_name string) (string, error) {
+	const op = "repository.media_repository.GetAvatarPic"
+
+	imgUrl, err := r.minioClient.GetAvatarPic(img_name)
+	if err != nil {
+		return "", fmt.Errorf("%s: %w", op, err)
+	}
+	imgUrlString := imgUrl.String()
+	return imgUrlString, nil
 }

@@ -157,3 +157,25 @@ func (m MinioClient) GenerateLink(uuidString string) (string, url.URL, error) {
 
 	return objectname, *presignedURL, nil
 }
+
+func (m MinioClient) GetAvatarPic(name string) (url.URL, error) {
+	expiry := time.Second * 24 * 60 * 60
+	exists, err := m.minioClient.BucketExists(context.Background(), "new-bucket")
+	if err != nil {
+		return url.URL{}, errors.New("bucket check failed")
+	}
+	if !exists {
+		return url.URL{},  errors.New("bucket does not exist")
+	}
+
+	reqParams := make(url.Values)
+	//reqParams.Set("response-content-disposition", "attachment; filename=\"your-filename.txt\"")
+
+	presignedURL, err := m.minioClient.PresignedGetObject(context.Background(), "new-bucket", name, expiry, reqParams)
+	if err != nil {
+		log.Println(err)
+		return url.URL{}, err
+	}
+
+	return *presignedURL, nil
+}

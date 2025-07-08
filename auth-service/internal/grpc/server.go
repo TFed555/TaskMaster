@@ -1,4 +1,4 @@
-package grpc
+package grpc_auth
 
 import (
 	"auth-service/internal/services"

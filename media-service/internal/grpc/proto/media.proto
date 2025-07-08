@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option go_package = "media-service/internal/grpc/pkg";
+
+package media;
+
+service MediaService {
+    rpc GetAvatarPic(AvatarRequest) returns (AvatarResponse) {}
+}
+
+message AvatarRequest {
+    string img_name = 1;
+}
+
+message AvatarResponse {
+    string imgURL = 1;
+}

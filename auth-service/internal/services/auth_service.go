@@ -1,10 +1,11 @@
 package services
 
 import (
+	"auth-service/internal/grpc/grpc_client"
 	"auth-service/internal/models"
+	"auth-service/internal/pkg/domain_models"
 	"auth-service/internal/pkg/jwt"
 	"auth-service/internal/repository"
-	"auth-service/internal/pkg/domain_models"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/grpc"
 )
 
 type AuthService interface {
@@ -31,10 +33,13 @@ type AuthServiceImpl struct {
 	userRepo repository.UserRepository
 	tokenRepo repository.TokenRepository
 	jwtFunc jwt.JWTFunctional
+	mediaClient grpc_client.GRPCMediaService
 }
 
-func NewAuthService(userRepo repository.UserRepository, tokenRepo repository.TokenRepository, jwtFunc jwt.JWTFunctional) AuthService {
-	return &AuthServiceImpl{userRepo: userRepo, tokenRepo: tokenRepo, jwtFunc: jwtFunc}
+func NewAuthService(userRepo repository.UserRepository, tokenRepo repository.TokenRepository, 
+			jwtFunc jwt.JWTFunctional, mediaClient grpc_client.GRPCMediaService) AuthService {
+	return &AuthServiceImpl{userRepo: userRepo, tokenRepo: tokenRepo, 
+			jwtFunc: jwtFunc, mediaClient: mediaClient,}
 }
 
 func (s AuthServiceImpl) Register(params domain_models.RegisterParams) (int, domain_models.Tokens, error) {
@@ -76,6 +81,22 @@ func (s AuthServiceImpl) Register(params domain_models.RegisterParams) (int, dom
 
 func (s AuthServiceImpl) Authorize(params domain_models.AuthorizeParams) (models.User, domain_models.Tokens, error) {
 	user, err := s.userRepo.GetByEmail(params.Email)
+	if user.ImgPath != "" {
+		if s.mediaClient == nil {
+			mediaCon, err := grpc.Dial("localhost:50050", grpc.WithInsecure())
+			if err != nil {
+				log.Fatalf("Failed to connect to grpc server: %v", err)
+			}
+			s.mediaClient = grpc_client.NewGRPCMediaService(mediaCon)
+			log.Print("Connected to media-service")
+			defer mediaCon.Close()
+			user.ImgPath, err = s.mediaClient.GetAvatarPic(user.ImgPath)
+			if err != nil {
+				log.Fatalf("Something went wrong; %v", err)
+			}
+		}
+	}
+
 	if err != nil {
 		return models.User{}, domain_models.Tokens{}, fmt.Errorf("User not found")
 	}

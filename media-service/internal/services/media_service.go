@@ -10,6 +10,7 @@ import (
 type MediaService interface {
 	GenerateLinkPic() (domain_models.File, error)
 	SaveAvatarPic(params domain_models.ConfirmSaveParams) (bool, error)
+	GetAvatarPic(img_name string) (string, error)
 }
 
 type MediaServiceImpl struct {
@@ -42,3 +43,11 @@ func (m MediaServiceImpl) SaveAvatarPic(params domain_models.ConfirmSaveParams) 
 	}
 	return success>0, nil
 }	
+
+func (m MediaServiceImpl) GetAvatarPic(img_name string) (string, error) {
+	imgURL, err := m.mediaRepository.GetAvatarPic(img_name)
+	if err != nil {
+		return "", err
+	}
+	return imgURL, nil
+}

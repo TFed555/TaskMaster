@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"media-service/internal/config"
-	_ "media-service/internal/config"
 	"media-service/internal/controllers"
 	"media-service/internal/repository"
 	"media-service/internal/router"
@@ -11,7 +10,7 @@ import (
 	"net/http"
 	"shared/config/dbconfig"
 	"shared/middleware"
-
+	"media-service/internal/grpc"
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
 )
@@ -43,9 +42,13 @@ func main() {
 	mediaService := services.NewMediaService(mediaRepo)
 	mediaController := controllers.NewMediaController(mediaService)
 
+	go func() {
+		if err:= grpc_media.StartGRPCServer(mediaService, ":50050"); err != nil {
+			log.Fatalf("GrpcServer otkisaet:%v", err)
+		}
+	}()
+
 	router := router.InitNewRouter(mediaController, authMiddleware)
-	// minioClient.UploadImage("yebok")
-	// config.ConnectToMinio()
 
 	log.Printf("Starting server on %s \n", router.Port)
 	if err := http.ListenAndServe(router.Port, router.ChiRouter); err != nil {

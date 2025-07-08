@@ -120,6 +120,7 @@ func (c AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 		UserID: user.ID,
 		Email:  user.Email,
 		Name:   user.Login,
+		ImgURL: user.ImgPath,
 	}
 
 	log.Printf("Called from auth_controller, tokens: %s, %s", tokens.AccessToken, tokens.RefreshToken)

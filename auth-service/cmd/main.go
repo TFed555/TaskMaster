@@ -1,9 +1,9 @@
 package main
 
 import (
-	"shared/config/dbconfig"
 	"auth-service/internal/controllers"
 	"auth-service/internal/grpc"
+	"shared/config/dbconfig"
 
 	"auth-service/internal/migrations"
 	"auth-service/internal/pkg/jwt"
@@ -31,16 +31,16 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 	tokenRepo := repository.NewTokenRepository(db)
 	jwtFunc := jwt.NewJWTFunctional()
-	authService := services.NewAuthService(userRepo, tokenRepo, jwtFunc)
+	authService := services.NewAuthService(userRepo, tokenRepo, jwtFunc, nil)
 	authController := controllers.NewAuthController(authService)
 	authMiddleware := middleware.NewAuthMiddleware(authService)
 
 	go func() {
-		if err:= grpc.StartGRPCServer(authService, ":50051"); err != nil {
+		if err:= grpc_auth.StartGRPCServer(authService, ":50051"); err != nil {
 			log.Fatalf("GrpcServer otkisaet:%v", err)
 		}
 	}()
-
+	
 	router := router.InitNewRouter(authController, authMiddleware)
 
 	log.Printf("Starting server on %s \n", router.Port)
