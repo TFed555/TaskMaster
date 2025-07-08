@@ -14,3 +14,7 @@ type ErrorResponse struct {
 	Status  int   `json:"code"`
 	Message string `json:"message"`
 }
+
+type LinkResponse struct {
+	Link	string `json:"image"`
+}

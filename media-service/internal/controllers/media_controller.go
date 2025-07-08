@@ -74,7 +74,22 @@ func (m MediaController) SaveAvatar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	link, err := m.mediaService.GetAvatarPic(params.Name)
+	if err != nil {
+		log.Print(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		errMsg := responses.ErrorResponse{
+			Status: http.StatusInternalServerError,
+			Message: "Can't get pic",
+		}
+		json.NewEncoder(w).Encode(errMsg)
+		return
+	}
+	linkMsg := responses.LinkResponse{
+		Link: link,
+	}
+
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
-	json.NewEncoder(w).Encode(success)
+	json.NewEncoder(w).Encode(linkMsg)
 }
