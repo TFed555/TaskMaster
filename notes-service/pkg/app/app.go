@@ -11,6 +11,7 @@ import (
 	"shared/middleware"
 	"fmt"
 	"google.golang.org/grpc"
+	_ "github.com/lib/pq"
 )
 
 func Run() error {
