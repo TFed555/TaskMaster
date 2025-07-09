@@ -39,7 +39,7 @@ func (m MediaController) Generate(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
-	log.Print(newFile.Name, newFile.Link)
+	// log.Print(newFile.Name, newFile.Link)
 
 	w.WriteHeader(http.StatusAccepted)
 	linkMsg := responses.GenerateResponse{
@@ -56,6 +56,8 @@ func (m MediaController) SaveAvatar(w http.ResponseWriter, r *http.Request) {
 	// if !ok {
 	// 	http.Error(w, "Unathorized", http.StatusUnauthorized)
 	// }
+	log.Print("Header:", r.Header)
+	
 	cookiesmas := r.Header.Get("Cookie")
 	newString := strings.Split(cookiesmas, "; ")
 	var refreshToken string
@@ -64,6 +66,16 @@ func (m MediaController) SaveAvatar(w http.ResponseWriter, r *http.Request) {
 		if newEl[0] == "refresh_token" {
 			refreshToken = newEl[1]
 		}
+	}
+	// log.Print(cookiesmas)
+	// log.Print(newString)
+	log.Print(refreshToken)
+	result, errMsg := m.authService.ValidateToken(refreshToken)
+
+	if !result {
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte(errMsg))
+			return
 	}
 
 	userID, err := m.authService.ParseUserId(refreshToken)
@@ -81,13 +93,14 @@ func (m MediaController) SaveAvatar(w http.ResponseWriter, r *http.Request) {
 	
 	success, newErr := m.mediaService.SaveAvatarPic(params)
 	if !success || newErr != nil {
-		log.Print(err)
+		log.Print(newErr)
 		w.WriteHeader(http.StatusInternalServerError)
 		errMsg := responses.ErrorResponse{
 			Status: http.StatusInternalServerError,
 			Message: "Can't save pic",
 		}
 		json.NewEncoder(w).Encode(errMsg)
+		log.Print("Не удалось сохранить")
 		return
 	}
 

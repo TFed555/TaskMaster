@@ -223,6 +223,7 @@ func (s AuthServiceImpl) UpdateAccessToken(refreshToken string) (bool, string, e
 
 func (s AuthServiceImpl) ParseUserId(token string) (uint, string) {
 	tokenMas := strings.Split(token,".")
+	log.Print(tokenMas)
 	payload := tokenMas[1]
 	dst := make([]byte, base64.RawURLEncoding.DecodedLen(len(payload)))
 	n, err := base64.RawURLEncoding.Decode(dst, []byte(payload))
