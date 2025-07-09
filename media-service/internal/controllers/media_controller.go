@@ -8,15 +8,19 @@ import (
 	"media-service/internal/services"
 	"net/http"
 	"shared/middleware"
+	"strings"
 )
 
 type MediaController struct {
 	mediaService services.MediaService
+	authService middleware.AuthService
 }
 
-func NewMediaController(mediaService services.MediaService) MediaController {
+func NewMediaController(mediaService services.MediaService, 
+							authService middleware.AuthService) MediaController {
 	return MediaController{
 		mediaService: mediaService,
+		authService: authService,
 	}
 }
 
@@ -47,11 +51,23 @@ func (m MediaController) Generate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (m MediaController) SaveAvatar(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	userID, ok := ctx.Value(middleware.UserIdKey).(uint)
-	if !ok {
-		http.Error(w, "Unathorized", http.StatusUnauthorized)
+	// ctx := r.Context()
+	// userID, ok := ctx.Value(middleware.UserIdKey).(uint)
+	// if !ok {
+	// 	http.Error(w, "Unathorized", http.StatusUnauthorized)
+	// }
+	cookiesmas := r.Header.Get("Cookie")
+	newString := strings.Split(cookiesmas, "; ")
+	var refreshToken string
+	for _, el := range newString {
+		newEl := strings.Split(el, "=")
+		if newEl[0] == "refresh_token" {
+			refreshToken = newEl[1]
+		}
 	}
+
+	userID, err := m.authService.ParseUserId(refreshToken)
+
 	log.Printf("Controller received userID: %v", userID)
 	var req responses.SaveRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -62,8 +78,9 @@ func (m MediaController) SaveAvatar(w http.ResponseWriter, r *http.Request) {
 		Name: req.Name,
 		UserID: userID,
 	}
-	success, err := m.mediaService.SaveAvatarPic(params)
-	if !success || err != nil {
+	
+	success, newErr := m.mediaService.SaveAvatarPic(params)
+	if !success || newErr != nil {
 		log.Print(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		errMsg := responses.ErrorResponse{
@@ -74,8 +91,8 @@ func (m MediaController) SaveAvatar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	link, err := m.mediaService.GetAvatarPic(params.Name)
-	if err != nil {
+	link, newErr := m.mediaService.GetAvatarPic(params.Name)
+	if newErr != nil {
 		log.Print(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		errMsg := responses.ErrorResponse{

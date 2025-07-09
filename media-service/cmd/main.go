@@ -40,8 +40,10 @@ func main() {
 	authMiddleware := middleware.NewAuthMiddleware(grpcAuthService)
 	mediaRepo := repository.NewMediaRepository(db, minioClient)
 	mediaService := services.NewMediaService(mediaRepo)
-	mediaController := controllers.NewMediaController(mediaService)
-
+		// mediaController := controllers.NewMediaController(mediaService)
+	//временно
+	mediaController := controllers.NewMediaController(mediaService, grpcAuthService)
+	
 	go func() {
 		if err:= grpc_media.StartGRPCServer(mediaService, ":50050"); err != nil {
 			log.Fatalf("GrpcServer otkisaet:%v", err)

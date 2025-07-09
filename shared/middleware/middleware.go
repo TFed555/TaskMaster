@@ -49,8 +49,8 @@ func (c *AuthMiddleware) SetAuthMiddleware(controller func(w http.ResponseWriter
 			}
 		}
 
-		log.Println("Called from middleware %s", refreshToken)
-		log.Println("Called from middleware %s", accessToken)
+		log.Printf("Called from middleware %s\n", refreshToken)
+		log.Printf("Called from middleware %s", accessToken)
 
 
 		result, errMsg := c.authService.ValidateToken(refreshToken)
