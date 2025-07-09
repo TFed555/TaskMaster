@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"log"
-	_"math/rand"
+	_ "math/rand"
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 	"time"
-
 	"github.com/joho/godotenv"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -21,7 +21,18 @@ type MinioClient struct {
 
 func NewMinioClient() (MinioClient, error) {
 
-	if err := godotenv.Load("../.env", ".env.local"); err != nil {
+	_, b, _, _ := runtime.Caller(0)
+	basepath := filepath.Dir(b)
+
+	// if err := godotenv.Load("../.env", ".env.local"); err != nil {
+	// 	log.Fatal("Can't load .env file")
+	// 	return MinioClient{}, err
+	// }
+
+	pathToEnvLocal := filepath.Join(basepath, "../../.env.local")
+	pathToEnv := filepath.Join(basepath, "../../../.env")
+	
+	if err := godotenv.Load(pathToEnv, pathToEnvLocal); err != nil {
 		log.Fatal("Can't load .env file")
 		return MinioClient{}, err
 	}

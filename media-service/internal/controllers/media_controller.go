@@ -67,8 +67,7 @@ func (m MediaController) SaveAvatar(w http.ResponseWriter, r *http.Request) {
 			refreshToken = newEl[1]
 		}
 	}
-	// log.Print(cookiesmas)
-	// log.Print(newString)
+
 	log.Print(refreshToken)
 	result, errMsg := m.authService.ValidateToken(refreshToken)
 
