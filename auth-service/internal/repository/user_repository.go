@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/jmoiron/sqlx"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserRepository struct {
@@ -47,6 +48,7 @@ func (r UserRepository) GetByEmail(email string) (models.User, error) {
 	var user models.User
 
 	err := r.db.QueryRowx(query, email).StructScan(&user)
+	log.Print(user)
 
 	log.Print(err)
     
@@ -87,7 +89,7 @@ func (r UserRepository) UpdateUser(user domain_models.User) (int, error) {
 
 	query := `UPDATE auth.users SET `
 	values := []string{}
-	args := []interface{}{}
+	args := []any{}
 	count := 0
 
 	if user.Email != "" {
@@ -101,9 +103,13 @@ func (r UserRepository) UpdateUser(user domain_models.User) (int, error) {
 		args = append(args, user.Name)
 	}
 	if user.Password != "" {
+		hashedPswd, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return -1, fmt.Errorf("Can't hash password")
+		}
 		count ++
 		values = append(values, fmt.Sprintf("PASSWORD=$%d", count))
-		args = append(args, user.Password)
+		args = append(args, hashedPswd)
 	}
 
 	query += strings.Join(values, ", ")
@@ -114,7 +120,7 @@ func (r UserRepository) UpdateUser(user domain_models.User) (int, error) {
 	var dbId int
     err := r.db.QueryRow(query, args...).Scan(&dbId)
     if err != nil {
-        return 0, fmt.Errorf("%s: %w", op, err)
+        return -1, fmt.Errorf("%s: %w", op, err)
     }
     return dbId, nil
 }

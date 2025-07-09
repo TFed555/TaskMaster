@@ -81,6 +81,9 @@ func (s AuthServiceImpl) Register(params domain_models.RegisterParams) (int, dom
 
 func (s AuthServiceImpl) Authorize(params domain_models.AuthorizeParams) (models.User, domain_models.Tokens, error) {
 	user, err := s.userRepo.GetByEmail(params.Email)
+	imgPath := ""
+
+	//пофиксить условие (падает при неверном логине или пароле)
 	if user.ImgPath != nil {
 		if s.mediaClient == nil {
 			mediaCon, err := grpc.Dial("localhost:50050", grpc.WithInsecure())
@@ -89,12 +92,14 @@ func (s AuthServiceImpl) Authorize(params domain_models.AuthorizeParams) (models
 			}
 			s.mediaClient = grpc_client.NewGRPCMediaService(mediaCon)
 			log.Print("Connected to media-service")
+			imgPath = *user.ImgPath
+			log.Print("ImgPath ", imgPath)
 			defer mediaCon.Close()
-			imgPath, err := s.mediaClient.GetAvatarPic(*user.ImgPath)
+			picLink, err := s.mediaClient.GetAvatarPic(*user.ImgPath)
 			if err != nil {
 				log.Fatalf("Something went wrong; %v", err)
 			}
-			user.ImgPath = &imgPath
+			user.ImgPath = &picLink
 		}
 	}
 
