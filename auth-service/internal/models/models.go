@@ -9,7 +9,7 @@ type User struct {
 	Login     string    `db:"login"`
 	Email     string    `db:"email"`
 	Password  string    `db:"password"`
-	ImgPath	  string	`db:"img_path"`
+	ImgPath	  *string	`db:"img_path"`
 	CreatedAt time.Time `db:"created_at"`
 }
 

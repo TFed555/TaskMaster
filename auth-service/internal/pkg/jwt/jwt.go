@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -20,7 +22,16 @@ func NewJWTFunctional() JWTFunctional {
 }
 
 func GetJWTSecretKey() []byte {
-	if err := godotenv.Load(".env.local"); err != nil {
+	_, b, _, _ := runtime.Caller(0)
+	basepath := filepath.Dir(b)
+	
+	// if err := godotenv.Load("../.env", ".env.local"); err != nil {
+	// 	log.Fatal("Can't load .env file")
+	// }
+	pathToEnvLocal := filepath.Join(basepath, "../../../.env.local")
+
+	if err := godotenv.Load(pathToEnvLocal); err != nil {
+		log.Println(pathToEnvLocal)
         log.Println("No .env file found, using system environment variables")
     }
 	key:=os.Getenv("JWT_SECRET_KEY")

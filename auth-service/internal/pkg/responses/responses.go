@@ -26,7 +26,7 @@ type AuthResponse struct {
 	UserID uint   `json:"id"`
 	Email  string `json:"email"`
 	Name   string `json:"name"`
-	ImgURL	string	`json:"image"`
+	ImgURL	*string	`json:"image"`
 }
 
 type RefreshResponse struct {

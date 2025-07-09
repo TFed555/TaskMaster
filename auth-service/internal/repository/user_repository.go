@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	_ "errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -46,6 +47,8 @@ func (r UserRepository) GetByEmail(email string) (models.User, error) {
 	var user models.User
 
 	err := r.db.QueryRowx(query, email).StructScan(&user)
+
+	log.Print(err)
     
     if err != nil {
         if err == sql.ErrNoRows {

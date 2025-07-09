@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"runtime"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
@@ -19,8 +21,16 @@ type DBConfig struct {
 }
 
 func NewDBConfig() (DBConfig) {
-	if err := godotenv.Load("../.env", ".env.local"); err != nil {
-		log.Fatal("Can't load .env file")
+	_, b, _, _ := runtime.Caller(0)
+	basepath := filepath.Dir(b)
+	
+	// if err := godotenv.Load("../.env", ".env.local"); err != nil {
+	// 	log.Fatal("Can't load .env file")
+	// }
+	pathToEnv := filepath.Join(basepath, "../../../.env")
+	if err := godotenv.Load(pathToEnv); err != nil {
+			log.Print(pathToEnv)
+			log.Fatal("Can't load .env file")
 	}
 
 	var name []string = []string {"DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME"}

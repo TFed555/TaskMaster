@@ -93,6 +93,7 @@ func (c AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 		Email: req.Email,
 		Password: req.Password,
 	}
+	log.Print(params)
 	user, tokens, err := c.authService.Authorize(params)
 
 	if err != nil {
