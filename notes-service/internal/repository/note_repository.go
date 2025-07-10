@@ -53,6 +53,7 @@ func (n NotesRepository) GetTodos(urlParams url.Values, tableName string) ([]mod
 
 	st := "WHERE"
 
+
 	if userID:=urlParams.Get("userID"); userID != "" {
 		counter ++
 		st = "AND"

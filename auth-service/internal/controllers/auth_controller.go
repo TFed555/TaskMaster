@@ -80,7 +80,7 @@ func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
 func (c AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 	var req responses.LogRequest
 	log.Println("DDDDDWWW")
-	// log.Print(r.Header.Get("set-cookie"))
+	log.Print(r.Header.Get("set-cookie"))
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -137,7 +137,7 @@ func (c AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c AuthController) Refresh(w http.ResponseWriter, r *http.Request) {
-	cookiesmas := r.Header.Get("Cookie")
+	cookiesmas := r.Header.Get("set-cookie")
 	// cookiesmas := r.Header.Get("set-cookie")
 
 	refreshToken, _ := cookies_func.ParseCookies(cookiesmas)
@@ -236,14 +236,14 @@ func (c AuthController) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c AuthController) TestCookie(w http.ResponseWriter, r *http.Request) {
-	log.Printf("TestCookie controller: %s", r.Header.Get("Cookie"))
+	log.Printf("TestCookie controller: %s", r.Header.Get("set-cookie"))
 
 	type Response struct {
 		Cookies	string `json:"cookies"`
 	}
 
 	response := Response{
-		Cookies: r.Header.Get("Cookie"),
+		Cookies: r.Header.Get("set-cookie"),
 		// Cookies: r.Header.Get("set-cookie")
 	}
 

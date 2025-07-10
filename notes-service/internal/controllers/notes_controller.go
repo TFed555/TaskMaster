@@ -45,7 +45,7 @@ func (n NotesController) GetTodos(w http.ResponseWriter, r *http.Request) {
 	// }
 	// log.Printf("Controller received userID: %v", userID)
 
-	log.Print(url.ParseQuery(r.URL.RawQuery))
+	// log.Print(r.Header.Get("set-cookie"))
 	urlParams, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
 		log.Print("Не удалось распарсить url")

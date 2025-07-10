@@ -56,11 +56,10 @@ func (m MediaController) SaveAvatar(w http.ResponseWriter, r *http.Request) {
 	// if !ok {
 	// 	http.Error(w, "Unathorized", http.StatusUnauthorized)
 	// }
-	log.Print("Header:", r.Header)
 	
-	cookiesmas := r.Header.Get("Cookie")
-	log.Printf("SaveAvatar %s", cookiesmas)
-	// cookiesmas := r.Header.Get("set-cookie")
+	// cookiesmas := r.Header.Get("Cookie")
+	// log.Printf("SaveAvatar %s", cookiesmas)
+	cookiesmas := r.Header.Get("set-cookie")
 	refreshToken, _ := cookies_func.ParseCookies(cookiesmas)
 
 	log.Print(refreshToken)
