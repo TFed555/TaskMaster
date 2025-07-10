@@ -16,6 +16,8 @@ type NotesService interface {
 	UpdateTask(todoBody domain_models.Todo) (int, error)
 	ArchiveTask(ID int) (int, error)
 	GetOneTodo(taskId int) (*models.Todo, error)
+	DeleteTodo(taskId int) (bool, error)
+	RestoreTodo(taskId int) (int, error)
 }
 
 type NotesServiceImpl struct {
@@ -89,9 +91,25 @@ func (s NotesServiceImpl) GetArchivedTodos(urlParams url.Values) ([]models.Todo,
 }
 
 func (s NotesServiceImpl) GetOneTodo(taskId int) (*models.Todo, error) {
-	todo, err := s.notesRepository.GetTodoByID(taskId)
+	todo, err := s.notesRepository.GetTodoByID(taskId, "todos")
 	if err != nil {
 		return nil, err
 	}
 	return todo, nil
+}
+
+func (s NotesServiceImpl) DeleteTodo(taskId int) (bool, error) {
+	result, err := s.notesRepository.DeleteTodo(taskId)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+func (s NotesServiceImpl) RestoreTodo(taskId int) (int, error) {
+	id, err := s.notesRepository.RestoreTodo(taskId)
+	if err != nil {
+		return -1, err
+	}
+	return id, nil
 }

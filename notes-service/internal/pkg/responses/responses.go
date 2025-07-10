@@ -46,3 +46,7 @@ type ErrorResponse struct {
 	Status  uint   `json:"code"`
 	Message string `json:"message"`
 }
+
+type DeleteResponse struct {
+	Message	string `json:"message"`
+}

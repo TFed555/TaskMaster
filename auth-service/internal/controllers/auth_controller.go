@@ -1,17 +1,16 @@
 package controllers
 
 import (
-	"auth-service/internal/services"
 	"auth-service/internal/pkg/domain_models"
+	"auth-service/internal/pkg/responses"
+	"auth-service/internal/services"
 	"encoding/json"
-	"errors"
 	_ "fmt"
 	"log"
 	"net/http"
 	"shared/middleware"
 	cookies_func "shared/utils/cookies"
 	"time"
-	"auth-service/internal/pkg/responses"
 )
 
 
@@ -77,13 +76,11 @@ func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-var (
-	errInvalidData = errors.New("email or password is incorrect")
-)
 
 func (c AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 	var req responses.LogRequest
 	log.Println("DDDDDWWW")
+	// log.Print(r.Header.Get("set-cookie"))
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -140,18 +137,26 @@ func (c AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c AuthController) Refresh(w http.ResponseWriter, r *http.Request) {
+	cookiesmas := r.Header.Get("Cookie")
+	// cookiesmas := r.Header.Get("set-cookie")
 
-	refresh_token, err := r.Cookie("refresh_token")
+	refreshToken, _ := cookies_func.ParseCookies(cookiesmas)
 
-	if err != nil {
-		http.Error(w, "Unabled to update refresh token", http.StatusBadRequest)
-		return
+	result, errMsg := c.authService.ValidateToken(refreshToken)
+
+	if !result {
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte(errMsg))
+			return
 	}
 
-	accesstoken, refreshtoken, err := c.authService.Refresh(refresh_token.Value)
+	accesstoken, refreshtoken, err := c.authService.Refresh(refreshToken)
 
 	if err != nil {
-		log.Print(err)
+			log.Print(err)
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte(errMsg))
+			return
 	}
 
 	var time_expires_refresh = time.Now().Add(30 * 24 * time.Hour)
@@ -231,14 +236,15 @@ func (c AuthController) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c AuthController) TestCookie(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.Header.Get("set-cookie"))
-	log.Println(r.Cookies())
+	log.Printf("TestCookie controller: %s", r.Header.Get("Cookie"))
+
 	type Response struct {
-		Msg string `json:"msg"`
+		Cookies	string `json:"cookies"`
 	}
 
 	response := Response{
-		Msg: "ok",
+		Cookies: r.Header.Get("Cookie"),
+		// Cookies: r.Header.Get("set-cookie")
 	}
 
 	w.Header().Set("Content-type", "application/json")

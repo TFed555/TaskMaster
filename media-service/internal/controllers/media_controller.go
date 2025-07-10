@@ -8,7 +8,7 @@ import (
 	"media-service/internal/services"
 	"net/http"
 	"shared/middleware"
-	"strings"
+	cookies_func "shared/utils/cookies"
 )
 
 type MediaController struct {
@@ -59,14 +59,9 @@ func (m MediaController) SaveAvatar(w http.ResponseWriter, r *http.Request) {
 	log.Print("Header:", r.Header)
 	
 	cookiesmas := r.Header.Get("Cookie")
-	newString := strings.Split(cookiesmas, "; ")
-	var refreshToken string
-	for _, el := range newString {
-		newEl := strings.Split(el, "=")
-		if newEl[0] == "refresh_token" {
-			refreshToken = newEl[1]
-		}
-	}
+	log.Printf("SaveAvatar %s", cookiesmas)
+	// cookiesmas := r.Header.Get("set-cookie")
+	refreshToken, _ := cookies_func.ParseCookies(cookiesmas)
 
 	log.Print(refreshToken)
 	result, errMsg := m.authService.ValidateToken(refreshToken)

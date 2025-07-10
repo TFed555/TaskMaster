@@ -33,14 +33,12 @@ func InitNewRouter(notesController controllers.NotesController, authMiddleware m
 	}))
 
 	router.Get("/api/test", authMiddleware.SetAuthMiddleware(notesController.Test))
-	// router.Get("/api/todos", authMiddleware.SetAuthMiddleware(notesController.GetTodos))
-	// router.Post("/api/createTodo", authMiddleware.SetAuthMiddleware(notesController.CreateTodo))
-	// router.Patch("/api/updateTodo", authMiddleware.SetAuthMiddleware(notesController.UpdateTodo))
-	// router.Get("/api/archivedtodos", authMiddleware.SetAuthMiddleware(notesController.GetArchivedTodos))
-	// router.Post("/api/archiveTodo", authMiddleware.SetAuthMiddleware(notesController.ArchiveTodo))
-
 	router.Get("/api/todos", notesController.GetTodos)
 	router.Get("/api/todos/archived", notesController.GetArchivedTodos)
+
+	router.Delete("/api/todos/archived/{id}", notesController.DeleteTodo)
+	router.Put("/api/todos/archived/{id}", notesController.RestoreTodo)
+
 	router.Get("/api/todos/{id}", notesController.GetOneTodo)
 	router.Delete("/api/todos/{id}", notesController.ArchiveTodo)
 	router.Post("/api/todos", notesController.CreateTodo)

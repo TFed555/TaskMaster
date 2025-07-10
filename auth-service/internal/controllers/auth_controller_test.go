@@ -7,14 +7,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
 	"auth-service/internal/controllers"
 	"auth-service/internal/controllers/mocks"
 	"auth-service/internal/models"
 	"auth-service/internal/pkg/domain_models"
 	"auth-service/internal/pkg/responses"
-
-	// "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -134,9 +131,6 @@ func TestAuthController_Login(t *testing.T) {
 			expectedCode: http.StatusNotFound,
 			expectedError: "User not found",
 		}, 
-		// {
-
-		// }
 	}
 
 	for _, tc := range cases {
@@ -157,6 +151,112 @@ func TestAuthController_Login(t *testing.T) {
 				require.Contains(t, resp.Message, tc.expectedError)
 			}
 
+		})
+	}
+}
+
+func TestAuthController_Refresh(t *testing.T) {
+	cases := [] struct {
+		name string
+		cookie string
+		mockSetup func (authMock *mocks.AuthService)
+		expectedCode int
+		expectedError string
+		expectedTokens bool
+	} {
+		{
+			name: "Success",
+			cookie: "refresh_token=valid_refresh_token",
+			mockSetup: func(authMock *mocks.AuthService) {
+				authMock.On("ValidateToken", "valid_refresh_token").
+					Return(true, "").
+					Once()
+
+				authMock.On("Refresh", "valid_refresh_token").
+					Return("new_access_token", "new_refresh_token", nil).
+					Once()
+			},
+			expectedCode: http.StatusAccepted,
+			expectedTokens: true,
+		},
+		{
+			name:   "No token",
+			cookie: "",
+			mockSetup: func(authMock *mocks.AuthService) {
+				authMock.On("ValidateToken", "").
+					Return(false, "Access denied").
+					Once()
+			},
+			expectedCode:  http.StatusForbidden,
+			expectedError: "Access denied",
+		},
+		{
+			name:   "Invalid token",
+			cookie: "refresh_token=invalid_token",
+			mockSetup: func(authMock *mocks.AuthService) {
+				authMock.On("ValidateToken", "invalid_token").
+					Return(false, "Access denied").
+					Once()
+			},
+			expectedCode:  http.StatusForbidden,
+			expectedError: "Access denied",
+		},
+		{
+			name:   "Refresh error",
+			cookie: "refresh_token=expired_token",
+			mockSetup: func(authMock *mocks.AuthService) {
+				authMock.On("ValidateToken", "expired_token").
+					Return(true, "").
+					Once()
+				authMock.On("Refresh", "expired_token").
+					Return("", "", errors.New("token expired")).
+					Once()
+			},
+			expectedCode: http.StatusForbidden,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T){
+			t.Parallel()
+			authMock := mocks.NewAuthService(t)
+			tc.mockSetup(authMock)
+			controllerMock := controllers.NewAuthController(authMock)
+			req := httptest.NewRequest(http.MethodPost, "/refresh", nil)
+			if tc.cookie != "" {
+				req.Header.Set("Cookie", tc.cookie)
+			}
+
+			rr := httptest.NewRecorder()
+			controllerMock.Refresh(rr, req)
+
+			require.Equal(t, tc.expectedCode, rr.Code)
+
+			if tc.expectedError != "" {
+				require.Contains(t, rr.Body.String(), tc.expectedError)
+			}
+			
+			if tc.expectedTokens {
+				var resp responses.RefreshResponse
+				err := json.Unmarshal(rr.Body.Bytes(), &resp)
+				require.NoError(t, err)
+				require.Equal(t, "new_access_token", resp.AccessToken)
+				require.Equal(t, "new_refresh_token", resp.RefreshToken)
+				cookies := rr.Result().Cookies()
+				require.Len(t, cookies, 2)
+				var accessCookie, refreshCookie *http.Cookie
+				for _, cookie := range cookies {
+					if cookie.Name == "access_token" {
+						accessCookie = cookie
+					} else if cookie.Name == "refresh_token" {
+						refreshCookie = cookie
+					}
+				}
+				require.NotNil(t, accessCookie)
+				require.NotNil(t, refreshCookie)
+				require.Equal(t, "new_access_token", accessCookie.Value)
+				require.Equal(t, "new_refresh_token", refreshCookie.Value)
+			}
 		})
 	}
 }

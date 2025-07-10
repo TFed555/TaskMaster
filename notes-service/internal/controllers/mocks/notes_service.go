@@ -73,6 +73,34 @@ func (_m *NotesService) CreateTask(todoBody domain_models.Todo) (int, error) {
 	return r0, r1
 }
 
+// DeleteTodo provides a mock function with given fields: taskId
+func (_m *NotesService) DeleteTodo(taskId int) (bool, error) {
+	ret := _m.Called(taskId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteTodo")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(int) (bool, error)); ok {
+		return rf(taskId)
+	}
+	if rf, ok := ret.Get(0).(func(int) bool); ok {
+		r0 = rf(taskId)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(int) error); ok {
+		r1 = rf(taskId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetArchivedTodos provides a mock function with given fields: urlParams
 func (_m *NotesService) GetArchivedTodos(urlParams url.Values) ([]models.Todo, error) {
 	ret := _m.Called(urlParams)
@@ -156,6 +184,34 @@ func (_m *NotesService) GetTodos(urlParams url.Values) ([]models.Todo, error) {
 
 	if rf, ok := ret.Get(1).(func(url.Values) error); ok {
 		r1 = rf(urlParams)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RestoreTodo provides a mock function with given fields: taskId
+func (_m *NotesService) RestoreTodo(taskId int) (int, error) {
+	ret := _m.Called(taskId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RestoreTodo")
+	}
+
+	var r0 int
+	var r1 error
+	if rf, ok := ret.Get(0).(func(int) (int, error)); ok {
+		return rf(taskId)
+	}
+	if rf, ok := ret.Get(0).(func(int) int); ok {
+		r0 = rf(taskId)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	if rf, ok := ret.Get(1).(func(int) error); ok {
+		r1 = rf(taskId)
 	} else {
 		r1 = ret.Error(1)
 	}

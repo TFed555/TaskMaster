@@ -95,10 +95,10 @@ func (n NotesRepository) GetTodos(urlParams url.Values, tableName string) ([]mod
 	return todos, nil
 }
 
-func (n NotesRepository) GetTodoByID(ID int) (*models.Todo, error) {
+func (n NotesRepository) GetTodoByID(ID int, tableName string) (*models.Todo, error) {
 	const op = "repository.notes_repository.GetTodoByID"
-	query := `SELECT id, title, priority, category, description, createdat, completedat, userid
-			FROM notes.todos WHERE id = $1 LIMIT 1`
+	query := fmt.Sprintf(`SELECT id, title, priority, category, description, createdat, completedat, userid
+			FROM notes.%s WHERE id = $1 LIMIT 1`, tableName)
 	todo := models.Todo{}
 	err := n.db.QueryRowx(query, ID).StructScan(&todo)
 	if err != nil {
@@ -135,7 +135,7 @@ func (n NotesRepository) CreateTodo(todo models.Todo) (int, error) {
 func (n NotesRepository) ArchiveTodo(ID int) (int, error) {
     const op = "repository.notes_repository.ArchiveTodo"
 
-	todo, err := n.GetTodoByID(ID)
+	todo, err := n.GetTodoByID(ID, "todos")
 	if err != nil {
 		return -1, fmt.Errorf("%s: %w", op, err)
 	}
@@ -145,7 +145,7 @@ func (n NotesRepository) ArchiveTodo(ID int) (int, error) {
     args := []interface{}{todo.UserId, todo.Title, todo.Priority, todo.Description, todo.Category, todo.CreatedAt}
     count := 6
 
-    if *todo.CompletedAt != "" {
+    if todo.CompletedAt != nil {
         query += `, completedat`
         count++
 
@@ -220,4 +220,61 @@ func (n NotesRepository) UpdateTodo(todo models.Todo) (int, error) {
         return 0, fmt.Errorf("%s: %w", op, err)
     }
     return dbId, nil
+}
+
+func (n NotesRepository) DeleteTodo(taskId int) (bool, error) {
+	const op = "repository.notes_repository.DeleteTodo"
+
+	query := `DELETE FROM notes.archived_todos WHERE id = $1`
+	res, err := n.db.Exec(query, taskId)
+	if err != nil {
+		return false, fmt.Errorf("%s: %w", op, err)
+	}
+	result, _ := res.RowsAffected()
+	return result>0, nil
+}
+
+func (n NotesRepository) RestoreTodo(taskId int) (int, error) {
+	const op =  "repository.notes_repository.RestoreTodo"
+
+	archivedTodo, err := n.GetTodoByID(taskId, "archived_todos")
+	if err != nil {
+		return -1, fmt.Errorf("%s: %w", op, err)
+	}
+
+    query := `INSERT INTO notes.todos (userid, title, priority, description, category, createdat`
+    values := `VALUES ($1, $2, $3, $4, $5, $6`
+    args := []any{archivedTodo.UserId, archivedTodo.Title,
+		archivedTodo.Priority, archivedTodo.Description, 
+		archivedTodo.Category, archivedTodo.CreatedAt}
+    count := 6
+
+    if archivedTodo.CompletedAt != nil {
+        query += `, completedat`
+        count++
+
+        values += fmt.Sprintf(`, $%d`, count)
+        args = append(args, archivedTodo.CompletedAt)
+    }
+    query +=` )` + values + ` ) RETURNING id`
+    var addedId int
+    err = n.db.QueryRow(query, args...).Scan(&addedId)
+    if err != nil {
+        return -1, fmt.Errorf("%s: %w", op, err)
+    }
+	nextQuery := `DELETE FROM notes.archived_todos WHERE id = $1`
+	
+	res, err := n.db.Exec(nextQuery, taskId)
+	if err != nil {
+    	return -1, fmt.Errorf("%s: %w", op, err)
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+    	return -1, fmt.Errorf("%s: %w", op, err)
+	}
+	if rowsAffected == 0 {
+		return -1, fmt.Errorf("%s: %w", op, err)
+	}
+
+    return addedId, nil
 }

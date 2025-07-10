@@ -4,8 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"shared/utils/cookies"
-	"strings"
+	cookies_func "shared/utils/cookies"
 	"time"
 )
 
@@ -33,21 +32,8 @@ func (c *AuthMiddleware) SetAuthMiddleware(controller func(w http.ResponseWriter
 	return func(w http.ResponseWriter, r *http.Request){
 
 		cookiesmas := r.Header.Get("Cookie")
-		log.Print("cookies:", cookiesmas)
-		// var newString string
-		var refreshToken string
-		var accessToken string
-		newString := strings.Split(cookiesmas, "; ")
-		
-		for _, el := range newString {
-			newEl := strings.Split(el, "=")
-			if newEl[0] == "refresh_token" {
-				refreshToken = newEl[1]
-			}
-			if newEl[0] == "access_token" {
-				accessToken = newEl[1]
-			}
-		}
+		// cookiesmas := r.Header.Get("set-cookie")
+		refreshToken, accessToken := cookies_func.ParseCookies(cookiesmas)
 
 		log.Printf("Called from middleware %s\n", refreshToken)
 		log.Printf("Called from middleware %s", accessToken)
@@ -72,7 +58,7 @@ func (c *AuthMiddleware) SetAuthMiddleware(controller func(w http.ResponseWriter
 				return
 			}
 			if success {
-				cookies.SetCookies(&w, "access_token", newValue, time.Now().Add(15 * time.Minute))
+				cookies_func.SetCookies(&w, "access_token", newValue, time.Now().Add(15 * time.Minute))
 			}
 		}
 

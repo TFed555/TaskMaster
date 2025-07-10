@@ -322,3 +322,53 @@ func (n NotesController) GetOneTodo(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusAccepted)
 	json.NewEncoder(w).Encode(response)
 }
+
+func (n NotesController) DeleteTodo(w http.ResponseWriter, r *http.Request) {
+	taskId := chi.URLParam(r, "id")
+	if taskId == "" {
+		log.Print("Не удалось получить id задачи")
+	}
+	id, err := strconv.Atoi(taskId)
+	if err != nil {
+		log.Print("Не удалось преобразовать id задачи")
+	}
+	success, err := n.notesService.DeleteTodo(id)
+	if !success || err != nil {
+		log.Println(err)
+		http.Error(w, "Can't get task info", http.StatusBadRequest)
+		return
+	}
+
+	response := responses.DeleteResponse{
+		Message: "Deleted successfully",
+	}
+
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (n NotesController) RestoreTodo(w http.ResponseWriter, r *http.Request) {
+	taskId := chi.URLParam(r, "id")
+	if taskId == "" {
+		log.Print("Не удалось получить id задачи")
+	}
+	id, err := strconv.Atoi(taskId)
+	if err != nil {
+		log.Print("Не удалось преобразовать id задачи")
+	}
+	newId, err := n.notesService.RestoreTodo(id)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Can't get task info", http.StatusBadRequest)
+		return
+	}
+
+	response := responses.CreateResponse{
+		ID: newId,
+	}
+
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(response)
+}
