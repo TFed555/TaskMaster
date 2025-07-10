@@ -48,15 +48,14 @@ func (r UserRepository) GetByEmail(email string) (models.User, error) {
 	var user models.User
 
 	err := r.db.QueryRowx(query, email).StructScan(&user)
-	log.Print(user)
 
 	log.Print(err)
     
     if err != nil {
         if err == sql.ErrNoRows {
-            return user, fmt.Errorf("%s: user not found", op)
+            return models.User{}, fmt.Errorf("%s: user not found", op)
         }
-        return user, fmt.Errorf("%s: %w", op, err)
+        return models.User{}, fmt.Errorf("%s: %w", op, err)
     }
 
 	return user, nil

@@ -53,7 +53,7 @@ func Run() error {
 	
 	router := router.InitNewRouter(authController, authMiddleware)
 
-	log.Printf("Starting server on %s \n", router.Port)
+	log.Printf("Starting auth-service on %s \n", router.Port)
 	if err := http.ListenAndServe(router.Port, router.ChiRouter); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 		return fmt.Errorf("Failed to start server: %v", err)

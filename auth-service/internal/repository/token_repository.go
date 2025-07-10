@@ -40,10 +40,10 @@ func (r TokenRepository) GetToken(token string) (models.RefreshToken, error) {
 	return result, err
 }
 
-func (r TokenRepository) DeleteToken(refreshToken string) (bool, error) {
-	query := `DELETE FROM auth.refresh_tokens WHERE token = $1`
+func (r TokenRepository) DeleteToken(userID uint) (bool, error) {
+	query := `DELETE FROM auth.refresh_tokens WHERE user_id = $1`
 
-	res, err := r.db.Exec(query, refreshToken)
+	res, err := r.db.Exec(query, userID)
 	if err != nil {
 		return false, err
 	}

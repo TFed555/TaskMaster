@@ -22,7 +22,7 @@ type AuthService interface {
     Authorize(params domain_models.AuthorizeParams) (models.User, domain_models.Tokens, error)
     Refresh(refreshToken string) (string, string, error)
     ValidateToken(tokenValue string) (bool, string)
-    Logout(refreshToken string) (bool, error)
+    Logout(userID uint) (bool, error)
 	UpdateAccessToken(refreshToken string) (bool, string, error)
 	ParseUserId(token string) (uint, string)
 	UpdateUser(domain_models.UpdateUserParams) (int, error)
@@ -82,8 +82,6 @@ func (s AuthServiceImpl) Register(params domain_models.RegisterParams) (int, dom
 func (s AuthServiceImpl) Authorize(params domain_models.AuthorizeParams) (models.User, domain_models.Tokens, error) {
 	user, err := s.userRepo.GetByEmail(params.Email)
 	imgPath := ""
-
-	//пофиксить условие (падает при неверном логине или пароле)
 	if user.ImgPath != nil {
 		if s.mediaClient == nil {
 			mediaCon, err := grpc.Dial("localhost:50050", grpc.WithInsecure())
@@ -194,8 +192,8 @@ func (s AuthServiceImpl) ValidateToken(tokenValue string) (bool, string) {
 	return true, ""
 }
 
-func (s AuthServiceImpl) Logout(refreshToken string) (bool, error) {
-	success, err := s.tokenRepo.DeleteToken(refreshToken)
+func (s AuthServiceImpl) Logout(userID uint) (bool, error) {
+	success, err := s.tokenRepo.DeleteToken(userID)
 	if err != nil {
 		return false, err
 	}

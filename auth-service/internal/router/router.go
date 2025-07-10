@@ -36,13 +36,12 @@ func InitNewRouter(authController controllers.AuthController, authMiddleware mid
 	router.Post("/api/refresh", authController.Refresh)
 
 	// router.Get("/api/testSecure", authController.Test)
-	router.Get("/api/testCookie", authMiddleware.SetAuthMiddleware(authController.TestCookie))
-	// router.Get("api/todos?")
-	router.Get("/api/testSecure", authMiddleware.SetAuthMiddleware(authController.Test))
-	router.Delete("/api/logout", authMiddleware.SetAuthMiddleware(authController.Logout))
+	router.Get("/api/test/cookie", authMiddleware.SetAuthMiddleware(authController.TestCookie))
+	router.Get("/api/test/middleware", authMiddleware.SetAuthMiddleware(authController.Test))
+	router.Delete("/api/login", authMiddleware.SetAuthMiddleware(authController.Logout))
 	// router.Post("/testJWT", authController.TestJWT)
-	router.Delete("/api/deleteUser", authMiddleware.SetAuthMiddleware(authController.DeleteUser))
-	router.Patch("/api/updateUser", authMiddleware.SetAuthMiddleware(authController.UpdateUser))
+	router.Delete("/api/user", authMiddleware.SetAuthMiddleware(authController.DeleteUser))
+	router.Patch("/api/user", authMiddleware.SetAuthMiddleware(authController.UpdateUser))
 
 	return Router{
 		ChiRouter: router,

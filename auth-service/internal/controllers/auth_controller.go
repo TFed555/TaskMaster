@@ -190,13 +190,23 @@ func (c AuthController) Test(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c AuthController) Logout(w http.ResponseWriter, r *http.Request) {
-	refreshCookie, err := r.Cookie("refresh_token")
-	if err != nil {
-		http.Error(w, "Missing token", http.StatusBadRequest)
-		return
+	// refreshCookie, err := r.Cookie("refresh_token")
+	// if err != nil {
+	// 	http.Error(w, "Missing token", http.StatusBadRequest)
+	// 	return
+	// }
+	// //или User.Id
+	// success, err := c.authService.Logout(refreshCookie.Value)
+	ctx := r.Context()
+	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	log.Print("UserID:", userID)
+	if !ok {
+	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	    return
 	}
-	//или User.Id
-	success, err := c.authService.Logout(refreshCookie.Value)
+	log.Printf("Controller received userID: %v", userID)
+
+	success, err := c.authService.Logout(userID)
 
 	if !success && err != nil {
 		log.Printf("Logout failed: %v", err)

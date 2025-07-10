@@ -78,9 +78,9 @@ func (_m *AuthService) DeleteUser(userID uint) (bool, error) {
 	return r0, r1
 }
 
-// Logout provides a mock function with given fields: refreshToken
-func (_m *AuthService) Logout(refreshToken string) (bool, error) {
-	ret := _m.Called(refreshToken)
+// Logout provides a mock function with given fields: userID
+func (_m *AuthService) Logout(userID uint) (bool, error) {
+	ret := _m.Called(userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Logout")
@@ -88,17 +88,17 @@ func (_m *AuthService) Logout(refreshToken string) (bool, error) {
 
 	var r0 bool
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (bool, error)); ok {
-		return rf(refreshToken)
+	if rf, ok := ret.Get(0).(func(uint) (bool, error)); ok {
+		return rf(userID)
 	}
-	if rf, ok := ret.Get(0).(func(string) bool); ok {
-		r0 = rf(refreshToken)
+	if rf, ok := ret.Get(0).(func(uint) bool); ok {
+		r0 = rf(userID)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(refreshToken)
+	if rf, ok := ret.Get(1).(func(uint) error); ok {
+		r1 = rf(userID)
 	} else {
 		r1 = ret.Error(1)
 	}
