@@ -28,7 +28,7 @@ func NewDBConfig() (DBConfig) {
 	// 	log.Fatal("Can't load .env file")
 	// }
 	pathToEnv := filepath.Join(basepath, "../../../.env")
-	if err := godotenv.Load(pathToEnv); err != nil {
+	if err := godotenv.Load("/app/.env"); err != nil {
 			log.Print(pathToEnv)
 			log.Fatal("Can't load .env file")
 	}
