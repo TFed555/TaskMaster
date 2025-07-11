@@ -79,8 +79,6 @@ func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
 
 func (c AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 	var req responses.LogRequest
-	log.Println("DDDDDWWW")
-	log.Print(r.Header.Get("set-cookie"))
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -90,7 +88,7 @@ func (c AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 		Email: req.Email,
 		Password: req.Password,
 	}
-	log.Print(params)
+	
 	user, tokens, err := c.authService.Authorize(params)
 
 	if err != nil {
@@ -121,7 +119,7 @@ func (c AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 		ImgURL: user.ImgPath,
 	}
 
-	log.Printf("Called from auth_controller, tokens: %s, %s", tokens.AccessToken, tokens.RefreshToken)
+	// log.Printf("Called from auth_controller, tokens: %s, %s", tokens.AccessToken, tokens.RefreshToken)
 
 	var time_expires_refresh = time.Now().Add(30 * 24 * time.Hour)
 	var time_expires_access = time.Now().Add(15 * time.Minute)
@@ -137,7 +135,12 @@ func (c AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c AuthController) Refresh(w http.ResponseWriter, r *http.Request) {
-	cookiesmas := r.Header.Get("set-cookie")
+	cookiesmas := ""
+	if r.Header.Get("set-cookie") != "" {
+		cookiesmas = r.Header.Get("set-cookie")
+	} else {
+		cookiesmas = r.Header.Get("Cookie")
+	}
 	// cookiesmas := r.Header.Get("Cookie")
 
 	refreshToken, _ := cookies_func.ParseCookies(cookiesmas)
