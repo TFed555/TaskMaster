@@ -137,8 +137,8 @@ func (c AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c AuthController) Refresh(w http.ResponseWriter, r *http.Request) {
-	// cookiesmas := r.Header.Get("set-cookie")
-	cookiesmas := r.Header.Get("Cookie")
+	cookiesmas := r.Header.Get("set-cookie")
+	// cookiesmas := r.Header.Get("Cookie")
 
 	refreshToken, _ := cookies_func.ParseCookies(cookiesmas)
 
