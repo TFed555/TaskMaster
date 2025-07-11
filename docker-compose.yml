@@ -36,6 +36,27 @@ services:
       - 9001:9001
     depends_on: 
       - db
+  
+  media_service:
+    build:
+      context: .
+      dockerfile: media-service/Dockerfile
+    ports:
+      - "8084:8084"
+      - "50050:50050"
+    volumes:
+      - ./media-service/.env.local:/app/.env.local:ro
+      - ./.env:/app/.env
+      - ./shared:/app/shared
+    depends_on:
+      db:
+        condition: service_healthy 
+    healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:8084/health"]
+        interval: 10s
+        timeout: 5s
+        retries: 10
+    restart: unless-stopped
       
   auth_service:
     build: 
@@ -45,15 +66,18 @@ services:
     #   DB_DSN: "postgres://user:password@postgres:5432/tasksdb?sslmode=disable"
     ports:
      - "8080:8080"
+     - "50051:50051"
     volumes:
-     - ./.env:/app/.env
+     - ./.env:/app/.env:ro
+     - ./auth-service/.env.local:/app/.env.local:ro
      - ./shared:/app/shared
      - ./auth-service/internal/migrations:/app/internal/migrations:ro
     depends_on:
       db:
-        condition: service_healthy 
+        condition: service_healthy
+      # media-service:
+      #   condition: service_healthy
     # command: >
-
     restart: unless-stopped
 
 
@@ -64,12 +88,6 @@ services:
   #   depends_on:
   #     - db
 
-  # media_service:
-  #   build: ./media-service
-  #   ports:
-  #    - "8003:8003"
-  #   depends_on:
-  #     - db
 
   # api:
   #   build: ./api

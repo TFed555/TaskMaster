@@ -56,7 +56,7 @@ func Run() error {
 		}
 	}()
 
-	router := router.InitNewRouter(mediaController, authMiddleware)
+	router := router.InitNewRouter(mediaController, authMiddleware, authCon)
 
 	log.Printf("Starting media-service on %s \n", router.Port)
 	if err := http.ListenAndServe(router.Port, router.ChiRouter); err != nil {

@@ -29,15 +29,15 @@ func NewMinioClient() (MinioClient, error) {
 	// 	return MinioClient{}, err
 	// }
 
-	pathToEnvLocal := filepath.Join(basepath, "../../.env.local")
+	// pathToEnvLocal := filepath.Join(basepath, "../../.env.local")
 	pathToEnv := filepath.Join(basepath, "../../../.env")
 	
-	if err := godotenv.Load(pathToEnv, pathToEnvLocal); err != nil {
-		log.Fatal("Can't load .env file")
+	if err := godotenv.Load(pathToEnv); err != nil {
+		log.Fatal("Can't load .env file to minio connection")
 		return MinioClient{}, err
 	}
 
-	endpoint := "127.0.0.1:9000"
+	endpoint := "minio:9000"
 	accessKeyID, exists := os.LookupEnv("MINIO_ACCESS_KEY")
 	if !exists {
 		log.Print("Can't get token")

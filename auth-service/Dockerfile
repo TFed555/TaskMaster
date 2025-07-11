@@ -1,18 +1,3 @@
-# FROM golang:alpine AS builder
-
-# WORKDIR /app/auth-service
-# COPY . .
-
-# # WORKDIR /app/auth-service
-
-# RUN go mod tidy && go build -o auth-service cmd/main.go
-
-# # RUN CGO_ENABLED=0 GOOS=linux go build -o /auth-service .
-# FROM alpine:latest
-# WORKDIR /root/
-# COPY --from=builder /app/auth-service/auth-service .
-# CMD ["./auth-service"]  
-
 FROM golang:alpine AS builder
 
 WORKDIR /app

@@ -24,7 +24,7 @@ require (
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/lib/pq v1.10.9
 	google.golang.org/grpc v1.73.0
-	shared v0.0.0
+	// shared v0.0.0
 )
 
 require (
@@ -36,4 +36,4 @@ require (
 	google.golang.org/protobuf v1.36.6 // indirect
 )
 
-replace shared => ../shared
+// replace shared => ../shared
