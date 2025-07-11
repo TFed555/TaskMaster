@@ -115,7 +115,7 @@ func (s AuthServiceImpl) Authorize(params domain_models.AuthorizeParams) (models
 	refreshToken := &models.RefreshToken{
 		UserID: user.ID,
 		Token:  refreshtoken,
-		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
+		ExpiresAt: time.Now().Add(30 * 24 * time.Hour),
 	}
 	if err := s.tokenRepo.Create(refreshToken); err != nil {
 		return models.User{}, domain_models.Tokens{}, fmt.Errorf("Failed to save refresh token: %w", err)
@@ -144,6 +144,37 @@ func (s AuthServiceImpl) Refresh(refreshToken string) (accesstoken string, refre
 	if err != nil {
 		return "","",err
 	}
+	tokenMas := strings.Split(refreshToken, ".")
+	payload := tokenMas[1]
+	dst := make([]byte, base64.RawURLEncoding.DecodedLen(len(payload)))
+	n, err := base64.RawURLEncoding.Decode(dst, []byte(payload))
+	payloadJson := dst[:n]
+	if err != nil {
+		log.Println("decode error:", err)
+		return "", "", err
+	}
+
+	type Token struct {
+			Sub uint `json:"sub"`
+			Exp int64 `json:"exp"`
+	}
+
+	var newToken Token
+	err = json.Unmarshal(payloadJson, &newToken)
+	if err != nil {
+			log.Println("Can't unmarshal")
+			return "", "", err
+	}
+
+	newRefreshToken := &models.RefreshToken{
+		UserID: newToken.Sub,
+		Token:  t2,
+		ExpiresAt: time.Now().Add(30 * 24 * time.Hour),
+	}
+	if err := s.tokenRepo.Create(newRefreshToken); err != nil {
+		return "", "", fmt.Errorf("Failed to save refresh token: %w", err)
+	}
+
 	return t1, t2, nil
 }
 
