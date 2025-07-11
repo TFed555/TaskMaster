@@ -84,7 +84,7 @@ func (s AuthServiceImpl) Authorize(params domain_models.AuthorizeParams) (models
 	imgPath := ""
 	if user.ImgPath != nil {
 		if s.mediaClient == nil {
-			mediaCon, err := grpc.Dial("localhost:50050", grpc.WithInsecure())
+			mediaCon, err := grpc.Dial("media_service:50050", grpc.WithInsecure())
 			if err != nil {
 				log.Fatalf("Failed to connect to grpc server: %v", err)
 			}

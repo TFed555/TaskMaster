@@ -13,6 +13,8 @@ services:
       DB_DSN: "postgresql://user:password@db:5432/tasksdb?sslmode=disable"
     ports:
       - "5432:5432"
+    networks:
+      - app-network
     volumes:
       - postgres_data:/var/lib/postgresql/dat
     healthcheck:
@@ -34,6 +36,8 @@ services:
     ports:
       - 9000:9000
       - 9001:9001
+    networks:
+      - app-network
     depends_on: 
       - db
   
@@ -46,7 +50,10 @@ services:
       - "50050:50050"
     expose:
       - "50050:50050"
+    networks:
+      - app-network
     volumes:
+      - ./:/app
       - ./media-service/.env.local:/app/.env.local:ro
       - ./.env:/app/.env
       - ./shared:/app/shared
@@ -71,7 +78,10 @@ services:
      - "50051:50051"
     expose:
      - "50051:50051"
+    networks:
+      - app-network
     volumes:
+     - ./:/app
      - ./.env:/app/.env:ro
      - ./auth-service/.env.local:/app/.env.local:ro
      - ./shared:/app/shared
@@ -79,8 +89,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      # media-service:
-      #   condition: service_healthy
+      media_service:
+        condition: service_healthy
     # command: >
     restart: unless-stopped
 
@@ -116,6 +126,10 @@ services:
   #     DB_PASSWORD: password
   #     DB_NAME: mydb
   #   restart: on-failure
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   postgres_data:
