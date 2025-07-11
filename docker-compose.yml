@@ -10,10 +10,16 @@ services:
       POSTGRES_DB: tasksdb
       LANG: en_US.UTF-8
       LC_ALL: en_US.UTF-8
+      DB_DSN: "postgresql://user:password@db:5432/tasksdb?sslmode=disable"
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/dat
+    healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U user -d tasksdb"]
+        interval: 5s
+        timeout: 5s
+        retries: 10
 
   minio:
     image: minio/minio
@@ -32,14 +38,24 @@ services:
       - db
       
   auth_service:
-    build: ./auth-service
+    build: 
+      context: .
+      dockerfile: auth-service/Dockerfile
+    # environment:
+    #   DB_DSN: "postgres://user:password@postgres:5432/tasksdb?sslmode=disable"
     ports:
-     - "8001:8001"
+     - "8080:8080"
     volumes:
      - ./.env:/app/.env
+     - ./shared:/app/shared
+     - ./auth-service/internal/migrations:/app/internal/migrations:ro
     depends_on:
-      - db
+      db:
+        condition: service_healthy 
+    # command: >
+
     restart: unless-stopped
+
 
   # notes_service:
   #   build: ./notes-service

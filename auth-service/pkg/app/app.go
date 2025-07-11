@@ -26,7 +26,8 @@ func Run() error {
 	basepath := filepath.Dir(b)
 	pathToMigrations := filepath.ToSlash(filepath.Join(basepath, "../../internal/migrations"))
 	log.Print(pathToMigrations)
-	err := migrations.RunMigration(conn, pathToMigrations)
+	// pathToMigrations = filepath.Join(".", "internal", "migrations")
+	err := migrations.RunMigration(conn, "/app/internal/migrations")
 	if err != nil {
 		log.Fatalf("Migration error: %v", err)
 		return fmt.Errorf("Migration error: %v", err)
@@ -34,8 +35,8 @@ func Run() error {
 
 	db, err := dbconf.CreateDSN()
 	if err != nil {
-		log.Fatal("DB connection error: ", err)
-		return fmt.Errorf("DB connection error: ", err)
+		log.Fatalf("DB connection error: %v", err)
+		return fmt.Errorf("DB connection error: %v", err)
 	}
 
 	userRepo := repository.NewUserRepository(db)
