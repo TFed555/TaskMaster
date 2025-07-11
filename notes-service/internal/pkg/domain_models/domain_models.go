@@ -10,3 +10,8 @@ type Todo struct {
   CompletedAt *string
   UserId        *int
 }
+
+type Tag struct {
+  UserID uint
+  Name string
+}

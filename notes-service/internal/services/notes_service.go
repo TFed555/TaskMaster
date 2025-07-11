@@ -18,6 +18,7 @@ type NotesService interface {
 	GetOneTodo(taskId int) (*models.Todo, error)
 	DeleteTodo(taskId int) (bool, error)
 	RestoreTodo(taskId int) (int, error)
+	CreateTag(tag domain_models.Tag) (int, error)
 }
 
 type NotesServiceImpl struct {
@@ -108,6 +109,15 @@ func (s NotesServiceImpl) DeleteTodo(taskId int) (bool, error) {
 
 func (s NotesServiceImpl) RestoreTodo(taskId int) (int, error) {
 	id, err := s.notesRepository.RestoreTodo(taskId)
+	if err != nil {
+		return -1, err
+	}
+	return id, nil
+}
+
+func (s NotesServiceImpl) CreateTag(tag domain_models.Tag) (int, error) {
+	tagName, userId := tag.Name, tag.UserID
+	id, err := s.notesRepository.CreateTag(tagName, userId)
 	if err != nil {
 		return -1, err
 	}

@@ -8,7 +8,8 @@ import (
 	"notes-service/internal/pkg/domain_models"
 	"notes-service/internal/pkg/responses"
 	"notes-service/internal/services"
-	_ "shared/middleware"
+	"shared/middleware"
+	_"shared/utils/cookies"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -366,6 +367,41 @@ func (n NotesController) RestoreTodo(w http.ResponseWriter, r *http.Request) {
 
 	response := responses.CreateResponse{
 		ID: newId,
+	}
+
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (n NotesController) CreateTag(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+		userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	log.Print("UserID:", userID)
+	if !ok {
+	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	    return
+	}
+	log.Printf("Controller received userID: %v", userID)
+	var req responses.CreateTagRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	tagBody := domain_models.Tag{
+		Name: req.Name,
+		UserID: userID,
+	}
+	id, err := n.notesService.CreateTag(tagBody)
+	if err != nil {
+		log.Printf("%s", err)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("bad")
+		return
+	}
+
+	response := responses.CreateResponse{
+		ID: id,
 	}
 
 	w.Header().Set("Content-type", "application/json")

@@ -45,6 +45,34 @@ func (_m *NotesService) ArchiveTask(ID int) (int, error) {
 	return r0, r1
 }
 
+// CreateTag provides a mock function with given fields: tag
+func (_m *NotesService) CreateTag(tag domain_models.Tag) (int, error) {
+	ret := _m.Called(tag)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateTag")
+	}
+
+	var r0 int
+	var r1 error
+	if rf, ok := ret.Get(0).(func(domain_models.Tag) (int, error)); ok {
+		return rf(tag)
+	}
+	if rf, ok := ret.Get(0).(func(domain_models.Tag) int); ok {
+		r0 = rf(tag)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	if rf, ok := ret.Get(1).(func(domain_models.Tag) error); ok {
+		r1 = rf(tag)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // CreateTask provides a mock function with given fields: todoBody
 func (_m *NotesService) CreateTask(todoBody domain_models.Todo) (int, error) {
 	ret := _m.Called(todoBody)

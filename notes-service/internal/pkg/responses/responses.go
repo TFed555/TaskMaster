@@ -50,3 +50,7 @@ type ErrorResponse struct {
 type DeleteResponse struct {
 	Message	string `json:"message"`
 }
+
+type CreateTagRequest struct {
+	Name	string `json:"name"`
+}

@@ -20,7 +20,7 @@ require (
 require (
 	github.com/stretchr/testify v1.9.0
 	google.golang.org/grpc v1.73.0
-	shared v0.0.0
+	// shared v0.0.0
 )
 
 require (
@@ -35,4 +35,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace shared => ../shared
+// replace shared => ../shared

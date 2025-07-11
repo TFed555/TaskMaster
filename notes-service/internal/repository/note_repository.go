@@ -277,3 +277,19 @@ func (n NotesRepository) RestoreTodo(taskId int) (int, error) {
 
 	return addedId, nil
 }
+
+
+func (n NotesRepository) CreateTag(tagName string, userId uint) (int, error) {
+	const op = "repository.notes_repository.createTag"
+
+	query := `INSERT INTO notes.tags (name, userid)
+				VALUES ($1, $2) RETURNING ID`
+	var id int
+	err := n.db.QueryRow(query, tagName, userId).Scan(&id)
+	if err != nil {
+		log.Printf("%s, %s", op, err)
+		return -1, err
+	}
+
+	return id, nil
+}
