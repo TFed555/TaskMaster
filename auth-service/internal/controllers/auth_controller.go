@@ -243,8 +243,8 @@ func (c AuthController) TestCookie(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := Response{
-		Cookies: r.Header.Get("set-cookie"),
-		// Cookies: r.Header.Get("set-cookie")
+		// Cookies: r.Header.Get("set-cookie"),
+		Cookies: r.Header.Get("Cookie"),
 	}
 
 	w.Header().Set("Content-type", "application/json")

@@ -73,6 +73,12 @@ func (m MediaController) SaveAvatar(w http.ResponseWriter, r *http.Request) {
 
 	userID, err := m.authService.ParseUserId(refreshToken)
 
+	if err != "" {
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte(errMsg))
+			return
+	}
+
 	log.Printf("Controller received userID: %v", userID)
 	var req responses.SaveRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

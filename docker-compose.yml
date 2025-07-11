@@ -44,6 +44,8 @@ services:
     ports:
       - "8084:8084"
       - "50050:50050"
+    expose:
+      - "50050:50050"
     volumes:
       - ./media-service/.env.local:/app/.env.local:ro
       - ./.env:/app/.env
@@ -66,6 +68,8 @@ services:
     #   DB_DSN: "postgres://user:password@postgres:5432/tasksdb?sslmode=disable"
     ports:
      - "8080:8080"
+     - "50051:50051"
+    expose:
      - "50051:50051"
     volumes:
      - ./.env:/app/.env:ro

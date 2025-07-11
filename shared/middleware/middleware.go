@@ -31,8 +31,8 @@ const UserIdKey	ContextKey = "userID"
 func (c *AuthMiddleware) SetAuthMiddleware(controller func(w http.ResponseWriter, r *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request){
 
-		// cookiesmas := r.Header.Get("Cookie")
-		cookiesmas := r.Header.Get("set-cookie")
+		cookiesmas := r.Header.Get("Cookie")
+		// cookiesmas := r.Header.Get("set-cookie")
 		refreshToken, accessToken := cookies_func.ParseCookies(cookiesmas)
 
 		log.Printf("Called from middleware %s\n", refreshToken)
