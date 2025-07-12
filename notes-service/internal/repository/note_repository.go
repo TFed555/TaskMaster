@@ -360,3 +360,16 @@ func (n NotesRepository) AddTagToTodo(todoID int, tagID int) (bool, error) {
 	}
 	return true, nil
 }
+
+func (n NotesRepository) ReduceTag(todoID int, tagID int) (bool, error) {
+	const op = "repository.notes_repository.ReduceTag"
+
+	query := `DELETE FROM notes.todo_tags WHERE todoid = $1, tagid = $2`
+	args := []any{todoID, tagID}
+
+	row := n.db.QueryRow(query, args...)
+	if row == nil {
+		return false, fmt.Errorf("%s: %v", op, row)
+	}
+	return true, nil
+}

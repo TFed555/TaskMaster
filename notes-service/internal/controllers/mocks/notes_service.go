@@ -305,6 +305,34 @@ func (_m *NotesService) GetTodos(urlParams url.Values) ([]models.Todo, error) {
 	return r0, r1
 }
 
+// ReduceTag provides a mock function with given fields: tagTodo
+func (_m *NotesService) ReduceTag(tagTodo domain_models.TagTodo) (bool, error) {
+	ret := _m.Called(tagTodo)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReduceTag")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(domain_models.TagTodo) (bool, error)); ok {
+		return rf(tagTodo)
+	}
+	if rf, ok := ret.Get(0).(func(domain_models.TagTodo) bool); ok {
+		r0 = rf(tagTodo)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(domain_models.TagTodo) error); ok {
+		r1 = rf(tagTodo)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RestoreTodo provides a mock function with given fields: taskId
 func (_m *NotesService) RestoreTodo(taskId int) (int, error) {
 	ret := _m.Called(taskId)

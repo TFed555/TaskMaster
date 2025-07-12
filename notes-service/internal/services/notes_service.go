@@ -23,6 +23,7 @@ type NotesService interface {
 	UpdateTag(tagBody domain_models.Tag) (int, error)
 	DeleteTag(tagId int) (bool, error)
 	AddTagToTodo(tagTodo domain_models.TagTodo) (bool, error)
+	ReduceTag(tagTodo domain_models.TagTodo) (bool, error)
 }
 
 type NotesServiceImpl struct {
@@ -158,6 +159,14 @@ func (s NotesServiceImpl) DeleteTag(tagId int) (bool, error) {
 
 func (s NotesServiceImpl) AddTagToTodo(tagTodo domain_models.TagTodo) (bool, error) {
 	result, err := s.notesRepository.AddTagToTodo(tagTodo.TodoID, tagTodo.TagID)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+func (s NotesServiceImpl) ReduceTag(tagTodo domain_models.TagTodo) (bool, error) {
+	result, err := s.notesRepository.ReduceTag(tagTodo.TodoID, tagTodo.TagID)
 	if err != nil {
 		return result, err
 	}

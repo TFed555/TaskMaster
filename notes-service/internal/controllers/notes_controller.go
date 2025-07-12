@@ -544,13 +544,13 @@ func (n NotesController) DeleteTag(w http.ResponseWriter, r *http.Request) {
 }
 
 func (n NotesController) AddTagToTodo(w http.ResponseWriter, r *http.Request) {
-	todoId := chi.URLParam(r, "id")
-	if todoId == "" {
+	tagId := chi.URLParam(r, "id")
+	if tagId == "" {
 		log.Print("Не удалось получить id тэга")
 		http.Error(w, "Invalid url params body", http.StatusBadRequest)
 		return
 	}
-	id, err := strconv.Atoi(todoId)
+	id, err := strconv.Atoi(tagId)
 	if err != nil {
 		log.Print("Не удалось преобразовать id тэга")
 		http.Error(w, "Invalid url params body", http.StatusBadRequest)
@@ -578,4 +578,48 @@ func (n NotesController) AddTagToTodo(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	json.NewEncoder(w).Encode("added successfully")
+}
+
+func (n NotesController) ReduceTag(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		log.Print("Не удалось получить id задачи")
+		http.Error(w, "Invalid url params body", http.StatusBadRequest)
+		return
+	}
+	todoId, err := strconv.Atoi(id)
+	if err != nil {
+		log.Print("Не удалось преобразовать id задачи")
+		http.Error(w, "Invalid url params body", http.StatusBadRequest)
+		return
+	}
+	id = chi.URLParam(r, "tag_id")
+	if id == "" {
+		log.Print("Не удалось получить id тэга")
+		http.Error(w, "Invalid url params body", http.StatusBadRequest)
+		return
+	}
+	tagId, err := strconv.Atoi(id)
+	if err != nil {
+		log.Print("Не удалось преобразовать id тэга")
+		http.Error(w, "Invalid url params body", http.StatusBadRequest)
+		return
+	}
+
+	tagTodo := domain_models.TagTodo{
+		TodoID: todoId,
+		TagID: tagId,
+	}
+	log.Print(tagTodo)
+	success, err := n.notesService.ReduceTag(tagTodo)
+	if !success || err != nil {
+		log.Printf("%s", err)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("bad")
+		return
+	}
+
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode("reduced successfully")
 }
