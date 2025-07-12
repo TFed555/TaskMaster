@@ -20,4 +20,5 @@ type Todo struct {
 type Tag struct {
     ID int `db:"id"`
     Name string `db:"name"`
+    UserID int `db:"userid"`
 }

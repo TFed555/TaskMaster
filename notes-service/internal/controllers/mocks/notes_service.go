@@ -101,6 +101,34 @@ func (_m *NotesService) CreateTask(todoBody domain_models.Todo) (int, error) {
 	return r0, r1
 }
 
+// DeleteTag provides a mock function with given fields: tagId
+func (_m *NotesService) DeleteTag(tagId int) (bool, error) {
+	ret := _m.Called(tagId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteTag")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(int) (bool, error)); ok {
+		return rf(tagId)
+	}
+	if rf, ok := ret.Get(0).(func(int) bool); ok {
+		r0 = rf(tagId)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(int) error); ok {
+		r1 = rf(tagId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // DeleteTodo provides a mock function with given fields: taskId
 func (_m *NotesService) DeleteTodo(taskId int) (bool, error) {
 	ret := _m.Called(taskId)
@@ -270,6 +298,34 @@ func (_m *NotesService) RestoreTodo(taskId int) (int, error) {
 
 	if rf, ok := ret.Get(1).(func(int) error); ok {
 		r1 = rf(taskId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateTag provides a mock function with given fields: tagBody
+func (_m *NotesService) UpdateTag(tagBody domain_models.Tag) (int, error) {
+	ret := _m.Called(tagBody)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateTag")
+	}
+
+	var r0 int
+	var r1 error
+	if rf, ok := ret.Get(0).(func(domain_models.Tag) (int, error)); ok {
+		return rf(tagBody)
+	}
+	if rf, ok := ret.Get(0).(func(domain_models.Tag) int); ok {
+		r0 = rf(tagBody)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	if rf, ok := ret.Get(1).(func(domain_models.Tag) error); ok {
+		r1 = rf(tagBody)
 	} else {
 		r1 = ret.Error(1)
 	}

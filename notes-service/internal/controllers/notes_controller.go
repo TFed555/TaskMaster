@@ -255,14 +255,17 @@ func (n NotesController) ArchiveTodo(w http.ResponseWriter, r *http.Request) {
 	taskId := chi.URLParam(r, "id")
 	if taskId == "" {
 		log.Print("Не удалось получить id задачи")
+		http.Error(w, "Invalid url params body", http.StatusBadRequest)
+		return
 	}
 
 	id, err := strconv.Atoi(taskId)
 	if err != nil {
 		log.Print("Не удалось преобразовать id задачи")
+		http.Error(w, "Invalid url params body", http.StatusBadRequest)
+		return
 	}
 
-	//передавать в модели
 	id, err = n.notesService.ArchiveTask(id)
 
 	if err != nil {
@@ -298,10 +301,14 @@ func (n NotesController) GetOneTodo(w http.ResponseWriter, r *http.Request) {
 	taskId := chi.URLParam(r, "id")
 	if taskId == "" {
 		log.Print("Не удалось получить id задачи")
+		http.Error(w, "Invalid url params body", http.StatusBadRequest)
+		return
 	}
 	id, err := strconv.Atoi(taskId)
 	if err != nil {
 		log.Print("Не удалось преобразовать id задачи")
+		http.Error(w, "Invalid url params body", http.StatusBadRequest)
+		return
 	}
 	todo, err := n.notesService.GetOneTodo(id)
 	if err != nil {
@@ -328,10 +335,14 @@ func (n NotesController) DeleteTodo(w http.ResponseWriter, r *http.Request) {
 	taskId := chi.URLParam(r, "id")
 	if taskId == "" {
 		log.Print("Не удалось получить id задачи")
+		http.Error(w, "Invalid url params body", http.StatusBadRequest)
+		return
 	}
 	id, err := strconv.Atoi(taskId)
 	if err != nil {
 		log.Print("Не удалось преобразовать id задачи")
+		http.Error(w, "Invalid url params body", http.StatusBadRequest)
+		return
 	}
 	success, err := n.notesService.DeleteTodo(id)
 	if !success || err != nil {
@@ -353,10 +364,14 @@ func (n NotesController) RestoreTodo(w http.ResponseWriter, r *http.Request) {
 	taskId := chi.URLParam(r, "id")
 	if taskId == "" {
 		log.Print("Не удалось получить id задачи")
+		http.Error(w, "Invalid url params body", http.StatusBadRequest)
+		return
 	}
 	id, err := strconv.Atoi(taskId)
 	if err != nil {
 		log.Print("Не удалось преобразовать id задачи")
+		http.Error(w, "Invalid url params body", http.StatusBadRequest)
+		return
 	}
 	newId, err := n.notesService.RestoreTodo(id)
 	if err != nil {
@@ -411,7 +426,7 @@ func (n NotesController) CreateTag(w http.ResponseWriter, r *http.Request) {
 
 func (n NotesController) GetTags(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-		userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
 	log.Print("UserID:", userID)
 	if !ok {
 	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -438,6 +453,89 @@ func (n NotesController) GetTags(w http.ResponseWriter, r *http.Request) {
 
 	response := responses.TagResponse{
 		Tags: &masTags,
+	}
+
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (n NotesController) UpdateTag(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	log.Print("UserID:", userID)
+	if !ok {
+	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	    return
+	}
+	log.Printf("Controller received userID: %v", userID)
+
+	tagId := chi.URLParam(r, "id")
+	if tagId == "" {
+		log.Print("Не удалось получить id тэга")
+		http.Error(w, "Invalid url params", http.StatusBadRequest)
+		return
+	}
+	id, err := strconv.Atoi(tagId)
+	if err != nil {
+		log.Print("Не удалось преобразовать id тэга")
+		http.Error(w, "Invalid url params body", http.StatusBadRequest)
+		return
+	}
+
+	var req responses.UpdateTagRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	tagBody := domain_models.Tag{
+		ID: &id,
+		UserID: userID,
+		Name: req.Name,
+	}
+	updatedId, err := n.notesService.UpdateTag(tagBody)
+	if err != nil {
+		log.Printf("%s", err)
+		w.WriteHeader(http.StatusBadRequest)
+		// errMsg := ErrorResponse{
+		// 	Status:  http.StatusInternalServerError,
+		// 	Message: "User does not exists",
+		// }
+		json.NewEncoder(w).Encode("bad")
+		return
+	}
+
+	response := responses.CreateResponse{
+		ID: updatedId,
+	}
+
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (n NotesController) DeleteTag(w http.ResponseWriter, r *http.Request) {
+	tagId := chi.URLParam(r, "id")
+	if tagId == "" {
+		log.Print("Не удалось получить id тэга")
+		http.Error(w, "Invalid url params body", http.StatusBadRequest)
+		return
+	}
+	id, err := strconv.Atoi(tagId)
+	if err != nil {
+		log.Print("Не удалось преобразовать id тэга")
+		http.Error(w, "Invalid url params body", http.StatusBadRequest)
+		return
+	}
+	success, err := n.notesService.DeleteTag(id)
+	if !success || err != nil {
+		log.Println(err)
+		http.Error(w, "Can't get tag info", http.StatusBadRequest)
+		return
+	}
+
+	response := responses.DeleteResponse{
+		Message: "Deleted successfully",
 	}
 
 	w.Header().Set("Content-type", "application/json")

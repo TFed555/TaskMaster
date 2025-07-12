@@ -12,6 +12,7 @@ type Todo struct {
 }
 
 type Tag struct {
+  ID     *int
   UserID uint
   Name string
 }

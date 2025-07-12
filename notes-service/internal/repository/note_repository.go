@@ -308,3 +308,40 @@ func (n NotesRepository) GetTags(userID uint) ([]models.Tag, error) {
 	}
 	return tags, nil
 }
+
+func (n NotesRepository) UpdateTag(tag models.Tag) (int, error) {
+	const op = "repository.notes_repository.UpdateTag"
+
+	query := `UPDATE notes.tags SET `
+	values := []string{}
+	args := []any{}
+	count := 0
+	if tag.Name != "" {
+		count++
+		values = append(values, fmt.Sprintf("NAME=NULLIF($%d, '')", count))
+		args = append(args, tag.Name)
+	}
+	query += strings.Join(values, "")
+	count++
+	query += fmt.Sprintf(` WHERE id = $%d RETURNING id`, count)
+	args = append(args, tag.ID)
+	log.Printf("%s, %d", op, tag.ID)
+	var dbId int
+	err := n.db.QueryRow(query, args...).Scan(&dbId)
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w", op, err)
+	}
+	return dbId, nil
+}
+
+func (n NotesRepository) DeleteTag(tagId int) (bool, error) {
+	const op = "repository.notes_repository.DeleteTag"
+
+	query := `DELETE FROM notes.tags WHERE id = $1`
+	res, err := n.db.Exec(query, tagId)
+	if err != nil {
+		return false, fmt.Errorf("%s: %w", op, err)
+	}
+	result, _ := res.RowsAffected()
+	return result > 0, nil
+}
