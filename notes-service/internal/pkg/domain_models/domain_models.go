@@ -16,3 +16,8 @@ type Tag struct {
   UserID uint
   Name string
 }
+
+type TagTodo struct {
+  TodoID int
+  TagID int
+}

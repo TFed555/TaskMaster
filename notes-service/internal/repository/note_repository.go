@@ -345,3 +345,18 @@ func (n NotesRepository) DeleteTag(tagId int) (bool, error) {
 	result, _ := res.RowsAffected()
 	return result > 0, nil
 }
+
+func (n NotesRepository) AddTagToTodo(todoID int, tagID int) (bool, error) {
+	const op = "repository.notes_repository.AddTagToTodo"
+
+	query := `INSERT INTO notes.todo_tags(todoid, tagid) `
+	values := `VALUES ($1, $2)`
+	args := []any{todoID, tagID}
+
+	query += values
+	row := n.db.QueryRow(query, args...)
+	if row == nil {
+		return false, fmt.Errorf("%s: %v", op, row)
+	}
+	return true, nil
+}

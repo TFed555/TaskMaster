@@ -17,6 +17,34 @@ type NotesService struct {
 	mock.Mock
 }
 
+// AddTagToTodo provides a mock function with given fields: tagTodo
+func (_m *NotesService) AddTagToTodo(tagTodo domain_models.TagTodo) (bool, error) {
+	ret := _m.Called(tagTodo)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddTagToTodo")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(domain_models.TagTodo) (bool, error)); ok {
+		return rf(tagTodo)
+	}
+	if rf, ok := ret.Get(0).(func(domain_models.TagTodo) bool); ok {
+		r0 = rf(tagTodo)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(domain_models.TagTodo) error); ok {
+		r1 = rf(tagTodo)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ArchiveTask provides a mock function with given fields: ID
 func (_m *NotesService) ArchiveTask(ID int) (int, error) {
 	ret := _m.Called(ID)

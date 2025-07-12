@@ -67,3 +67,7 @@ type OneTagResponse struct {
 type UpdateTagRequest struct {
 	Name string	`json:"name"`
 }
+
+type AddTagRequest struct {
+	TagId int `json:"tagId"`
+}

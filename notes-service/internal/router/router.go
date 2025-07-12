@@ -46,6 +46,7 @@ func InitNewRouter(notesController controllers.NotesController, authMiddleware m
 	router.Get("/api/tags", authMiddleware.SetAuthMiddleware(notesController.GetTags))
 	router.Patch("/api/tags/{id}", authMiddleware.SetAuthMiddleware(notesController.UpdateTag))
 	router.Delete("/api/tags/{id}", authMiddleware.SetAuthMiddleware(notesController.DeleteTag))
+	router.Post("/api/todos/{id}/tags", authMiddleware.SetAuthMiddleware(notesController.AddTagToTodo))
 
 	return Router{
 		ChiRouter: router,

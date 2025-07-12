@@ -542,3 +542,40 @@ func (n NotesController) DeleteTag(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusAccepted)
 	json.NewEncoder(w).Encode(response)
 }
+
+func (n NotesController) AddTagToTodo(w http.ResponseWriter, r *http.Request) {
+	todoId := chi.URLParam(r, "id")
+	if todoId == "" {
+		log.Print("Не удалось получить id тэга")
+		http.Error(w, "Invalid url params body", http.StatusBadRequest)
+		return
+	}
+	id, err := strconv.Atoi(todoId)
+	if err != nil {
+		log.Print("Не удалось преобразовать id тэга")
+		http.Error(w, "Invalid url params body", http.StatusBadRequest)
+		return
+	}
+
+	var req responses.AddTagRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	tagTodo := domain_models.TagTodo{
+		TodoID: id,
+		TagID: req.TagId,
+	}
+	log.Print(tagTodo)
+	success, err := n.notesService.AddTagToTodo(tagTodo)
+	if !success || err != nil {
+		log.Printf("%s", err)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("bad")
+		return
+	}
+
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode("added successfully")
+}
