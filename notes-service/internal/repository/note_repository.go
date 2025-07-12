@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"net/url"
@@ -171,7 +172,18 @@ func (n NotesRepository) ArchiveTodo(ID int) (int, error) {
 	if rowsAffected == 0 {
 		return -1, fmt.Errorf("%s: %w", op, err)
 	}
-
+	var tagId int
+	err = n.db.QueryRow(`SELECT tagId from notes.todo_tags WHERE todoId = $1`, ID).Scan(&tagId)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+   		return -1, fmt.Errorf("%s: %w", op, err)
+	}
+	if err == nil {
+		nextQuery = `INSERT INTO notes.archived_todo_tags (todoid, tagid) VALUES ($1, $2)`
+		_, err = n.db.Exec(nextQuery, addedId, tagId)
+		if err != nil {
+			return -1, fmt.Errorf("%s: %w", op, err)
+		}
+	}
 	return addedId, nil
 }
 
@@ -229,8 +241,16 @@ func (n NotesRepository) DeleteTodo(taskId int) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("%s: %w", op, err)
 	}
-	result, _ := res.RowsAffected()
-	return result > 0, nil
+	resultFromArchived, _ := res.RowsAffected()
+
+	query = `DELETE FROM notes.archived_todo_tags WHERE todoid = $1`
+	res, err = n.db.Exec(query, taskId)
+	if err != nil {
+		return false, fmt.Errorf("%s: %w", op, err)
+	}
+	resultFromTodotags, _ := res.RowsAffected()
+
+	return resultFromArchived > 0 && resultFromTodotags > 0, nil
 }
 
 func (n NotesRepository) RestoreTodo(taskId int) (int, error) {
