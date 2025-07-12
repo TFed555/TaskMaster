@@ -54,3 +54,12 @@ type DeleteResponse struct {
 type CreateTagRequest struct {
 	Name	string `json:"name"`
 }
+
+type TagResponse struct {
+	Tags *[]OneTagResponse
+}
+
+type OneTagResponse struct {
+	ID	int		`json:"id"`
+	Name string `json:"name"`
+}

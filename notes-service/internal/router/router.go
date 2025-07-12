@@ -42,7 +42,8 @@ func InitNewRouter(notesController controllers.NotesController, authMiddleware m
 	router.Post("/api/todos", notesController.CreateTodo)
 	router.Patch("/api/todos", notesController.UpdateTodo)
 
-	router.Post("/api/tag", authMiddleware.SetAuthMiddleware(notesController.CreateTag))
+	router.Post("/api/tags", authMiddleware.SetAuthMiddleware(notesController.CreateTag))
+	router.Get("/api/tags", authMiddleware.SetAuthMiddleware(notesController.GetTags))
 
 
 	return Router{

@@ -87,7 +87,7 @@ func (n NotesRepository) GetTodos(urlParams url.Values, tableName string) ([]mod
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("%s: task not found", op)
+			return nil, fmt.Errorf("%s: tasks not found", op)
 		}
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
@@ -292,4 +292,19 @@ func (n NotesRepository) CreateTag(tagName string, userId uint) (int, error) {
 	}
 
 	return id, nil
+}
+
+func (n NotesRepository) GetTags(userID uint) ([]models.Tag, error) {
+	const op = "repository.notes_repository.getTags"
+
+	query := `SELECT id, name FROM notes.tags WHERE userid = $1`
+	tags := []models.Tag{}
+	err := n.db.Select(&tags, query, userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("%s: tags not found", op)
+		}
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	return tags, nil
 }

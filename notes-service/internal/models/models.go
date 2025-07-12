@@ -16,3 +16,8 @@ type Todo struct {
   CompletedAt *string	`db:"completedat"` //т.к. может быть null
   UserId        *int       `db:"userid"`
 }
+
+type Tag struct {
+    ID int `db:"id"`
+    Name string `db:"name"`
+}

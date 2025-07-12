@@ -189,6 +189,36 @@ func (_m *NotesService) GetOneTodo(taskId int) (*models.Todo, error) {
 	return r0, r1
 }
 
+// GetTags provides a mock function with given fields: userID
+func (_m *NotesService) GetTags(userID uint) ([]models.Tag, error) {
+	ret := _m.Called(userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetTags")
+	}
+
+	var r0 []models.Tag
+	var r1 error
+	if rf, ok := ret.Get(0).(func(uint) ([]models.Tag, error)); ok {
+		return rf(userID)
+	}
+	if rf, ok := ret.Get(0).(func(uint) []models.Tag); ok {
+		r0 = rf(userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]models.Tag)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(uint) error); ok {
+		r1 = rf(userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetTodos provides a mock function with given fields: urlParams
 func (_m *NotesService) GetTodos(urlParams url.Values) ([]models.Todo, error) {
 	ret := _m.Called(urlParams)

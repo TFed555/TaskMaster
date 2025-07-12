@@ -408,3 +408,39 @@ func (n NotesController) CreateTag(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusAccepted)
 	json.NewEncoder(w).Encode(response)
 }
+
+func (n NotesController) GetTags(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+		userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	log.Print("UserID:", userID)
+	if !ok {
+	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	    return
+	}
+	log.Printf("Controller received userID: %v", userID)
+
+	tags, err := n.notesService.GetTags(userID)
+	if err != nil {
+		log.Printf("%s", err)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("bad")
+		return
+	}
+	masTags := make([]responses.OneTagResponse, 0)
+
+	for _, el := range tags {
+		tag := responses.OneTagResponse{
+			ID: el.ID,
+			Name: el.Name,
+		}
+		masTags = append(masTags, tag)
+	}
+
+	response := responses.TagResponse{
+		Tags: &masTags,
+	}
+
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(response)
+}
