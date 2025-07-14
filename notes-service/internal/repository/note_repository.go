@@ -80,6 +80,8 @@ func (n NotesRepository) GetTodos(urlParams url.Values, tableName string) ([]mod
 		log.Printf("Limit: %s", limit)
 	}
 
+	// nextQuery := `SELECT name FROM tags WHERE id = (SELECT id FROM todo_tags WHERE taskid = $1)`
+
 	err := n.db.Select(&todos, query, args...)
 
 	if err != nil {
@@ -248,7 +250,7 @@ func (n NotesRepository) DeleteTodo(taskId int) (bool, error) {
 
 	if err == nil {
 		query = `DELETE FROM notes.archived_todo_tags WHERE todoid = $1`
-		res, err = n.db.Exec(query, taskId)
+		_, err = n.db.Exec(query, taskId)
 		if err != nil {
 			return false, fmt.Errorf("%s: %w", op, err)
 		}
@@ -373,14 +375,25 @@ func (n NotesRepository) DeleteTag(tagId int) (bool, error) {
 func (n NotesRepository) AddTagToTodo(todoID int, tagID int) (bool, error) {
 	const op = "repository.notes_repository.AddTagToTodo"
 
-	query := `INSERT INTO notes.todo_tags(todoid, tagid) `
-	values := `VALUES ($1, $2)`
+	query := `SELECT todoid from notes.todo_tags WHERE todoid = $1 and tagid = $2`
+	var selectedId int
+	err := n.db.QueryRow(query, todoID, tagID).Scan(&selectedId)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return false, fmt.Errorf("%s: %v", op, err)
+	}
+	if selectedId > 0 {
+		return false, fmt.Errorf("This connection already exists")
+	}
+
+	nextQuery := `INSERT INTO notes.todo_tags(todoid, tagid) `
+	values := `VALUES ($1, $2) RETURNING todoid`
 	args := []any{todoID, tagID}
 
-	query += values
-	row := n.db.QueryRow(query, args...)
-	if row == nil {
-		return false, fmt.Errorf("%s: %v", op, row)
+	nextQuery += values
+	var insertedId int
+	err = n.db.QueryRow(nextQuery, args...).Scan(&insertedId)
+	if err != nil {
+		return false, fmt.Errorf("%s: %v", op, err)
 	}
 	return true, nil
 }
@@ -388,12 +401,16 @@ func (n NotesRepository) AddTagToTodo(todoID int, tagID int) (bool, error) {
 func (n NotesRepository) ReduceTag(todoID int, tagID int) (bool, error) {
 	const op = "repository.notes_repository.ReduceTag"
 
-	query := `DELETE FROM notes.todo_tags WHERE todoid = $1, tagid = $2`
+	query := `DELETE FROM notes.todo_tags WHERE todoid = $1 AND tagid = $2`
 	args := []any{todoID, tagID}
 
-	row := n.db.QueryRow(query, args...)
-	if row == nil {
-		return false, fmt.Errorf("%s: %v", op, row)
+	res, err := n.db.Exec(query, args...)
+	if err != nil {
+		return false, fmt.Errorf("%s: %v", op, err)
 	}
-	return true, nil
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return false, fmt.Errorf("%s: %v", op, err)
+	}
+	return rowsAffected>0, nil
 }
