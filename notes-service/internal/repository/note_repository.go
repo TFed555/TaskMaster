@@ -113,8 +113,23 @@ func (n NotesRepository) GetTodoByID(ID int, tableName string) (*models.Todo, er
 	todo := models.Todo{}
 	err := n.db.QueryRowx(query, ID).StructScan(&todo)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("%s: todos not found", op)
+		}
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
+
+	nextQuery := `SELECT id, name FROM notes.tags WHERE id IN (SELECT tagid FROM notes.todo_tags WHERE todoid = $1)`
+	tags := []models.Tag{}
+	err = n.db.Select(&tags, nextQuery, *todo.ID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("%s: %v", op, err)
+	}
+	if err == nil {
+	todo.Tags = append(todo.Tags, tags...)
+		log.Printf("Mass %v", todo)
+	}
+
 	return &todo, nil
 }
 

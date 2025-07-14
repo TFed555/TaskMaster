@@ -335,6 +335,14 @@ func (n NotesController) GetOneTodo(w http.ResponseWriter, r *http.Request) {
 		CompletedAt: todo.CompletedAt,
 	}
 
+	for _, el_t := range todo.Tags {
+		tag := responses.OneTagResponse{
+			ID: el_t.ID,
+			Name: el_t.Name,
+		}
+		response.Tags = append(response.Tags, tag)
+	}
+
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	json.NewEncoder(w).Encode(response)
