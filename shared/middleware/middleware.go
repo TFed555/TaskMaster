@@ -44,7 +44,7 @@ func (c *AuthMiddleware) SetAuthMiddleware(controller func(w http.ResponseWriter
 	if !result {
 		w.WriteHeader(http.StatusForbidden)
 		w.Write([]byte(errMsg))
-    	http.Error(w, "Invalid token", http.StatusUnauthorized)
+    	// http.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
 	}
 
