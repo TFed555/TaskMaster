@@ -23,3 +23,8 @@ type Tag struct {
 	Name   string `db:"name"`
 	UserID *int    `db:"userid"`
 }
+
+type HistoryTodo struct {
+  Title string `db:"title"`
+  Status string `db:"action"`
+}

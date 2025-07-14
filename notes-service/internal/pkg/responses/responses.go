@@ -73,3 +73,12 @@ type UpdateTagRequest struct {
 type AddTagRequest struct {
 	TagId int `json:"tagId"`
 }
+
+type OneAuditTrial struct {
+	Title string `json:"title"`
+	Status string `json:"status"`
+}
+
+type AuditTrial struct {
+	Changes *[]OneAuditTrial
+}

@@ -30,18 +30,20 @@ func InitNewRouter(authController controllers.AuthController, authMiddleware mid
         MaxAge:           300,
     }))
 
-	// router.Post("/", middleware.AuthMiddleware(authController.Test))
-	router.Post("/api/registration", authController.Register)
-	router.Post("/api/login", authController.Authorize)
-	//router.Get("/api/refresh", authController.Refresh)
+	router.Route("/api", func(r chi.Router) {
+		r.Post("/registration", authController.Register)
+		r.Post("/login", authController.Authorize)
 
-	// router.Get("/api/testSecure", authController.Test)
-	router.Get("/api/test/cookie", authMiddleware.SetAuthMiddleware(authController.TestCookie))
-	router.Get("/api/test/middleware", authMiddleware.SetAuthMiddleware(authController.Test))
-	router.Delete("/api/login", authMiddleware.SetAuthMiddleware(authController.Logout))
-	// router.Post("/testJWT", authController.TestJWT)
-	router.Delete("/api/user", authMiddleware.SetAuthMiddleware(authController.DeleteUser))
-	router.Patch("/api/user", authMiddleware.SetAuthMiddleware(authController.UpdateUser))
+		r.Group(func(r chi.Router) {
+			r.Use(authMiddleware.SetAuthMiddleware)
+			r.Get("/test/cookie", authController.TestCookie)
+			r.Get("/test/middleware", authController.Test)
+			r.Delete("/login", authController.Logout)
+			r.Delete("/user", authController.DeleteUser)
+			r.Patch("/user", authController.UpdateUser)
+		})
+	})
+
 
 	return Router{
 		ChiRouter: router,

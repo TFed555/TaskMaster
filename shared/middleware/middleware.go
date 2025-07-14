@@ -27,8 +27,8 @@ type ContextKey string
 
 const UserIdKey	ContextKey = "userID"
 
-func (c *AuthMiddleware) SetAuthMiddleware(controller func(w http.ResponseWriter, r *http.Request)) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request){
+func (c *AuthMiddleware) SetAuthMiddleware(controller http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
 	cookiesmas := ""
 	if r.Header.Get("set-cookie") != "" {
 		cookiesmas = r.Header.Get("set-cookie")
@@ -58,7 +58,7 @@ func (c *AuthMiddleware) SetAuthMiddleware(controller func(w http.ResponseWriter
     ctx := context.WithValue(r.Context(), UserIdKey, userID)
 
 	log.Printf("CALLED FROM MDLWR %d \n", ctx.Value(UserIdKey).(uint))
-	controller(w, r.WithContext(ctx))
+	controller.ServeHTTP(w, r.WithContext(ctx))
 
-	}
+	})
 }

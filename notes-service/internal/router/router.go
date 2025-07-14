@@ -1,13 +1,9 @@
 package router
 
 import (
-	// "log"
-	// "net/http"
-
 	"notes-service/internal/controllers"
-	// "notes-service/internal/middleware"
+	notesMiddleware "notes-service/internal/middleware"
 	"shared/middleware"
-	_ "shared/middleware"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
@@ -18,7 +14,7 @@ type Router struct {
 	Port      string
 }
 
-func InitNewRouter(notesController controllers.NotesController, authMiddleware middleware.AuthMiddleware) Router {
+func InitNewRouter(notesController controllers.NotesController, authMiddleware middleware.AuthMiddleware, notesMiddleware notesMiddleware.NotesMiddleware) Router {
 
 	router := chi.NewRouter()
 
@@ -32,22 +28,29 @@ func InitNewRouter(notesController controllers.NotesController, authMiddleware m
 		MaxAge:           300,
 	}))
 
-	router.Get("/api/test", authMiddleware.SetAuthMiddleware(notesController.Test))
-	router.Get("/api/todos", authMiddleware.SetAuthMiddleware(notesController.GetTodos))
-	router.Get("/api/todos/archived", authMiddleware.SetAuthMiddleware(notesController.GetArchivedTodos))
-	router.Delete("/api/todos/archived/{id}", authMiddleware.SetAuthMiddleware(notesController.DeleteTodo))
-	router.Put("/api/todos/archived/{id}", authMiddleware.SetAuthMiddleware(notesController.RestoreTodo))
-	router.Get("/api/todos/{id}", authMiddleware.SetAuthMiddleware(notesController.GetOneTodo))
-	router.Delete("/api/todos/{id}", authMiddleware.SetAuthMiddleware(notesController.ArchiveTodo))
-	router.Post("/api/todos", authMiddleware.SetAuthMiddleware(notesController.CreateTodo))
-	router.Patch("/api/todos", authMiddleware.SetAuthMiddleware(notesController.UpdateTodo))
+	router.Use(authMiddleware.SetAuthMiddleware)
 
-	router.Post("/api/tags", authMiddleware.SetAuthMiddleware(notesController.CreateTag))
-	router.Get("/api/tags", authMiddleware.SetAuthMiddleware(notesController.GetTags))
-	router.Patch("/api/tags/{id}", authMiddleware.SetAuthMiddleware(notesController.UpdateTag))
-	router.Delete("/api/tags/{id}", authMiddleware.SetAuthMiddleware(notesController.DeleteTag))
-	router.Post("/api/todos/{id}/tags", authMiddleware.SetAuthMiddleware(notesController.AddTagToTodo))
-	router.Delete("/api/todos/{id}/tags/{tag_id}", authMiddleware.SetAuthMiddleware(notesController.ReduceTag))
+	router.Route("/api/todos", func(r chi.Router) {
+		// r.Use(notesMiddleware.SetNotesMIddleware)
+		r.Get("/", notesController.GetTodos)
+		r.Get("/archived", notesController.GetArchivedTodos)
+
+		r.With(notesMiddleware.SetNotesMIddleware).Delete("/archived/{id}", notesController.DeleteTodo)
+		r.With(notesMiddleware.SetNotesMIddleware).Put("/archived/{id}", notesController.RestoreTodo)
+		r.With(notesMiddleware.SetNotesMIddleware).Patch("/{id}", notesController.UpdateTodo)
+		r.With(notesMiddleware.SetNotesMIddleware).Delete("/{id}", notesController.ArchiveTodo)
+
+		r.Get("/{id}", notesController.GetOneTodo)
+		r.Post("/", notesController.CreateTodo)
+		r.Get("/history", notesController.GetAuditTrail)
+	})
+
+	router.Post("/api/tags", notesController.CreateTag)
+	router.Get("/api/tags", notesController.GetTags)
+	router.Patch("/api/tags/{id}", notesController.UpdateTag)
+	router.Delete("/api/tags/{id}", notesController.DeleteTag)
+	router.Post("/api/todos/{id}/tags", notesController.AddTagToTodo)
+	router.Delete("/api/todos/{id}/tags/{tag_id}", notesController.ReduceTag)
 
 	return Router{
 		ChiRouter: router,

@@ -11,7 +11,7 @@ import (
 	"shared/middleware"
 	cookies_func "shared/utils/cookies"
 	"time"
-	// jwt_func "auth-service/internal/pkg/jwt"
+	jwt_func "auth-service/internal/pkg/jwt"
 )
 
 
@@ -115,19 +115,19 @@ func (c AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//temp
-	// jwt := jwt_func.NewJWTFunctional()
+	jwt := jwt_func.NewJWTFunctional()
 
-	// accesstoken, _  := jwt.GenerateJWTAccessToken(user.ID)
+	accesstoken, _  := jwt.GenerateJWTAccessToken(user.ID)
 
-	// if err != nil {
-	// 		log.Print(err)
-	// 		w.WriteHeader(http.StatusForbidden)
-	// 		w.Write([]byte(err.Error()))
-	// 		return
-	// }
-	// var time_expires_access = time.Now().Add(15 * time.Minute)
+	if err != nil {
+			log.Print(err)
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte(err.Error()))
+			return
+	}
+	var time_expires_access = time.Now().Add(15 * time.Minute)
 
-	// cookies_func.SetCookies(&w, "access_token", accesstoken, time_expires_access)
+	cookies_func.SetCookies(&w, "access_token", accesstoken, time_expires_access)
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)

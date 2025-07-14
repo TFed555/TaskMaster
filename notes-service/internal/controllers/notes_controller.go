@@ -103,23 +103,24 @@ func (n NotesController) GetTodos(w http.ResponseWriter, r *http.Request) {
 }
 
 func (n NotesController) CreateTodo(w http.ResponseWriter, r *http.Request) {
-	// ctx := r.Context()
-	// 	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
-	// log.Print("UserID:", userID)
-	// if !ok {
-	//     http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	//     return
-	// }
-	// log.Printf("Controller received userID: %v", userID)
+	ctx := r.Context()
+	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	log.Print("UserID:", userID)
+	if !ok {
+	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	    return
+	}
+	log.Printf("Controller received userID: %v", userID)
 
 	var req responses.CreateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
+	userId := int(userID)
 	log.Printf("NotesController: %v", req)
 	todoBody := domain_models.Todo{
-		UserId: req.UserID,
+		UserId: &userId,
 		Title: req.Title,
 		Priority: req.Priority,
 		Description: req.Description,
@@ -152,14 +153,19 @@ func (n NotesController) CreateTodo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (n NotesController) UpdateTodo(w http.ResponseWriter, r *http.Request) {
-	// ctx := r.Context()
-	// 	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
-	// log.Print("UserID:", userID)
-	// if !ok {
-	//     http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	//     return
-	// }
-	// log.Printf("Controller received userID: %v", userID)
+	todoId := chi.URLParam(r, "id")
+	if todoId == "" {
+		log.Print("Не удалось получить id задачи")
+		http.Error(w, "Invalid url params body", http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.Atoi(todoId)
+	if err != nil {
+		log.Print("Не удалось преобразовать id задачи")
+		http.Error(w, "Invalid url params body", http.StatusBadRequest)
+		return
+	}
 
 	var req responses.UpdateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -167,7 +173,7 @@ func (n NotesController) UpdateTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	todoBody := domain_models.Todo{
-		ID: &req.ID,
+		ID: &id,
 		Title: req.Title,
 		Priority: req.Priority,
 		Description: req.Description,
@@ -176,7 +182,7 @@ func (n NotesController) UpdateTodo(w http.ResponseWriter, r *http.Request) {
 		CompletedAt: req.CompletedAt,
 	}
 
-	id, err := n.notesService.UpdateTask(todoBody)
+	updatedId, err := n.notesService.UpdateTask(todoBody)
 
 	if err != nil {
 		log.Printf("%s", err)
@@ -190,7 +196,7 @@ func (n NotesController) UpdateTodo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := responses.CreateResponse{
-		ID: id,
+		ID: updatedId,
 	}
 
 	w.Header().Set("Content-type", "application/json")
@@ -639,4 +645,44 @@ func (n NotesController) ReduceTag(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	json.NewEncoder(w).Encode("reduced successfully")
+}
+
+func (n NotesController) GetAuditTrail(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	log.Print("UserID:", userID)
+	if !ok {
+	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	    return
+	}
+	log.Printf("Controller received userID: %v", userID)
+
+	history_todos, err := n.notesService.GetAuditTrail(userID)
+	if err != nil {
+		log.Println(err)
+		w.Header().Set("Content-type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": "Не удалось получить данные",
+		})
+	}
+
+	mas_history := make([]responses.OneAuditTrial, 0)
+
+	for _, el := range history_todos {
+		todo := responses.OneAuditTrial{
+			Title: el.Title,
+			Status: el.Status,
+		}
+		mas_history = append(mas_history, todo)
+	}
+
+	response := responses.AuditTrial {
+		Changes: &mas_history,
+	}
+	
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(response)
+
 }

@@ -20,11 +20,12 @@ require (
 require (
 	github.com/stretchr/testify v1.9.0
 	google.golang.org/grpc v1.73.0
-	// shared v0.0.0
+// shared v0.0.0
 )
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/go-chi/chi v1.5.5
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	golang.org/x/net v0.38.0 // indirect

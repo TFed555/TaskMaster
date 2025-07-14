@@ -1,12 +1,15 @@
 package services
 
 import (
+	"errors"
 	"log"
 	_ "log"
 	"net/url"
 	"notes-service/internal/models"
 	"notes-service/internal/pkg/domain_models"
+	"notes-service/internal/pkg/responses"
 	"notes-service/internal/repository"
+	"strconv"
 )
 
 type NotesService interface {
@@ -24,6 +27,8 @@ type NotesService interface {
 	DeleteTag(tagId int) (bool, error)
 	AddTagToTodo(tagTodo domain_models.TagTodo) (bool, error)
 	ReduceTag(tagTodo domain_models.TagTodo) (bool, error)
+	Audit(method string, userId uint, requestBody any) (error)
+	GetAuditTrail(userID uint) ([]models.HistoryTodo, error)
 }
 
 type NotesServiceImpl struct {
@@ -171,4 +176,30 @@ func (s NotesServiceImpl) ReduceTag(tagTodo domain_models.TagTodo) (bool, error)
 		return result, err
 	}
 	return result, nil
+}
+
+func (s NotesServiceImpl) Audit(method string, userId uint, requestBody any) (error) {
+	var id int
+    switch req := requestBody.(type) {
+		case map[string]interface{}:
+			if val, ok := req["ID"].(string); ok {
+				id, _ = strconv.Atoi(val)
+			}
+		case responses.UpdateRequest:
+			id = req.ID
+    }
+
+    if id < 0 {
+        return errors.New("ID not found")
+    }
+
+    return s.notesRepository.AuditTodo(id, userId, method)
+}
+
+func (s NotesServiceImpl) GetAuditTrail(userID uint) ([]models.HistoryTodo, error) {
+	todos, err := s.notesRepository.GetHistoryTodos(userID)
+	if err != nil {
+		return []models.HistoryTodo{}, err
+	}
+	return todos, nil
 }

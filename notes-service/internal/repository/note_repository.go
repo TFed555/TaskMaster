@@ -8,8 +8,6 @@ import (
 	"net/url"
 	"notes-service/internal/models"
 	"strings"
-	_ "strings"
-	_ "time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -439,4 +437,45 @@ func (n NotesRepository) ReduceTag(todoID int, tagID int) (bool, error) {
 		return false, fmt.Errorf("%s: %v", op, err)
 	}
 	return rowsAffected>0, nil
+}
+
+func (n NotesRepository) AuditTodo(id int, userId uint, method string) (error) {
+	const op = "repository.notes_repository.AuditTodo"
+	log.Printf("CALLED FROM REPOSITORY %d", id)
+	action := "Deleted"
+	idTodo := "archived_todoid"
+	if method == "PATCH" {
+		action = "Changed"
+		idTodo = "todoid"
+	}
+	query := fmt.Sprintf(`INSERT INTO todos_history (%s, userId, action) `, idTodo)
+	values := `VALUES ($1, $2, $3)`
+	args := []any{id, userId, action}
+
+	query += values + ` RETURNING id`
+	var insertedId int
+	err := n.db.QueryRow(query, args...).Scan(&id)
+	if err != nil {
+		return err
+	}
+	log.Print(insertedId)
+	return nil
+}
+
+func (n NotesRepository) GetHistoryTodos(userID uint) ([]models.HistoryTodo, error) {
+	const op = "repository.notes_repository.GetHistoryTodos"
+	query := (`SELECT t.title, th.action 
+			FROM notes.todos t
+			JOIN todos_history th ON t.id = th.todoId
+			WHERE t.userid = $1`)
+	todos := []models.HistoryTodo{}
+	err := n.db.Select(&todos, query, userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("%s: todos not found", op)
+		}
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return todos, nil
 }

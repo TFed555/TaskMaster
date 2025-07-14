@@ -27,10 +27,10 @@ func InitNewRouter(mediaController controllers.MediaController, authMiddleware m
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
-
-	router.Get("/api/test", authMiddleware.SetAuthMiddleware(mediaController.Test))
-	router.Get("/api/images/avatar", authMiddleware.SetAuthMiddleware(mediaController.Generate))
-	router.Post("/api/images/avatar", authMiddleware.SetAuthMiddleware(mediaController.SaveAvatar))
+	router.Use(authMiddleware.SetAuthMiddleware)
+	router.Get("/api/test", mediaController.Test)
+	router.Get("/api/images/avatar", mediaController.Generate)
+	router.Post("/api/images/avatar", mediaController.SaveAvatar)
 
 	return Router{
 		ChiRouter: router,
