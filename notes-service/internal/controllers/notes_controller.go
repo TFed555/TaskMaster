@@ -656,7 +656,6 @@ func (n NotesController) GetAuditTrail(w http.ResponseWriter, r *http.Request) {
 	    return
 	}
 	log.Printf("Controller received userID: %v", userID)
-
 	history_todos, err := n.notesService.GetAuditTrail(userID)
 	if err != nil {
 		log.Println(err)

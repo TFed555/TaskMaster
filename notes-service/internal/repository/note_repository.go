@@ -439,26 +439,59 @@ func (n NotesRepository) ReduceTag(todoID int, tagID int) (bool, error) {
 	return rowsAffected>0, nil
 }
 
-func (n NotesRepository) AuditTodo(id int, userId uint, method string) (error) {
+func (n NotesRepository) AuditTodo(id int, userId uint, method string, isArchived bool) (error) {
 	const op = "repository.notes_repository.AuditTodo"
 	log.Printf("CALLED FROM REPOSITORY %d", id)
 	action := "Deleted"
-	idTodo := "archived_todoid"
-	if method == "PATCH" {
+	idColumn := "todoid"
+	switch {
+	case method == "PATCH":
 		action = "Changed"
-		idTodo = "todoid"
+	case method == "DELETE" && isArchived:
+		idColumn = "archived_todoid"
+	case method == "DELETE" && !isArchived:
+		action = "Archived"
+	case method == "PUT" && isArchived:
+		action = "Restored"
+		idColumn = "archived_todoid"
 	}
-	query := fmt.Sprintf(`INSERT INTO todos_history (%s, userId, action) `, idTodo)
-	values := `VALUES ($1, $2, $3)`
-	args := []any{id, userId, action}
 
-	query += values + ` RETURNING id`
-	var insertedId int
-	err := n.db.QueryRow(query, args...).Scan(&id)
-	if err != nil {
-		return err
+	query := (`INSERT INTO todos_history 
+        (todoid, archived_todoid, userId, action) 
+        VALUES ($1, $2, $3, $4)
+        RETURNING id`)
+	// values := `VALUES ($1, $2, $3)`
+	var todoId, archivedTodoid any
+	if idColumn == "todoid" {
+		archivedTodoid = nil
+		todoId = id
+	} else {
+		archivedTodoid = id
+		todoId = nil
 	}
+	args := []any{todoId, archivedTodoid, userId, action}
+
+	// query += values + ` RETURNING id`
+	var insertedId int
+	err := n.db.QueryRow(query, args...).Scan(&insertedId)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	if insertedId == 0 {
+        return fmt.Errorf("%s: failed to get inserted id", op)
+    }
 	log.Print(insertedId)
+
+	if action == "Archived" {
+		log.Printf("%s: %d", op, id)
+		_, err := n.db.Exec(`UPDATE todos_history 
+        SET archived_todoid = todoid, 
+            todoid = NULL
+        WHERE todoid = $1`, id)
+		if err != nil {
+        return fmt.Errorf("%s: %w", op, err)
+    	}
+	}
 	return nil
 }
 

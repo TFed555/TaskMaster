@@ -42,6 +42,8 @@ func (n NotesMiddleware) SetNotesMIddleware(controller http.Handler) http.Handle
 		r.Body = io.NopCloser(&buf)
 
 		var req any
+		archivedEndpoint := strings.Contains(r.URL.Path, "/archived/")
+
 		switch r.Method {
         case "PATCH":
             var updateReq responses.UpdateRequest
@@ -53,7 +55,7 @@ func (n NotesMiddleware) SetNotesMIddleware(controller http.Handler) http.Handle
 			req = updateReq
 
         case "PUT", "DELETE":
-            req = map[string]interface{}{"ID": id}
+            req = map[string]interface{}{"ID": id, "isArchived": archivedEndpoint}
 
         default:
             controller.ServeHTTP(w, r)

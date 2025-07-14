@@ -180,10 +180,12 @@ func (s NotesServiceImpl) ReduceTag(tagTodo domain_models.TagTodo) (bool, error)
 
 func (s NotesServiceImpl) Audit(method string, userId uint, requestBody any) (error) {
 	var id int
+	isArchived := false
     switch req := requestBody.(type) {
 		case map[string]interface{}:
 			if val, ok := req["ID"].(string); ok {
 				id, _ = strconv.Atoi(val)
+				isArchived = req["isArchived"].(bool)
 			}
 		case responses.UpdateRequest:
 			id = req.ID
@@ -193,7 +195,7 @@ func (s NotesServiceImpl) Audit(method string, userId uint, requestBody any) (er
         return errors.New("ID not found")
     }
 
-    return s.notesRepository.AuditTodo(id, userId, method)
+    return s.notesRepository.AuditTodo(id, userId, method, isArchived)
 }
 
 func (s NotesServiceImpl) GetAuditTrail(userID uint) ([]models.HistoryTodo, error) {

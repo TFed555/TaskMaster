@@ -34,11 +34,13 @@ func InitNewRouter(notesController controllers.NotesController, authMiddleware m
 		// r.Use(notesMiddleware.SetNotesMIddleware)
 		r.Get("/", notesController.GetTodos)
 		r.Get("/archived", notesController.GetArchivedTodos)
-
-		r.With(notesMiddleware.SetNotesMIddleware).Delete("/archived/{id}", notesController.DeleteTodo)
-		r.With(notesMiddleware.SetNotesMIddleware).Put("/archived/{id}", notesController.RestoreTodo)
-		r.With(notesMiddleware.SetNotesMIddleware).Patch("/{id}", notesController.UpdateTodo)
-		r.With(notesMiddleware.SetNotesMIddleware).Delete("/{id}", notesController.ArchiveTodo)
+		notesGroup := r.With(notesMiddleware.SetNotesMIddleware)
+		{
+			notesGroup.Delete("/archived/{id}", notesController.DeleteTodo)
+			notesGroup.Put("/archived/{id}", notesController.RestoreTodo)
+			notesGroup.Patch("/{id}", notesController.UpdateTodo)
+			notesGroup.Delete("/{id}", notesController.ArchiveTodo)
+		}
 
 		r.Get("/{id}", notesController.GetOneTodo)
 		r.Post("/", notesController.CreateTodo)
