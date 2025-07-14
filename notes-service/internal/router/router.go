@@ -2,7 +2,6 @@ package router
 
 import (
 	"notes-service/internal/controllers"
-	notesMiddleware "notes-service/internal/middleware"
 	"shared/middleware"
 
 	"github.com/go-chi/chi/v5"
@@ -14,7 +13,7 @@ type Router struct {
 	Port      string
 }
 
-func InitNewRouter(notesController controllers.NotesController, authMiddleware middleware.AuthMiddleware, notesMiddleware notesMiddleware.NotesMiddleware) Router {
+func InitNewRouter(notesController controllers.NotesController, authMiddleware middleware.AuthMiddleware) Router {
 
 	router := chi.NewRouter()
 
@@ -34,14 +33,10 @@ func InitNewRouter(notesController controllers.NotesController, authMiddleware m
 		// r.Use(notesMiddleware.SetNotesMIddleware)
 		r.Get("/", notesController.GetTodos)
 		r.Get("/archived", notesController.GetArchivedTodos)
-		notesGroup := r.With(notesMiddleware.SetNotesMIddleware)
-		{
-			notesGroup.Delete("/archived/{id}", notesController.DeleteTodo)
-			notesGroup.Put("/archived/{id}", notesController.RestoreTodo)
-			notesGroup.Patch("/{id}", notesController.UpdateTodo)
-			notesGroup.Delete("/{id}", notesController.ArchiveTodo)
-		}
-
+		r.Delete("/archived/{id}", notesController.DeleteTodo)
+		r.Put("/archived/{id}", notesController.RestoreTodo)
+		r.Patch("/{id}", notesController.UpdateTodo)
+		r.Delete("/{id}", notesController.ArchiveTodo)
 		r.Get("/{id}", notesController.GetOneTodo)
 		r.Post("/", notesController.CreateTodo)
 		r.Get("/history", notesController.GetAuditTrail)

@@ -158,6 +158,16 @@ func (n NotesRepository) CreateTodo(todo models.Todo) (int, error) {
 func (n NotesRepository) ArchiveTodo(ID int) (int, error) {
 	const op = "repository.notes_repository.ArchiveTodo"
 
+	tx, err := n.db.Begin()
+    if err != nil {
+        return -1, fmt.Errorf("%s: %w", op, err)
+    }
+    defer func() {
+        if err != nil {
+            tx.Rollback()
+        }
+    }()
+
 	todo, err := n.GetTodoByID(ID, "todos")
 	if err != nil {
 		return -1, fmt.Errorf("%s: %w", op, err)
@@ -177,13 +187,29 @@ func (n NotesRepository) ArchiveTodo(ID int) (int, error) {
 	}
 	query += ` )` + values + ` ) RETURNING id`
 	var addedId int
-	err = n.db.QueryRow(query, args...).Scan(&addedId)
+	err = tx.QueryRow(query, args...).Scan(&addedId)
 	if err != nil {
 		return -1, fmt.Errorf("%s: %w", op, err)
 	}
+
+		_, err = tx.Exec(`UPDATE todos_history 
+        SET archived_todoid = $1, 
+            todoid = NULL WHERE todoid = $2`, addedId, ID)
+		if err != nil {
+        	return -1, fmt.Errorf("%s: %w", op, err)
+    	}
+
+	_, err = tx.Exec(`INSERT INTO todos_history 
+        (todoid, archived_todoid, userId, action) 
+        VALUES ($1, $2, $3, 'Archived')`, 
+        ID, addedId, todo.UserId)
+    if err != nil {
+        return -1, fmt.Errorf("%s: %w", op, err)
+    }
+
 	nextQuery := `DELETE FROM notes.todos WHERE id = $1`
 
-	res, err := n.db.Exec(nextQuery, ID)
+	res, err := tx.Exec(nextQuery, ID)
 	if err != nil {
 		return -1, fmt.Errorf("%s: %w", op, err)
 	}
@@ -195,17 +221,24 @@ func (n NotesRepository) ArchiveTodo(ID int) (int, error) {
 		return -1, fmt.Errorf("%s: %w", op, err)
 	}
 	var tagId int
-	err = n.db.QueryRow(`SELECT tagId from notes.todo_tags WHERE todoId = $1`, ID).Scan(&tagId)
+	err = tx.QueryRow(`SELECT tagId from notes.todo_tags WHERE todoId = $1`, ID).Scan(&tagId)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
    		return -1, fmt.Errorf("%s: %w", op, err)
 	}
+	
+
 	if err == nil {
 		nextQuery = `INSERT INTO notes.archived_todo_tags (todoid, tagid) VALUES ($1, $2)`
-		_, err = n.db.Exec(nextQuery, addedId, tagId)
+		_, err = tx.Exec(nextQuery, addedId, tagId)
 		if err != nil {
 			return -1, fmt.Errorf("%s: %w", op, err)
 		}
 	}
+
+	if err = tx.Commit(); err != nil {
+        return -1, fmt.Errorf("%s: %w", op, err)
+    }
+
 	return addedId, nil
 }
 
@@ -325,6 +358,13 @@ func (n NotesRepository) RestoreTodo(taskId int) (int, error) {
 		return -1, fmt.Errorf("%s: %w", op, err)
 	}
 
+	_, err = n.db.Exec(`UPDATE todos_history 
+        SET todoid = $1, 
+            archived_todoid = NULL WHERE todoid = $2`, addedId, taskId)
+		if err != nil {
+        	return -1, fmt.Errorf("%s: %w", op, err)
+    	}
+
 	return addedId, nil
 }
 
@@ -439,68 +479,76 @@ func (n NotesRepository) ReduceTag(todoID int, tagID int) (bool, error) {
 	return rowsAffected>0, nil
 }
 
-func (n NotesRepository) AuditTodo(id int, userId uint, method string, isArchived bool) (error) {
+func (n NotesRepository) AuditTodo(id int, userId uint, isArchived bool, method string) (error) {
 	const op = "repository.notes_repository.AuditTodo"
 	log.Printf("CALLED FROM REPOSITORY %d", id)
 	action := "Deleted"
-	idColumn := "todoid"
 	switch {
 	case method == "PATCH":
 		action = "Changed"
 	case method == "DELETE" && isArchived:
-		idColumn = "archived_todoid"
 	case method == "DELETE" && !isArchived:
 		action = "Archived"
 	case method == "PUT" && isArchived:
 		action = "Restored"
-		idColumn = "archived_todoid"
 	}
-
-	query := (`INSERT INTO todos_history 
-        (todoid, archived_todoid, userId, action) 
-        VALUES ($1, $2, $3, $4)
-        RETURNING id`)
-	// values := `VALUES ($1, $2, $3)`
-	var todoId, archivedTodoid any
-	if idColumn == "todoid" {
-		archivedTodoid = nil
-		todoId = id
-	} else {
-		archivedTodoid = id
-		todoId = nil
-	}
-	args := []any{todoId, archivedTodoid, userId, action}
-
-	// query += values + ` RETURNING id`
-	var insertedId int
-	err := n.db.QueryRow(query, args...).Scan(&insertedId)
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-	if insertedId == 0 {
-        return fmt.Errorf("%s: failed to get inserted id", op)
-    }
-	log.Print(insertedId)
 
 	if action == "Archived" {
+		query := (`INSERT INTO todos_history 
+			(todoid, archived_todoid, userId, action) 
+			VALUES ($1, $2, $3, $4)
+			RETURNING id`)
+		args := []any{nil, id, userId, action}
+		var insertedId int
+		err := n.db.QueryRow(query, args...).Scan(&insertedId)
+		if err != nil {
+			return fmt.Errorf("%s: %w", op, err)
+		}
+		if insertedId == 0 {
+			return fmt.Errorf("%s: failed to get inserted id", op)
+		}
+		return nil
+	}
+
+	if action == "Changed" || action == "Restored" {
+		query := (`INSERT INTO todos_history 
+			(todoid, archived_todoid, userId, action) 
+			VALUES ($1, $2, $3, $4)
+			RETURNING id`)
+		args := []any{id, nil, userId, action}
+		var insertedId int
+		err := n.db.QueryRow(query, args...).Scan(&insertedId)
+		if err != nil {
+			return fmt.Errorf("%s: %w", op, err)
+		}
+		if insertedId == 0 {
+			return fmt.Errorf("%s: failed to get inserted id", op)
+		}
+		return nil
+	}
+
+	if action == "Deleted" {
 		log.Printf("%s: %d", op, id)
-		_, err := n.db.Exec(`UPDATE todos_history 
-        SET archived_todoid = todoid, 
-            todoid = NULL
-        WHERE todoid = $1`, id)
+		_, err := n.db.Exec(`DELETE FROM todos_history 
+        WHERE archived_todoid = $1`, id)
 		if err != nil {
         return fmt.Errorf("%s: %w", op, err)
     	}
+		return nil
 	}
+
 	return nil
 }
 
 func (n NotesRepository) GetHistoryTodos(userID uint) ([]models.HistoryTodo, error) {
 	const op = "repository.notes_repository.GetHistoryTodos"
-	query := (`SELECT t.title, th.action 
-			FROM notes.todos t
-			JOIN todos_history th ON t.id = th.todoId
-			WHERE t.userid = $1`)
+	query := (`SELECT 
+    COALESCE(t.title, a.title) AS title,
+    th.action
+	FROM todos_history th
+	LEFT JOIN notes.todos t ON t.id = th.todoid AND t.userid = $1
+	LEFT JOIN notes.archived_todos a ON a.id = th.archived_todoid AND a.userid = 1
+	WHERE (t.id IS NOT NULL OR a.id IS NOT NULL)`)
 	todos := []models.HistoryTodo{}
 	err := n.db.Select(&todos, query, userID)
 	if err != nil {

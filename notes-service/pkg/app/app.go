@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"notes-service/internal/controllers"
-	notes_middleware "notes-service/internal/middleware"
 	"notes-service/internal/repository"
 	"notes-service/internal/router"
 	"notes-service/internal/services"
@@ -45,9 +44,8 @@ func Run() error {
 	notesRepo := repository.NewNotesRepository(db)
 	notesService := services.NewNotesService(notesRepo)
 	notesController := controllers.NewNotesController(notesService)
-	notesMiddleware := notes_middleware.NewNotesMiddleware(notesService)
 
-	router := router.InitNewRouter(notesController, authMiddleware, notesMiddleware)
+	router := router.InitNewRouter(notesController, authMiddleware)
 
 	log.Printf("Starting notes-service on %s \n", router.Port)
 	if err := http.ListenAndServe(router.Port, router.ChiRouter); err != nil {

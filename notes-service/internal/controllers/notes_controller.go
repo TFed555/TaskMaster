@@ -199,6 +199,17 @@ func (n NotesController) UpdateTodo(w http.ResponseWriter, r *http.Request) {
 		ID: updatedId,
 	}
 
+	ctx := r.Context()
+	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	log.Print("UserID:", userID)
+	if !ok {
+	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	    return
+	}
+	log.Printf("Controller received userID: %v", userID)
+
+	n.notesService.Audit("PATCH", false, userID, updatedId)
+
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	json.NewEncoder(w).Encode(response)
@@ -258,14 +269,6 @@ func (n NotesController) GetArchivedTodos(w http.ResponseWriter, r *http.Request
 }
 
 func (n NotesController) ArchiveTodo(w http.ResponseWriter, r *http.Request) {
-	// ctx := r.Context()
-	// 	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
-	// log.Print("UserID:", userID)
-	// if !ok {
-	//     http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	//     return
-	// }
-	// log.Printf("Controller received userID: %v", userID)
 
 	taskId := chi.URLParam(r, "id")
 	if taskId == "" {
@@ -297,6 +300,15 @@ func (n NotesController) ArchiveTodo(w http.ResponseWriter, r *http.Request) {
 	response := responses.CreateResponse{
 		ID: id,
 	}
+
+	ctx := r.Context()
+	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	log.Print("UserID:", userID)
+	if !ok {
+	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	    return
+	}
+	log.Printf("Controller received userID: %v", userID)
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
@@ -378,6 +390,17 @@ func (n NotesController) DeleteTodo(w http.ResponseWriter, r *http.Request) {
 		Message: "Deleted successfully",
 	}
 
+	ctx := r.Context()
+	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	log.Print("UserID:", userID)
+	if !ok {
+	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	    return
+	}
+	log.Printf("Controller received userID: %v", userID)
+
+	n.notesService.Audit("DELETE", true, userID, id)
+
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	json.NewEncoder(w).Encode(response)
@@ -406,6 +429,17 @@ func (n NotesController) RestoreTodo(w http.ResponseWriter, r *http.Request) {
 	response := responses.CreateResponse{
 		ID: newId,
 	}
+
+	ctx := r.Context()
+	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	log.Print("UserID:", userID)
+	if !ok {
+	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	    return
+	}
+	log.Printf("Controller received userID: %v", userID)
+
+	n.notesService.Audit("PUT", false, userID, newId)
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
@@ -441,6 +475,8 @@ func (n NotesController) CreateTag(w http.ResponseWriter, r *http.Request) {
 	response := responses.CreateResponse{
 		ID: id,
 	}
+
+
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
