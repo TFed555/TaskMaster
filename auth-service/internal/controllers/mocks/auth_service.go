@@ -16,7 +16,7 @@ type AuthService struct {
 }
 
 // Authorize provides a mock function with given fields: params
-func (_m *AuthService) Authorize(params domain_models.AuthorizeParams) (models.User, domain_models.Tokens, error) {
+func (_m *AuthService) Authorize(params domain_models.AuthorizeParams) (models.User, error) {
 	ret := _m.Called(params)
 
 	if len(ret) == 0 {
@@ -24,9 +24,8 @@ func (_m *AuthService) Authorize(params domain_models.AuthorizeParams) (models.U
 	}
 
 	var r0 models.User
-	var r1 domain_models.Tokens
-	var r2 error
-	if rf, ok := ret.Get(0).(func(domain_models.AuthorizeParams) (models.User, domain_models.Tokens, error)); ok {
+	var r1 error
+	if rf, ok := ret.Get(0).(func(domain_models.AuthorizeParams) (models.User, error)); ok {
 		return rf(params)
 	}
 	if rf, ok := ret.Get(0).(func(domain_models.AuthorizeParams) models.User); ok {
@@ -35,19 +34,13 @@ func (_m *AuthService) Authorize(params domain_models.AuthorizeParams) (models.U
 		r0 = ret.Get(0).(models.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(domain_models.AuthorizeParams) domain_models.Tokens); ok {
+	if rf, ok := ret.Get(1).(func(domain_models.AuthorizeParams) error); ok {
 		r1 = rf(params)
 	} else {
-		r1 = ret.Get(1).(domain_models.Tokens)
+		r1 = ret.Error(1)
 	}
 
-	if rf, ok := ret.Get(2).(func(domain_models.AuthorizeParams) error); ok {
-		r2 = rf(params)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
+	return r0, r1
 }
 
 // DeleteUser provides a mock function with given fields: userID
@@ -170,7 +163,7 @@ func (_m *AuthService) Refresh(refreshToken string) (string, string, error) {
 }
 
 // Register provides a mock function with given fields: params
-func (_m *AuthService) Register(params domain_models.RegisterParams) (int, domain_models.Tokens, error) {
+func (_m *AuthService) Register(params domain_models.RegisterParams) (int, error) {
 	ret := _m.Called(params)
 
 	if len(ret) == 0 {
@@ -178,9 +171,8 @@ func (_m *AuthService) Register(params domain_models.RegisterParams) (int, domai
 	}
 
 	var r0 int
-	var r1 domain_models.Tokens
-	var r2 error
-	if rf, ok := ret.Get(0).(func(domain_models.RegisterParams) (int, domain_models.Tokens, error)); ok {
+	var r1 error
+	if rf, ok := ret.Get(0).(func(domain_models.RegisterParams) (int, error)); ok {
 		return rf(params)
 	}
 	if rf, ok := ret.Get(0).(func(domain_models.RegisterParams) int); ok {
@@ -189,19 +181,13 @@ func (_m *AuthService) Register(params domain_models.RegisterParams) (int, domai
 		r0 = ret.Get(0).(int)
 	}
 
-	if rf, ok := ret.Get(1).(func(domain_models.RegisterParams) domain_models.Tokens); ok {
+	if rf, ok := ret.Get(1).(func(domain_models.RegisterParams) error); ok {
 		r1 = rf(params)
 	} else {
-		r1 = ret.Get(1).(domain_models.Tokens)
+		r1 = ret.Error(1)
 	}
 
-	if rf, ok := ret.Get(2).(func(domain_models.RegisterParams) error); ok {
-		r2 = rf(params)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
+	return r0, r1
 }
 
 // UpdateAccessToken provides a mock function with given fields: refreshToken

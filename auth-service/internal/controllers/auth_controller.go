@@ -11,6 +11,7 @@ import (
 	"shared/middleware"
 	cookies_func "shared/utils/cookies"
 	"time"
+	jwt_func "auth-service/internal/pkg/jwt"
 )
 
 
@@ -49,7 +50,7 @@ func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
 		Email: req.Email,
 		Password: req.Password,
 	}
-	user, tokens, err := c.authService.Register(params)
+	user, err := c.authService.Register(params)
 	if err != nil {
 		log.Printf("Registration error: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -60,12 +61,6 @@ func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(errMsg)
 		return
 	}
-
-	var time_expires_refresh = time.Now().Add(30 * 24 * time.Hour)
-	var time_expires_access = time.Now().Add(15 * time.Minute)
-
-	cookies_func.SetCookies(&w, "access_token", tokens.AccessToken, time_expires_access)
-	cookies_func.SetCookies(&w, "refresh_token", tokens.RefreshToken, time_expires_refresh)
 
 	response := responses.RegResponse{
 		UserID: user,
@@ -89,7 +84,7 @@ func (c AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 		Password: req.Password,
 	}
 	
-	user, tokens, err := c.authService.Authorize(params)
+	user, err := c.authService.Authorize(params)
 
 	if err != nil {
 		statusCode := http.StatusInternalServerError
@@ -119,14 +114,20 @@ func (c AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 		ImgURL: user.ImgPath,
 	}
 
-	// log.Printf("Called from auth_controller, tokens: %s, %s", tokens.AccessToken, tokens.RefreshToken)
+	//temp
+	jwt := jwt_func.NewJWTFunctional()
 
-	var time_expires_refresh = time.Now().Add(30 * 24 * time.Hour)
+	accesstoken, _  := jwt.GenerateJWTAccessToken(user.ID)
+
+	if err != nil {
+			log.Print(err)
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte(err.Error()))
+			return
+	}
 	var time_expires_access = time.Now().Add(15 * time.Minute)
 
-	cookies_func.SetCookies(&w, "refresh_token", tokens.RefreshToken, time_expires_refresh)
-	cookies_func.SetCookies(&w, "access_token", tokens.AccessToken, time_expires_access)
-
+	cookies_func.SetCookies(&w, "access_token", accesstoken, time_expires_access)
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)

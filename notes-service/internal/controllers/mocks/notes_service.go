@@ -185,9 +185,9 @@ func (_m *NotesService) DeleteTodo(taskId int) (bool, error) {
 	return r0, r1
 }
 
-// GetArchivedTodos provides a mock function with given fields: urlParams
-func (_m *NotesService) GetArchivedTodos(urlParams url.Values) ([]models.Todo, error) {
-	ret := _m.Called(urlParams)
+// GetArchivedTodos provides a mock function with given fields: urlParams, userID
+func (_m *NotesService) GetArchivedTodos(urlParams url.Values, userID uint) ([]models.Todo, error) {
+	ret := _m.Called(urlParams, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetArchivedTodos")
@@ -195,19 +195,19 @@ func (_m *NotesService) GetArchivedTodos(urlParams url.Values) ([]models.Todo, e
 
 	var r0 []models.Todo
 	var r1 error
-	if rf, ok := ret.Get(0).(func(url.Values) ([]models.Todo, error)); ok {
-		return rf(urlParams)
+	if rf, ok := ret.Get(0).(func(url.Values, uint) ([]models.Todo, error)); ok {
+		return rf(urlParams, userID)
 	}
-	if rf, ok := ret.Get(0).(func(url.Values) []models.Todo); ok {
-		r0 = rf(urlParams)
+	if rf, ok := ret.Get(0).(func(url.Values, uint) []models.Todo); ok {
+		r0 = rf(urlParams, userID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]models.Todo)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(url.Values) error); ok {
-		r1 = rf(urlParams)
+	if rf, ok := ret.Get(1).(func(url.Values, uint) error); ok {
+		r1 = rf(urlParams, userID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -275,9 +275,9 @@ func (_m *NotesService) GetTags(userID uint) ([]models.Tag, error) {
 	return r0, r1
 }
 
-// GetTodos provides a mock function with given fields: urlParams
-func (_m *NotesService) GetTodos(urlParams url.Values) ([]models.Todo, error) {
-	ret := _m.Called(urlParams)
+// GetTodos provides a mock function with given fields: urlParams, userID
+func (_m *NotesService) GetTodos(urlParams url.Values, userID uint) ([]models.Todo, error) {
+	ret := _m.Called(urlParams, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetTodos")
@@ -285,19 +285,19 @@ func (_m *NotesService) GetTodos(urlParams url.Values) ([]models.Todo, error) {
 
 	var r0 []models.Todo
 	var r1 error
-	if rf, ok := ret.Get(0).(func(url.Values) ([]models.Todo, error)); ok {
-		return rf(urlParams)
+	if rf, ok := ret.Get(0).(func(url.Values, uint) ([]models.Todo, error)); ok {
+		return rf(urlParams, userID)
 	}
-	if rf, ok := ret.Get(0).(func(url.Values) []models.Todo); ok {
-		r0 = rf(urlParams)
+	if rf, ok := ret.Get(0).(func(url.Values, uint) []models.Todo); ok {
+		r0 = rf(urlParams, userID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]models.Todo)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(url.Values) error); ok {
-		r1 = rf(urlParams)
+	if rf, ok := ret.Get(1).(func(url.Values, uint) error); ok {
+		r1 = rf(urlParams, userID)
 	} else {
 		r1 = ret.Error(1)
 	}
