@@ -70,7 +70,8 @@ func (n NotesController) GetTodos(w http.ResponseWriter, r *http.Request) {
 
 	masTodos := make([]responses.OneTodoResponse, 0)
 
-	for _, el := range todos {
+	for i := range todos {
+		el := &todos[i]
 		todo := responses.OneTodoResponse{
 			Title:       el.Title,
 			Priority:    el.Priority,
@@ -79,6 +80,14 @@ func (n NotesController) GetTodos(w http.ResponseWriter, r *http.Request) {
 			CreatedAt:   el.CreatedAt,
 			CompletedAt: el.CompletedAt,
 			ID:          *el.ID,
+			// Tags:		 el.Tags,
+		}
+		for _, el_t := range el.Tags {
+			tag := responses.OneTagResponse{
+				ID: el_t.ID,
+				Name: el_t.Name,
+			}
+			todo.Tags = append(todo.Tags, tag)
 		}
 		masTodos = append(masTodos, todo)
 	}
@@ -593,8 +602,8 @@ func (n NotesController) ReduceTag(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid url params body", http.StatusBadRequest)
 		return
 	}
-	id = chi.URLParam(r, "tag_id")
-	if id == "" {
+	nextId := chi.URLParam(r, "tag_id")
+	if nextId == "" {
 		log.Print("Не удалось получить id тэга")
 		http.Error(w, "Invalid url params body", http.StatusBadRequest)
 		return

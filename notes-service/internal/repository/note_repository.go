@@ -80,15 +80,27 @@ func (n NotesRepository) GetTodos(urlParams url.Values, tableName string) ([]mod
 		log.Printf("Limit: %s", limit)
 	}
 
-	// nextQuery := `SELECT name FROM tags WHERE id = (SELECT id FROM todo_tags WHERE taskid = $1)`
-
 	err := n.db.Select(&todos, query, args...)
-
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("%s: tasks not found", op)
+			return nil, fmt.Errorf("%s: todos not found", op)
 		}
 		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	// log.Print(*todos[0].ID)
+	for i := range todos {
+		el := &todos[i]
+		nextQuery := `SELECT id, name FROM notes.tags WHERE id IN (SELECT tagid FROM notes.todo_tags WHERE todoid = $1)`
+		tags := []models.Tag{}
+		err = n.db.Select(&tags, nextQuery, *el.ID)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("%s: %v", op, err)
+		}
+		if err == nil {
+			el.Tags = append(el.Tags, tags...)
+			log.Printf("Mass %v", el)
+		}
 	}
 
 	return todos, nil
