@@ -80,5 +80,5 @@ type OneAuditTrial struct {
 }
 
 type AuditTrial struct {
-	Changes *[]OneAuditTrial
+	Changes *[]OneAuditTrial `json:"changes"`
 }
