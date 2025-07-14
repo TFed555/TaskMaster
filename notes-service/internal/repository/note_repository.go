@@ -26,8 +26,7 @@ func NewNotesRepository(db *sqlx.DB) NotesRepository {
 
 func (n NotesRepository) GetTodos(urlParams url.Values, tableName string) ([]models.Todo, error) {
 	const op = "repository.notes_repository.GetTodos"
-	args := []interface{}{}
-	// args := []interface{}{userId}
+	args := []any{}
 	// parserCreatedAt, err := time.Parse(time.RFC3339, createdAt)
 	var sqlFilter string
 	if filter := urlParams.Get("filter"); filter != "" {
@@ -42,9 +41,6 @@ func (n NotesRepository) GetTodos(urlParams url.Values, tableName string) ([]mod
 
 	log.Printf("Filter: %s", sqlFilter)
 
-	// query := (`
-	// 	SELECT id, title, priority, category, description, createdat, completedat, userid FROM notes.todos
-	// 	WHERE userid = $1`)
 
 	query := fmt.Sprintf(`
 		SELECT id, title, priority, category, description, createdat, completedat, userid FROM notes.%s `, tableName)
@@ -243,14 +239,22 @@ func (n NotesRepository) DeleteTodo(taskId int) (bool, error) {
 	}
 	resultFromArchived, _ := res.RowsAffected()
 
-	query = `DELETE FROM notes.archived_todo_tags WHERE todoid = $1`
-	res, err = n.db.Exec(query, taskId)
-	if err != nil {
+	var tagId int
+	err = n.db.QueryRow(`SELECT tagId from notes.archived_todo_tags WHERE todoId = $1`, taskId).Scan(&tagId)
+	
+	if err != nil && !errors.Is(err, sql.ErrNoRows){
 		return false, fmt.Errorf("%s: %w", op, err)
 	}
-	resultFromTodotags, _ := res.RowsAffected()
 
-	return resultFromArchived > 0 && resultFromTodotags > 0, nil
+	if err == nil {
+		query = `DELETE FROM notes.archived_todo_tags WHERE todoid = $1`
+		res, err = n.db.Exec(query, taskId)
+		if err != nil {
+			return false, fmt.Errorf("%s: %w", op, err)
+		}
+	}
+
+	return resultFromArchived > 0, nil
 }
 
 func (n NotesRepository) RestoreTodo(taskId int) (int, error) {
