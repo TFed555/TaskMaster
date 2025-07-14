@@ -33,7 +33,7 @@ func InitNewRouter(authController controllers.AuthController, authMiddleware mid
 	// router.Post("/", middleware.AuthMiddleware(authController.Test))
 	router.Post("/api/registration", authController.Register)
 	router.Post("/api/login", authController.Authorize)
-	router.Get("/api/refresh", authController.Refresh)
+	//router.Get("/api/refresh", authController.Refresh)
 
 	// router.Get("/api/testSecure", authController.Test)
 	router.Get("/api/test/cookie", authMiddleware.SetAuthMiddleware(authController.TestCookie))

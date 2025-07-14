@@ -18,8 +18,8 @@ import (
 )
 
 type AuthService interface {
-    Register(params domain_models.RegisterParams) (int, domain_models.Tokens, error)
-    Authorize(params domain_models.AuthorizeParams) (models.User, domain_models.Tokens, error)
+    Register(params domain_models.RegisterParams) (int, error)
+    Authorize(params domain_models.AuthorizeParams) (models.User, error)
     Refresh(refreshToken string) (string, string, error)
     ValidateToken(tokenValue string) (bool, string)
     Logout(userID uint) (bool, error)
@@ -42,10 +42,10 @@ func NewAuthService(userRepo repository.UserRepository, tokenRepo repository.Tok
 			jwtFunc: jwtFunc, mediaClient: mediaClient,}
 }
 
-func (s AuthServiceImpl) Register(params domain_models.RegisterParams) (int, domain_models.Tokens, error) {
+func (s AuthServiceImpl) Register(params domain_models.RegisterParams) (int, error) {
 	hashedPswd, err := bcrypt.GenerateFromPassword([]byte(params.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return -1, domain_models.Tokens{}, err
+		return -1, err
 	}
 	user:=&models.User{
 		Email: params.Email,
@@ -54,32 +54,14 @@ func (s AuthServiceImpl) Register(params domain_models.RegisterParams) (int, dom
 	}
 
 	if err := s.userRepo.Create(user); err != nil {
-		return -1, domain_models.Tokens{}, err
+		return -1, err
 	}
 
-	accesstoken, refreshtoken, err := s.jwtFunc.GenerateJWTRefreshTokens(user.ID)
-	if err != nil {
-		return -1, domain_models.Tokens{}, err
-	}
-	refreshToken := &models.RefreshToken{
-		UserID: user.ID,
-		Token:  refreshtoken,
-		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
-	}
 
-	if err := s.tokenRepo.Create(refreshToken); err != nil {
-		return -1, domain_models.Tokens{}, fmt.Errorf("failed to save refresh token: %w", err)
-	}
-
-	tokens := domain_models.Tokens{
-		AccessToken: accesstoken,
-		RefreshToken: refreshtoken,
-	}
-
-	return int(user.ID), tokens, nil
+	return int(user.ID), nil
 }
 
-func (s AuthServiceImpl) Authorize(params domain_models.AuthorizeParams) (models.User, domain_models.Tokens, error) {
+func (s AuthServiceImpl) Authorize(params domain_models.AuthorizeParams) (models.User, error) {
 	user, err := s.userRepo.GetByEmail(params.Email)
 	imgPath := ""
 	if user.ImgPath != nil {
@@ -102,33 +84,13 @@ func (s AuthServiceImpl) Authorize(params domain_models.AuthorizeParams) (models
 	}
 
 	if err != nil {
-		return models.User{}, domain_models.Tokens{}, fmt.Errorf("User not found")
+		return models.User{}, fmt.Errorf("User not found")
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(params.Password)); err != nil {
-		return models.User{}, domain_models.Tokens{}, fmt.Errorf("Invalid password")
+		return models.User{}, fmt.Errorf("Invalid password")
 	}
 
-	accesstoken, refreshtoken, err := s.jwtFunc.GenerateJWTRefreshTokens(user.ID)
-	if err != nil {
-		return models.User{}, domain_models.Tokens{}, err
-	}
-	refreshToken := &models.RefreshToken{
-		UserID: user.ID,
-		Token:  refreshtoken,
-		ExpiresAt: time.Now().Add(30 * 24 * time.Hour),
-	}
-	if err := s.tokenRepo.Create(refreshToken); err != nil {
-		return models.User{}, domain_models.Tokens{}, fmt.Errorf("Failed to save refresh token: %w", err)
-	}
-
-	tokens := domain_models.Tokens{
-		AccessToken: accesstoken,
-		RefreshToken: refreshtoken,
-	}
-
-	log.Printf("Called from auth_service, access_token: %s", tokens.AccessToken)
-
-	return user, tokens, err
+	return user, err
 }
 
 func (s AuthServiceImpl) Refresh(refreshToken string) (accesstoken string, refreshtoken string, err error) {
