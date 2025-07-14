@@ -42,7 +42,16 @@ func (c *AuthMiddleware) SetAuthMiddleware(controller func(w http.ResponseWriter
 		log.Printf("Called from middleware %s", accessToken)
 
 
+<<<<<<< Updated upstream
 		result, errMsg := c.authService.ValidateToken(refreshToken)
+=======
+	if !result {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte(errMsg))
+    	// http.Error(w, "Invalid token", http.StatusUnauthorized)
+		return
+	}
+>>>>>>> Stashed changes
 
 		if !result {
 			w.WriteHeader(http.StatusForbidden)
