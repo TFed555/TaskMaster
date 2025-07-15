@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 	cookies_func "shared/utils/cookies"
-	"time"
+	_"time"
 )
 
 type AuthService interface{
@@ -44,39 +44,41 @@ func (c *AuthMiddleware) SetAuthMiddleware(controller http.Handler) http.Handler
 		log.Printf("Called from middleware %s", accessToken)
 
 
-		result, errMsg := c.authService.ValidateToken(refreshToken)
+		result, _ := c.authService.ValidateToken(accessToken)
 
 		if !result {
-			w.WriteHeader(http.StatusForbidden)
-			w.Write([]byte(errMsg))
-			return
-		}
+			resultRefresh, _ := c.authService.ValidateToken(refreshToken)
 
-		result, errMsg = c.authService.ValidateToken(accessToken)
-
-		if !result {
-			success, newValue, err:=  c.authService.UpdateAccessToken(refreshToken)
-			log.Printf("Called from middleware access token: %t, %s, %v", success, newValue, err)
-			if err != nil {
-				w.WriteHeader(http.StatusForbidden)
-				w.Write([]byte(errMsg))
+			if !resultRefresh {
+				w.WriteHeader(498)
+				w.Write([]byte("Invalid token"))
 				return
 			}
-			if success {
-				cookies_func.SetCookies(&w, "access_token", newValue, time.Now().Add(15 * time.Minute))
-			}
+
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte("Unathorized"))
+            return
+
+			// success, newValue, err:=  c.authService.UpdateAccessToken(refreshToken)
+			// log.Printf("Called from middleware access token: %t, %s, %v", success, newValue, err)
+			// if err != nil {
+			// 	w.WriteHeader(http.StatusForbidden)
+			// 	w.Write([]byte(errMsg))
+			// 	return
+			// }
+			// if success {
+			// 	cookies_func.SetCookies(&w, "access_token", newValue, time.Now().Add(15 * time.Minute))
+			// }
 		}
 
 		userID, err := c.authService.ParseUserId(refreshToken)
 		if err != "" {
 			w.WriteHeader(http.StatusForbidden)
 			w.Write([]byte(err))
-            // http.Error(w, "Invalid token", http.StatusUnauthorized)
-
             return
         }
 
-        ctx := context.WithValue(r.Context(), UserIdKey, userID)
+    ctx := context.WithValue(r.Context(), UserIdKey, userID)
 
 	log.Printf("CALLED FROM MDLWR %d \n", ctx.Value(UserIdKey).(uint))
 	controller.ServeHTTP(w, r.WithContext(ctx))
