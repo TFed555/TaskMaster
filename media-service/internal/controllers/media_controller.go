@@ -8,7 +8,7 @@ import (
 	"media-service/internal/services"
 	"net/http"
 	"shared/middleware"
-	cookies_func "shared/utils/cookies"
+	// cookies_func "shared/utils/cookies"
 )
 
 type MediaController struct {
@@ -51,30 +51,30 @@ func (m MediaController) Generate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (m MediaController) SaveAvatar(w http.ResponseWriter, r *http.Request) {
-	// ctx := r.Context()
-	// userID, ok := ctx.Value(middleware.UserIdKey).(uint)
-	// if !ok {
-	// 	http.Error(w, "Unathorized", http.StatusUnauthorized)
-	// }
+	ctx := r.Context()
+	userID, ok := ctx.Value(middleware.UserIdKey).(uint)
+	if !ok {
+		http.Error(w, "Unathorized", http.StatusUnauthorized)
+	}
 	
-	cookiesmas := ""
-	if r.Header.Get("set-cookie") != "" {
-		cookiesmas = r.Header.Get("set-cookie")
-	} else {
-		cookiesmas = r.Header.Get("Cookie")
-	}
-	refreshToken, _ := cookies_func.ParseCookies(cookiesmas)
+	// cookiesmas := ""
+	// if r.Header.Get("set-cookie") != "" {
+	// 	cookiesmas = r.Header.Get("set-cookie")
+	// } else {
+	// 	cookiesmas = r.Header.Get("Cookie")
+	// }
+	// refreshToken, _ := cookies_func.ParseCookies(cookiesmas)
 
-	log.Printf("RefreshToken: %s", refreshToken)
-	result, errMsg := m.authService.ValidateToken(refreshToken)
+	// log.Printf("RefreshToken: %s", refreshToken)
+	// result, errMsg := m.authService.ValidateToken(refreshToken)
 
-	if !result {
-			w.WriteHeader(http.StatusForbidden)
-			w.Write([]byte(errMsg))
-			return
-	}
+	// if !result {
+	// 		w.WriteHeader(http.StatusForbidden)
+	// 		w.Write([]byte(errMsg))
+	// 		return
+	// }
 
-	userID, err := m.authService.ParseUserId(refreshToken)
+	// userID, err := m.authService.ParseUserId(refreshToken)
 
 	log.Printf("Controller received userID: %v", userID)
 	var req responses.SaveRequest
@@ -102,7 +102,7 @@ func (m MediaController) SaveAvatar(w http.ResponseWriter, r *http.Request) {
 
 	link, newErr := m.mediaService.GetAvatarPic(params.Name)
 	if newErr != nil {
-		log.Print(err)
+		log.Print(newErr)
 		w.WriteHeader(http.StatusInternalServerError)
 		errMsg := responses.ErrorResponse{
 			Status: http.StatusInternalServerError,

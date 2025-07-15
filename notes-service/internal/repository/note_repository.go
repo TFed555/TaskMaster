@@ -55,6 +55,13 @@ func (n NotesRepository) GetTodos(urlParams url.Values, tableName string, userID
 		args = append(args, userID)
 		log.Printf("UserID: %s", userID)
 	// }
+	if title := urlParams.Get("title"); title != "" {
+		counter ++
+		searchPattern := "%" + title + "%"
+		query += fmt.Sprintf(" %s title ILIKE $%d", st, counter)
+		args = append(args, searchPattern)
+		log.Printf("Title: %s", title)
+	}
 
 	if dataToFilter := urlParams.Get("createdAt"); dataToFilter != "" {
 		counter++

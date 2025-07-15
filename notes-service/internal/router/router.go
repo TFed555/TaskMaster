@@ -38,7 +38,6 @@ func InitNewRouter(notesController controllers.NotesController, authMiddleware m
 	router.Get("/api/todos/{id}", notesController.GetOneTodo)
 	router.Post("/api/todos", notesController.CreateTodo)
 	router.Get("/api/todos/history", notesController.GetAuditTrail)
-	router.Post("/api/todos/search", notesController.SearchTodos)
 
 	router.Post("/api/tags", notesController.CreateTag)
 	router.Get("/api/tags", notesController.GetTags)
