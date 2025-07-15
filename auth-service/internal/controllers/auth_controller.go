@@ -138,8 +138,10 @@ func (c AuthController) Refresh(w http.ResponseWriter, r *http.Request) {
 	cookiesmas := ""
 	if r.Header.Get("set-cookie") != "" {
 		cookiesmas = r.Header.Get("set-cookie")
+		log.Print("Get it from set-cookie")
 	} else {
 		cookiesmas = r.Header.Get("Cookie")
+		log.Print("Get it from Cookie")
 	}
 	// cookiesmas := r.Header.Get("Cookie")
 
@@ -239,14 +241,14 @@ func (c AuthController) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c AuthController) TestCookie(w http.ResponseWriter, r *http.Request) {
-	log.Printf("TestCookie controller: %s", r.Header.Get("set-cookie"))
+	log.Printf("TestCookie controller: %s", r.Header.Get("Cookie"))
 
 	type Response struct {
 		Cookies	string `json:"cookies"`
 	}
 
 	response := Response{
-		Cookies: r.Header.Get("set-cookie"),
+		Cookies: r.Header.Get("Cookie"),
 		// Cookies: r.Header.Get("set-cookie")
 	}
 

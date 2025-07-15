@@ -37,21 +37,21 @@ func (n NotesController) Test(w http.ResponseWriter, r *http.Request) {
 
 func (n NotesController) GetTodos(w http.ResponseWriter, r *http.Request) {
 	// /api/todos?createdAt=(date YYYY-MM-DD)&filter=(after | before)&offset=(int)&limit=(int)
-	// ctx := r.Context()
-	// userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
-	// log.Print("UserID:", userID)
-	// if !ok {
-	//     http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	//     return
-	// }
-	// log.Printf("Controller received userID: %v", userID)
+	ctx := r.Context()
+	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	log.Print("UserID:", userID)
+	if !ok {
+	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	    return
+	}
+	log.Printf("Controller received userID: %v", userID)
 
 	// log.Print(r.Header.Get("set-cookie"))
 	urlParams, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
 		log.Print("Не удалось распарсить url")
 	}
-	todos, err := n.notesService.GetTodos(urlParams)
+	todos, err := n.notesService.GetTodos(urlParams, userID)
 
 	// todos, err := n.notesService.GetTodos(userID, urlParams)
 
@@ -179,7 +179,7 @@ func (n NotesController) UpdateTodo(w http.ResponseWriter, r *http.Request) {
 		Description: req.Description,
 		Category: req.Category,
 		CreatedAt: req.CreatedAt,
-		CompletedAt: req.CompletedAt,
+		CompletedAt: &req.CompletedAt,
 	}
 
 	updatedId, err := n.notesService.UpdateTask(todoBody)
@@ -217,21 +217,21 @@ func (n NotesController) UpdateTodo(w http.ResponseWriter, r *http.Request) {
 
 func (n NotesController) GetArchivedTodos(w http.ResponseWriter, r *http.Request) {
 	// /api/archivedtodos?createdAt=(date YYYY-MM-DD)&filter=(after | before)&offset=(int)&limit=(int)
-	// ctx := r.Context()
-	// userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
-	// log.Print("UserID:", userID)
-	// if !ok {
-	//     http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	//     return
-	// }
-	// log.Printf("Controller received userID: %v", userID)
+	ctx := r.Context()
+	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	log.Print("UserID:", userID)
+	if !ok {
+	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	    return
+	}
+	log.Printf("Controller received userID: %v", userID)
 
 	log.Print(url.ParseQuery(r.URL.RawQuery))
 	urlParams, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
 		log.Print("Не удалось распарсить url")
 	}
-	todos, err := n.notesService.GetArchivedTodos(urlParams)
+	todos, err := n.notesService.GetArchivedTodos(urlParams, userID)
 
 	// todos, err := n.notesService.GetTodos(userID, urlParams)
 

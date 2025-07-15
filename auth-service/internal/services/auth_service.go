@@ -235,11 +235,13 @@ func (s AuthServiceImpl) Logout(userID uint) (bool, error) {
 func (s AuthServiceImpl) UpdateAccessToken(refreshToken string) (bool, string, error) {
 	res, err := s.tokenRepo.GetToken(refreshToken)
 	if err != nil {
+		log.Printf("No get token %s", refreshToken)
 		return false, "", err
 	}
 	if res.Token != "" {
 		newValue, err := s.jwtFunc.GenerateJWTAccessToken(res.UserID)
 		if err != nil {
+			log.Print("Generation failed")
 			return false, "", err
 		}
 

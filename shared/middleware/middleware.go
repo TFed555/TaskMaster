@@ -33,8 +33,10 @@ func (c *AuthMiddleware) SetAuthMiddleware(controller http.Handler) http.Handler
 	cookiesmas := ""
 	if r.Header.Get("set-cookie") != "" {
 		cookiesmas = r.Header.Get("set-cookie")
+		log.Print("Get it from set-cookie")
 	} else {
 		cookiesmas = r.Header.Get("Cookie")
+		log.Print("Get it from Cookie")
 	}
 		refreshToken, accessToken := cookies_func.ParseCookies(cookiesmas)
 

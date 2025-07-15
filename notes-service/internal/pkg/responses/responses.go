@@ -29,7 +29,7 @@ type UpdateRequest struct {
 	Category    string  `json:"category,omitempty"`
 	Description string  `json:"description,omitempty"`
 	CreatedAt   string  `json:"createdAt,omitempty"`
-	CompletedAt *string `json:"completedAt,omitempty"`
+	CompletedAt string `json:"completedAt,omitempty"`
 	ID          int     `json:"id"`
 }
 

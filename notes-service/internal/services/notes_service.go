@@ -10,8 +10,8 @@ import (
 )
 
 type NotesService interface {
-	GetTodos(urlParams url.Values) ([]models.Todo, error)
-	GetArchivedTodos(urlParams url.Values) ([]models.Todo, error)
+	GetTodos(urlParams url.Values, userID uint) ([]models.Todo, error)
+	GetArchivedTodos(urlParams url.Values, userID uint) ([]models.Todo, error)
 	CreateTask(todoBody domain_models.Todo) (int, error)
 	UpdateTask(todoBody domain_models.Todo) (int, error)
 	ArchiveTask(ID int) (int, error)
@@ -38,8 +38,8 @@ func NewNotesService(notesRepository repository.NotesRepository) NotesService {
 	}
 }
 
-func (s NotesServiceImpl) GetTodos(urlParams url.Values) ([]models.Todo, error) {
-	todos, err := s.notesRepository.GetTodos(urlParams, "todos")
+func (s NotesServiceImpl) GetTodos(urlParams url.Values, userID uint) ([]models.Todo, error) {
+	todos, err := s.notesRepository.GetTodos(urlParams, "todos", userID)
 	if err != nil {
 		return nil, err
 	}
@@ -90,8 +90,8 @@ func (s NotesServiceImpl) UpdateTask(todoBody domain_models.Todo) (int, error) {
 	return id, nil
 }
 
-func (s NotesServiceImpl) GetArchivedTodos(urlParams url.Values) ([]models.Todo, error) {
-	todos, err := s.notesRepository.GetTodos(urlParams, "archived_todos")
+func (s NotesServiceImpl) GetArchivedTodos(urlParams url.Values, userID uint) ([]models.Todo, error) {
+	todos, err := s.notesRepository.GetTodos(urlParams, "archived_todos", userID)
 	if err != nil {
 		return nil, err
 	}
