@@ -25,6 +25,7 @@ type Tag struct {
 }
 
 type HistoryTodo struct {
+  ID	int		`db:"id"`
   Title string `db:"title"`
   Status string `db:"action"`
 }

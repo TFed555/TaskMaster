@@ -705,6 +705,7 @@ func (n NotesController) GetAuditTrail(w http.ResponseWriter, r *http.Request) {
 
 	for _, el := range history_todos {
 		todo := responses.OneAuditTrial{
+			ID: el.ID,
 			Title: el.Title,
 			Status: el.Status,
 		}

@@ -552,7 +552,7 @@ func (n NotesRepository) GetHistoryTodos(userID uint) ([]models.HistoryTodo, err
 	const op = "repository.notes_repository.GetHistoryTodos"
 	query := (`SELECT 
     COALESCE(t.title, a.title) AS title,
-    th.action
+    th.action, COALESCE(th.todoid, th.archived_todoid) as id
 	FROM todos_history th
 	LEFT JOIN notes.todos t ON t.id = th.todoid AND t.userid = $1
 	LEFT JOIN notes.archived_todos a ON a.id = th.archived_todoid AND a.userid = $1
