@@ -216,13 +216,6 @@ func (c AuthController) Logout(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Controller received userID: %v", userID)
 
-	success, err := c.authService.Logout(userID)
-
-	if !success && err != nil {
-		log.Printf("Logout failed: %v", err)
-		http.Error(w, "Logout failed", http.StatusInternalServerError)
-		return
-	}
 
 	cookies_func.SetCookies(&w, "refresh_token", "", time.Unix(0, 0))
 	cookies_func.SetCookies(&w, "access_token", "", time.Unix(0, 0))

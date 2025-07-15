@@ -39,9 +39,8 @@ func Run() error {
 	}
 
 	userRepo := repository.NewUserRepository(db)
-	tokenRepo := repository.NewTokenRepository(db)
 	jwtFunc := jwt.NewJWTFunctional()
-	authService := services.NewAuthService(userRepo, tokenRepo, jwtFunc, nil)
+	authService := services.NewAuthService(userRepo, jwtFunc, nil)
 	authController := controllers.NewAuthController(authService)
 	authMiddleware := middleware.NewAuthMiddleware(authService)
 
