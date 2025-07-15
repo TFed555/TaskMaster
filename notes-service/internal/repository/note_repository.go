@@ -548,8 +548,10 @@ func (n NotesRepository) GetHistoryTodos(userID uint) ([]models.HistoryTodo, err
     th.action
 	FROM todos_history th
 	LEFT JOIN notes.todos t ON t.id = th.todoid AND t.userid = $1
-	LEFT JOIN notes.archived_todos a ON a.id = th.archived_todoid AND a.userid = 1
+	LEFT JOIN notes.archived_todos a ON a.id = th.archived_todoid AND a.userid = $1
 	WHERE (t.id IS NOT NULL OR a.id IS NOT NULL)`)
+
+	query += (` ORDER BY changedat DESC`)
 	todos := []models.HistoryTodo{}
 	err := n.db.Select(&todos, query, userID)
 	if err != nil {
