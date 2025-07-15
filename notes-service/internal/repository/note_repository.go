@@ -53,7 +53,7 @@ func (n NotesRepository) GetTodos(urlParams url.Values, tableName string, userID
 		st = "AND"
 		query += fmt.Sprintf("WHERE userid = $%d ", counter)
 		args = append(args, userID)
-		log.Printf("UserID: %s", userID)
+		log.Printf("UserID: %d", userID)
 	// }
 	if title := urlParams.Get("title"); title != "" {
 		counter ++
@@ -73,10 +73,18 @@ func (n NotesRepository) GetTodos(urlParams url.Values, tableName string, userID
 
 	if dataToFilter := urlParams.Get("createdAt"); dataToFilter != "" {
 		counter++
-
 		query += fmt.Sprintf(" %s createdat %s $%d::TIMESTAMPTZ ", st, sqlFilter, counter)
 		args = append(args, dataToFilter)
 		log.Printf("Date: %s", dataToFilter)
+	}
+
+	if filterStatus := urlParams.Get("filterStatus"); filterStatus != "" {
+		switch filterStatus {
+		case "current":
+			query += fmt.Sprintf(" %s completedat IS NULL ", st)
+		case "completed":
+			query += fmt.Sprintf(" %s completedat IS NOT NULL", st)
+		}
 	}
 
 	if offset := urlParams.Get("offset"); offset != "" {
