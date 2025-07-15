@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	cookies_func "shared/utils/cookies"
+	"time"
 )
 
 type AuthService interface{
@@ -35,30 +36,48 @@ func (c *AuthMiddleware) SetAuthMiddleware(controller func(w http.ResponseWriter
 	} else {
 		cookiesmas = r.Header.Get("Cookie")
 	}
-	_, accessToken := cookies_func.ParseCookies(cookiesmas)
+		refreshToken, accessToken := cookies_func.ParseCookies(cookiesmas)
 
-	log.Printf("Called from middleware %s", accessToken)
+		log.Printf("Called from middleware %s\n", refreshToken)
+		log.Printf("Called from middleware %s", accessToken)
 
-	result, errMsg := c.authService.ValidateToken(accessToken)
 
-	if !result {
-		w.WriteHeader(http.StatusForbidden)
-		w.Write([]byte(errMsg))
-    	http.Error(w, "Invalid token", http.StatusUnauthorized)
-		return
-	}
+		result, errMsg := c.authService.ValidateToken(refreshToken)
 
-	userID, err := c.authService.ParseUserId(accessToken)
-	if err != "" {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err))
-        return
-    }
+		if !result {
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte(errMsg))
+			return
+		}
 
-    ctx := context.WithValue(r.Context(), UserIdKey, userID)
+		result, errMsg = c.authService.ValidateToken(accessToken)
 
-	log.Printf("CALLED FROM MDLWR %d \n", ctx.Value(UserIdKey).(uint))
-	controller(w, r.WithContext(ctx))
+		if !result {
+			success, newValue, err:=  c.authService.UpdateAccessToken(refreshToken)
+			log.Printf("Called from middleware access token: %t, %s, %v", success, newValue, err)
+			if err != nil {
+				w.WriteHeader(http.StatusForbidden)
+				w.Write([]byte(errMsg))
+				return
+			}
+			if success {
+				cookies_func.SetCookies(&w, "access_token", newValue, time.Now().Add(15 * time.Minute))
+			}
+		}
 
+		userID, err := c.authService.ParseUserId(refreshToken)
+		if err != "" {
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte(err))
+            // http.Error(w, "Invalid token", http.StatusUnauthorized)
+
+            return
+        }
+
+        ctx := context.WithValue(r.Context(), UserIdKey, userID)
+
+		log.Printf("CALLED FROM MDLWR %d \n", ctx.Value(UserIdKey).(uint))
+
+		controller(w, r.WithContext(ctx))
 	}
 }
