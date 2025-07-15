@@ -63,6 +63,14 @@ func (n NotesRepository) GetTodos(urlParams url.Values, tableName string, userID
 		log.Printf("Title: %s", title)
 	}
 
+	if category := urlParams.Get("category"); category != "" {
+		counter ++
+		query += fmt.Sprintf(" %s category = $%d", st, counter)
+		args = append(args, category)
+		log.Printf("Category: %s", category)
+	}
+
+
 	if dataToFilter := urlParams.Get("createdAt"); dataToFilter != "" {
 		counter++
 

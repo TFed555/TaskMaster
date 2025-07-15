@@ -30,6 +30,7 @@ const UserIdKey	ContextKey = "userID"
 
 func (c *AuthMiddleware) SetAuthMiddleware(controller http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
+	log.Print(r.Header)
 	cookiesmas := ""
 	if r.Header.Get("set-cookie") != "" {
 		cookiesmas = r.Header.Get("set-cookie")
