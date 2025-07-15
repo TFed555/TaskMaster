@@ -101,6 +101,18 @@ func (n NotesRepository) GetTodos(urlParams url.Values, tableName string, userID
 		log.Printf("Limit: %s", limit)
 	}
 
+
+	if sortBy := urlParams.Get("sortBy"); sortBy != "" {
+		switch sortBy {
+		case "date":
+			query += (" ORDER BY createdat DESC")
+		case "priority":
+			query += (" ORDER BY array_position(ARRAY['high', 'medium', 'low'], priority)")
+		case "category":
+			query += (" ORDER BY category")
+		}
+	}
+
 	err := n.db.Select(&todos, query, args...)
 	if err != nil {
 		if err == sql.ErrNoRows {
