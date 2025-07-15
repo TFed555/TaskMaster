@@ -41,6 +41,7 @@ func InitNewRouter(authController controllers.AuthController, authMiddleware mid
 			r.Delete("/login", authController.Logout)
 			r.Delete("/user", authController.DeleteUser)
 			r.Patch("/user", authController.UpdateUser)
+			r.Get("/refresh", authController.Refresh)
 		})
 	})
 
