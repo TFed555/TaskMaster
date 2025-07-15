@@ -22,7 +22,7 @@ func NewNotesRepository(db *sqlx.DB) NotesRepository {
 	}
 }
 
-func (n NotesRepository) GetTodos(urlParams url.Values, userID uint, tableName string) ([]models.Todo, error) {
+func (n NotesRepository) GetTodos(urlParams url.Values, tableName string) ([]models.Todo, error) {
 	const op = "repository.notes_repository.GetTodos"
 	args := []any{}
 	// parserCreatedAt, err := time.Parse(time.RFC3339, createdAt)
@@ -47,13 +47,14 @@ func (n NotesRepository) GetTodos(urlParams url.Values, userID uint, tableName s
 	counter := 0
 
 	st := "WHERE"
-	
+
+	if userID := urlParams.Get("userID"); userID != "" {
 		counter++
 		st = "AND"
 		query += fmt.Sprintf("WHERE userid = $%d ", counter)
-		args = append(args, int(userID))
+		args = append(args, userID)
 		log.Printf("UserID: %s", userID)
-	
+	}
 
 	if dataToFilter := urlParams.Get("createdAt"); dataToFilter != "" {
 		counter++
