@@ -82,3 +82,7 @@ type OneAuditTrial struct {
 type AuditTrial struct {
 	Changes *[]OneAuditTrial `json:"changes"`
 }
+
+type SearchRequest struct {
+	SearchString string `json:"search"`
+}
