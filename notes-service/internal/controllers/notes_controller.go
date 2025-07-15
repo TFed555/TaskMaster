@@ -736,8 +736,9 @@ func (n NotesController) SearchTodos(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
+	req.UserID = userID
 
-	todos, err := n.notesService.SearchTodos(req.SearchString)
+	todos, err := n.notesService.SearchTodos(req.SearchString, req.UserID)
 	if err != nil {
 		log.Printf("%s", err)
 		w.WriteHeader(http.StatusBadRequest)

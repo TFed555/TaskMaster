@@ -85,4 +85,5 @@ type AuditTrial struct {
 
 type SearchRequest struct {
 	SearchString string `json:"search"`
+	UserID	uint
 }

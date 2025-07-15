@@ -31,20 +31,20 @@ services:
     depends_on: 
       - db
 
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
-    environment:
-      discovery.type: single-node
-      xpack.security.enabled: false
-      ES_JAVA_OPTS: -Xmx512m -Xms512m
-      ELASTIC_USERNAME: "elastic"
-      ELASTIC_PASSWORD: "MyPw123"
-    ports:
-      - "9200:9200"
-      - "9300:9300"
-    volumes:
-      - ./configs/elasticsearch/config.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
-      - ./docker_volumes/elasticsearch/data:/usr/share/elasticsearch/data
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+  #   environment:
+  #     discovery.type: single-node
+  #     xpack.security.enabled: false
+  #     ES_JAVA_OPTS: -Xmx512m -Xms512m
+  #     ELASTIC_USERNAME: "elastic"
+  #     ELASTIC_PASSWORD: "MyPw123"
+  #   ports:
+  #     - "9200:9200"
+  #     - "9300:9300"
+  #   volumes:
+  #     - ./configs/elasticsearch/config.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+  #     - ./docker_volumes/elasticsearch/data:/usr/share/elasticsearch/data
       
   # auth_service:
   #   build: ./auth-service

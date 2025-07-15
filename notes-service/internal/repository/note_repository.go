@@ -562,12 +562,12 @@ func (n NotesRepository) GetHistoryTodos(userID uint) ([]models.HistoryTodo, err
 	return todos, nil
 }
 
-func (n NotesRepository) SearchTodos(searchString string) ([]models.Todo, error) {
+func (n NotesRepository) SearchTodos(searchString string, userID uint) ([]models.Todo, error) {
 	const op = "repository.notes_repository.SearchTodos"
 	query := (`SELECT * from notes.todos t WHERE
-		t.title = $1 or t.description = $1`)
+		t.title = $1 AND t.userid = $2`)
 	todos := []models.Todo{}
-	err := n.db.Select(&todos, query, searchString)
+	err := n.db.Select(&todos, query, searchString, userID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return []models.Todo{}, nil
