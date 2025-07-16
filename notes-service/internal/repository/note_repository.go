@@ -297,33 +297,42 @@ func (n NotesRepository) UpdateTodo(todo models.Todo, changedColumns utils.Chang
 	if errSelect != nil {
 		return -1, fmt.Errorf("%s: %w", op, errSelect)
 	}
+
+	log.Print(scanArgs...)
 	var valuesFromArgs []string
 
 	for _, ptr := range scanArgs {
-    valPtr := ptr.(*interface{})
+		valPtr := ptr.(*interface{})
 
-    var strValue string
-    switch v := (*valPtr).(type) {
-    case string:
-        strValue = v
-    case []byte:
-        strValue = string(v)
-    case int, int64, float64, bool:
-        strValue = fmt.Sprintf("%v", v)
-    // case time.Time:
-    //     strValue = v.Format(time.RFC3339)
-    case nil:
-        strValue = "NULL"
-    default:
-        strValue = fmt.Sprintf("%v", v)
-    }
-	// strValue += ""
-    
-    valuesFromArgs = append(valuesFromArgs, strValue)
+		var strValue string
+		switch v := (*valPtr).(type) {
+		case string:
+			strValue = v
+		case []byte:
+			strValue = string(v)
+		case int, int64, float64, bool:
+			strValue = fmt.Sprintf("%v", v)
+		// case time.Time:
+		//     strValue = v.Format(time.RFC3339)
+		case nil:
+			strValue = "NULL"
+		default:
+			strValue = fmt.Sprintf("%v", v)
+		}
+		// strValue += ""
+		
+		valuesFromArgs = append(valuesFromArgs, strValue)
 	}
 
 	log.Printf("valuesfromargs: %v", valuesFromArgs)
+	columnsMas := strings.Split(columns, ", ")
+	log.Print("columnsMas: %v", columnsMas)
+	for i, _ := range valuesFromArgs {
+		valuesFromArgs[i] += ":" + columnsMas[i]
+	}
+
 	oldValues := strings.Join(valuesFromArgs, ", ")
+	
 	log.Print(oldValues)
 
 	queryf := (`INSERT INTO todos_history 
