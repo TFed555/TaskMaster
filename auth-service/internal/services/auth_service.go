@@ -74,7 +74,7 @@ func (s AuthServiceImpl) Authorize(params domain_models.AuthorizeParams) (models
 	imgPath := ""
 	if user.ImgPath != nil {
 		if s.mediaClient == nil {
-			mediaCon, err := grpc.Dial("localhost:50050", grpc.WithInsecure())
+			mediaCon, err := grpc.Dial("media_service:50050", grpc.WithInsecure())
 			if err != nil {
 				log.Fatalf("Failed to connect to grpc server: %v", err)
 			}
@@ -134,11 +134,13 @@ func (s AuthServiceImpl) Refresh(refreshToken string) (string, string, error) {
 
 func (s AuthServiceImpl) ValidateToken(tokenValue string) (bool, string) {
 	if tokenValue == ""  {
+		log.Print("tokenValue empty")
 		return false, "Access denied"
 	}
 
 	verified, err := s.jwtFunc.VerifyKey(tokenValue)
 	if !verified || err != nil {
+		log.Print("Isn't verified")
 		return false, "Access denied"
 	}
 

@@ -2,11 +2,14 @@ package router
 
 import (
 	"media-service/internal/controllers"
+	"net/http"
 	"shared/middleware"
 	_ "shared/middleware"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
 )
 
 type Router struct {
@@ -14,7 +17,8 @@ type Router struct {
 	Port      string
 }
 
-func InitNewRouter(mediaController controllers.MediaController, authMiddleware middleware.AuthMiddleware) Router {
+func InitNewRouter(mediaController controllers.MediaController, authMiddleware middleware.AuthMiddleware,
+					authCon *grpc.ClientConn) Router {
 
 	router := chi.NewRouter()
 
@@ -31,6 +35,15 @@ func InitNewRouter(mediaController controllers.MediaController, authMiddleware m
 	router.Get("/api/test", mediaController.Test)
 	router.Get("/api/images/avatar", mediaController.Generate)
 	router.Post("/api/images/avatar", mediaController.SaveAvatar)
+
+	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+			if authCon.GetState() != connectivity.Ready {
+				w.WriteHeader(503)
+				return
+			}
+
+			w.WriteHeader(200)
+	})
 
 	return Router{
 		ChiRouter: router,

@@ -33,9 +33,10 @@ func Run() error {
 		return fmt.Errorf("DB connection error: %v", err)
 	}
 
-	authCon, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	authCon, err := grpc.Dial("auth_service:50051", grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("Failed to connect to grpc server: %v", err)
+		return fmt.Errorf("Failed to connect to grpc server: %v", err)
 	}
 	defer authCon.Close()
 

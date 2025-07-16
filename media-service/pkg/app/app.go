@@ -30,7 +30,7 @@ func Run() error {
 		return fmt.Errorf("DB connection error: %v", err)
 	}
 
-	authCon, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	authCon, err := grpc.Dial("auth_service:50051", grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("Failed to connect to grpc server: %v", err)
 		return fmt.Errorf("Failed to connect to grpc server: %v", err)
@@ -56,7 +56,7 @@ func Run() error {
 		}
 	}()
 
-	router := router.InitNewRouter(mediaController, authMiddleware)
+	router := router.InitNewRouter(mediaController, authMiddleware, authCon)
 
 	log.Printf("Starting media-service on %s \n", router.Port)
 	if err := http.ListenAndServe(router.Port, router.ChiRouter); err != nil {

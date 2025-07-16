@@ -10,10 +10,18 @@ services:
       POSTGRES_DB: tasksdb
       LANG: en_US.UTF-8
       LC_ALL: en_US.UTF-8
+      DB_DSN: "postgresql://user:password@db:5432/tasksdb?sslmode=disable"
     ports:
       - "5432:5432"
+    networks:
+      - app-network
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/dat
+    healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U user -d tasksdb"]
+        interval: 5s
+        timeout: 5s
+        retries: 10
 
   minio:
     image: minio/minio
@@ -28,6 +36,8 @@ services:
     ports:
       - 9000:9000
       - 9001:9001
+    networks:
+      - app-network
     depends_on: 
       - db
       - llm
@@ -43,42 +53,79 @@ services:
     ports:
       - "8001:8001"
 
-
-  # elasticsearch:
-  #   image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
-  #   environment:
-  #     discovery.type: single-node
-  #     xpack.security.enabled: false
-  #     ES_JAVA_OPTS: -Xmx512m -Xms512m
-  #     ELASTIC_USERNAME: "elastic"
-  #     ELASTIC_PASSWORD: "MyPw123"
-  #   ports:
-  #     - "9200:9200"
-  #     - "9300:9300"
-  #   volumes:
-  #     - ./configs/elasticsearch/config.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
-  #     - ./docker_volumes/elasticsearch/data:/usr/share/elasticsearch/data
+  
+  media_service:
+    build:
+      context: .
+      dockerfile: media-service/Dockerfile
+    ports:
+      - "8084:8084"
+      - "50050:50050"
+    expose:
+      - "50050:50050"
+    networks:
+      - app-network
+    volumes:
+      - ./:/app
+      - ./media-service/.env.local:/app/.env.local:ro
+      - ./.env:/app/.env
+      - ./shared:/app/shared
+    depends_on:
+      db:
+        condition: service_healthy 
+    healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:8084/health"]
+        interval: 10s
+        timeout: 5s
+        retries: 10
+    restart: unless-stopped
       
-  # auth_service:
-  #   build: ./auth-service
-  #   ports:
-  #    - "8001:8001"
-  #   depends_on:
-  #     - db
+  auth_service:
+    build: 
+      context: .
+      dockerfile: auth-service/Dockerfile
+    # environment:
+    #   DB_DSN: "postgres://user:password@postgres:5432/tasksdb?sslmode=disable"
+    ports:
+     - "8080:8080"
+     - "50051:50051"
+    expose:
+     - "50051:50051"
+    networks:
+      - app-network
+    volumes:
+     - ./:/app
+     - ./.env:/app/.env:ro
+     - ./auth-service/.env.local:/app/.env.local:ro
+     - ./shared:/app/shared
+     - ./auth-service/internal/migrations:/app/internal/migrations:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      # media_service:
+      #   condition: service_healthy
+    # command: >
+    restart: unless-stopped
 
-  # notes_service:
-  #   build: ./notes-service
-  #   ports:
-  #    - "8002:8002"
-  #   depends_on:
-  #     - db
 
-  # media_service:
-  #   build: ./media-service
-  #   ports:
-  #    - "8003:8003"
-  #   depends_on:
-  #     - db
+  notes_service:
+    build:
+      context: .
+      dockerfile: notes-service/Dockerfile
+    ports:
+     - "8082:8082"
+    networks:
+     - app-network
+    volumes:
+      - ./:/app
+      - ./notes-service/.env.local:/app/.env.local:ro
+      - ./.env:/app/.env
+      - ./shared:/app/shared
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
 
   # api:
   #   build: ./api
@@ -103,6 +150,10 @@ services:
   #     DB_PASSWORD: password
   #     DB_NAME: mydb
   #   restart: on-failure
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   postgres_data:

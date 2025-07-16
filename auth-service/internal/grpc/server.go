@@ -42,7 +42,8 @@ func (s *AuthServer) ParseUserId(ctx context.Context, req *pb.RefreshTokenReques
 }
 
 func StartGRPCServer(authService services.AuthService, port string) error {
-	lis, err := net.Listen("tcp", port)
+	lis, err := net.Listen("tcp", "0.0.0.0"+port)
+	log.Print("Changed settings")
 	if err != nil {
 		return err
 	}
