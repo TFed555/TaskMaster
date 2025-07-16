@@ -5,7 +5,7 @@ type Todo struct {
   Title 		string
   Priority 		string
   Category 		string
-  Description 	string
+  Description 	*string
   CreatedAt 	string
   CompletedAt *string
   UserId        *int

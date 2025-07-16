@@ -296,7 +296,7 @@ func (n NotesRepository) UpdateTodo(todo models.Todo) (int, error) {
 		values = append(values, fmt.Sprintf("PRIORITY=$%d", count))
 		args = append(args, todo.Priority)
 	}
-	if todo.Description != "" {
+	if todo.Description != nil {
 		count++
 		values = append(values, fmt.Sprintf("DESCRIPTION=$%d", count))
 		args = append(args, todo.Description)

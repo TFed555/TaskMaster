@@ -122,7 +122,7 @@ func (n NotesController) CreateTodo(w http.ResponseWriter, r *http.Request) {
 		UserId: &userId,
 		Title: req.Title,
 		Priority: req.Priority,
-		Description: req.Description,
+		Description: &req.Description,
 		Category: req.Category,
 		CreatedAt: req.CreatedAt,
 		CompletedAt: req.CompletedAt,

@@ -27,7 +27,7 @@ type UpdateRequest struct {
 	Title       string  `json:"title,omitempty"`
 	Priority    string  `json:"priority,omitempty"`
 	Category    string  `json:"category,omitempty"`
-	Description string  `json:"description,omitempty"`
+	Description *string  `json:"description,omitempty"`
 	CreatedAt   string  `json:"createdAt,omitempty"`
 	CompletedAt string `json:"completedAt,omitempty"`
 	ID          int     `json:"id"`
@@ -37,7 +37,7 @@ type OneTodoResponse struct {
 	Title       string       `json:"title,omitempty"`
 	Priority    string       `json:"priority,omitempty"`
 	Category    string       `json:"category,omitempty"`
-	Description string       `json:"description,omitempty"`
+	Description *string       `json:"description,omitempty"`
 	CreatedAt   string       `json:"createdAt,omitempty"`
 	CompletedAt *string      `json:"completedAt,omitempty"`
 	ID          int          `json:"id"`

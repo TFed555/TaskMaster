@@ -11,7 +11,7 @@ type Todo struct {
 	Title       string     `db:"title"`
 	Priority    string     `db:"priority"`
 	Category    string     `db:"category"`
-	Description string     `db:"description"`
+	Description *string     `db:"description"`
 	CreatedAt   string     `db:"createdat"`
 	CompletedAt *string    `db:"completedat"` //т.к. может быть null
 	UserId      *int       `db:"userid"`
