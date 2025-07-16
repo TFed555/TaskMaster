@@ -89,18 +89,29 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      media_service:
-        condition: service_healthy
+      # media_service:
+      #   condition: service_healthy
     # command: >
     restart: unless-stopped
 
 
-  # notes_service:
-  #   build: ./notes-service
-  #   ports:
-  #    - "8002:8002"
-  #   depends_on:
-  #     - db
+  notes_service:
+    build:
+      context: .
+      dockerfile: notes-service/Dockerfile
+    ports:
+     - "8082:8082"
+    networks:
+     - app-network
+    volumes:
+      - ./:/app
+      - ./notes-service/.env.local:/app/.env.local:ro
+      - ./.env:/app/.env
+      - ./shared:/app/shared
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
 
 
   # api:

@@ -9,14 +9,11 @@ COPY . .
 # COPY go.work ./
 RUN ls -la auth-service/
 
-# Переходим в директорию с main.go
-WORKDIR /app/auth-service/cmd
+WORKDIR /app/auth-service   
 
-# Скачиваем зависимости
 RUN go mod download
 
-# Собираем приложение
-RUN CGO_ENABLED=0 GOOS=linux go build -o /auth-service .
+RUN go mod tidy && go build -o auth-service ./cmd/main.go
 
 FROM alpine:latest
 WORKDIR /root/

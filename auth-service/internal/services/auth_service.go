@@ -134,11 +134,13 @@ func (s AuthServiceImpl) Refresh(refreshToken string) (string, string, error) {
 
 func (s AuthServiceImpl) ValidateToken(tokenValue string) (bool, string) {
 	if tokenValue == ""  {
+		log.Print("tokenValue empty")
 		return false, "Access denied"
 	}
 
 	verified, err := s.jwtFunc.VerifyKey(tokenValue)
 	if !verified || err != nil {
+		log.Print("Isn't verified")
 		return false, "Access denied"
 	}
 

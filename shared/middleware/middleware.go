@@ -5,10 +5,10 @@ import (
 	"log"
 	"net/http"
 	cookies_func "shared/utils/cookies"
-	_"time"
+	_ "time"
 )
 
-type AuthService interface{
+type AuthService interface {
 	ValidateToken(token string) (bool, string)
 	UpdateAccessToken(token string) (bool, string, error)
 	ParseUserId(token string) (uint, string)
@@ -18,7 +18,7 @@ type AuthMiddleware struct {
 	authService AuthService
 }
 
-func NewAuthMiddleware(authService AuthService) AuthMiddleware{
+func NewAuthMiddleware(authService AuthService) AuthMiddleware {
 	return AuthMiddleware{
 		authService: authService,
 	}
@@ -26,30 +26,31 @@ func NewAuthMiddleware(authService AuthService) AuthMiddleware{
 
 type ContextKey string
 
-const UserIdKey	ContextKey = "userID"
+const UserIdKey ContextKey = "userID"
 
 func (c *AuthMiddleware) SetAuthMiddleware(controller http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
-	log.Print(r.Header)
-	cookiesmas := ""
-	if r.Header.Get("set-cookie") != "" {
-		cookiesmas = r.Header.Get("set-cookie")
-		log.Print("Get it from set-cookie")
-	} else {
-		cookiesmas = r.Header.Get("Cookie")
-		log.Print("Get it from Cookie")
-	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Print(r.Header)
+		cookiesmas := ""
+		if r.Header.Get("set-cookie") != "" {
+			cookiesmas = r.Header.Get("set-cookie")
+			log.Print("Get it from set-cookie")
+		} else {
+			cookiesmas = r.Header.Get("Cookie")
+			log.Print("Get it from Cookie")
+		}
+		
 		refreshToken, accessToken := cookies_func.ParseCookies(cookiesmas)
-
+		log.Print("It has changes")
 		log.Printf("Called from middleware %s\n", refreshToken)
 		log.Printf("Called from middleware %s", accessToken)
 
-		resultRefresh, _ := c.authService.ValidateToken(refreshToken)
+		resultRefresh, err := c.authService.ValidateToken(refreshToken)
 
 		if !resultRefresh {
-				w.WriteHeader(498)
-				w.Write([]byte("Invalid token"))
-				return
+			w.WriteHeader(498)
+			w.Write([]byte(err))
+			return
 		}
 
 		result, _ := c.authService.ValidateToken(accessToken)
@@ -58,7 +59,7 @@ func (c *AuthMiddleware) SetAuthMiddleware(controller http.Handler) http.Handler
 
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte("Unathorized"))
-            return
+			return
 
 			// success, newValue, err:=  c.authService.UpdateAccessToken(refreshToken)
 			// log.Printf("Called from middleware access token: %t, %s, %v", success, newValue, err)
@@ -76,13 +77,13 @@ func (c *AuthMiddleware) SetAuthMiddleware(controller http.Handler) http.Handler
 		if err != "" {
 			w.WriteHeader(http.StatusForbidden)
 			w.Write([]byte(err))
-            return
-        }
+			return
+		}
 
-    ctx := context.WithValue(r.Context(), UserIdKey, userID)
+		ctx := context.WithValue(r.Context(), UserIdKey, userID)
 
-	log.Printf("CALLED FROM MDLWR %d \n", ctx.Value(UserIdKey).(uint))
-	controller.ServeHTTP(w, r.WithContext(ctx))
+		log.Printf("CALLED FROM MDLWR %d \n", ctx.Value(UserIdKey).(uint))
+		controller.ServeHTTP(w, r.WithContext(ctx))
 
 	})
 }
