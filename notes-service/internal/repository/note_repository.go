@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/url"
 	"notes-service/internal/models"
+	"notes-service/internal/pkg/utils"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -278,24 +279,61 @@ func (n NotesRepository) ArchiveTodo(ID int) (int, error) {
 	return addedId, nil
 }
 
-func (n NotesRepository) UpdateTodo(todo models.Todo) (int, error) {
-
+func (n NotesRepository) UpdateTodo(todo models.Todo, changedColumns utils.ChangedColumns) (int, error) {
 	const op = "repository.notes_repository.UpdateTodo"
-	oldName := ""
-	err := n.db.QueryRow(`SELECT title from notes.todos where id = $1`, todo.ID).Scan(&oldName)
-	if err != nil {
-		return -1, fmt.Errorf("%s: %w", op, err)
+
+	columns := changedColumns.StringifyNotEmptyFields()
+	log.Printf("Columns: %s", columns)
+	lenColumns := len(strings.Split(columns, ", "))
+	log.Print(lenColumns)
+	scanArgs := make([]interface{}, lenColumns)
+	for i := range scanArgs {
+		var val interface{}
+		scanArgs[i] = &val
 	}
-	newName := todo.Title
+
+	errSelect := n.db.QueryRow(fmt.Sprintf(`SELECT %s from notes.todos 
+	where id = $1`, columns), todo.ID).Scan(scanArgs...)
+	if errSelect != nil {
+		return -1, fmt.Errorf("%s: %w", op, errSelect)
+	}
+	var valuesFromArgs []string
+
+	for _, ptr := range scanArgs {
+    valPtr := ptr.(*interface{})
+
+    var strValue string
+    switch v := (*valPtr).(type) {
+    case string:
+        strValue = v
+    case []byte:
+        strValue = string(v)
+    case int, int64, float64, bool:
+        strValue = fmt.Sprintf("%v", v)
+    // case time.Time:
+    //     strValue = v.Format(time.RFC3339)
+    case nil:
+        strValue = "NULL"
+    default:
+        strValue = fmt.Sprintf("%v", v)
+    }
+	// strValue += ""
+    
+    valuesFromArgs = append(valuesFromArgs, strValue)
+	}
+
+	log.Printf("valuesfromargs: %v", valuesFromArgs)
+	oldValues := strings.Join(valuesFromArgs, ", ")
+	log.Print(oldValues)
 
 	queryf := (`INSERT INTO todos_history 
 			(todoid, archived_todoid, userId, action, old_value, new_value) 
 			VALUES ($1, $2, $3, $4, $5, $6)
 			RETURNING id`)
-	argsf := []any{todo.ID, nil, todo.UserId, "Changed", oldName, newName}
+	argsf := []any{todo.ID, nil, todo.UserId, "Changed", oldValues, ""}
 	
 	var insertedId int
-	err = n.db.QueryRow(queryf, argsf...).Scan(&insertedId)
+	err := n.db.QueryRow(queryf, argsf...).Scan(&insertedId)
 	if err != nil {
 			return -1, fmt.Errorf("%s: %w", op, err)
 	}
@@ -354,6 +392,12 @@ func (n NotesRepository) DeleteTodo(taskId int) (bool, error) {
 		return false, fmt.Errorf("%s: %w", op, err)
 	}
 	resultFromArchived, _ := res.RowsAffected()
+
+	_, err = n.db.Exec(`DELETE FROM todos_history 
+        WHERE archived_todoid = $1`, taskId)
+	if err != nil {
+        return false, fmt.Errorf("%s: %w", op, err)
+    }
 
 	var tagId int
 	err = n.db.QueryRow(`SELECT tagId from notes.archived_todo_tags WHERE todoId = $1`, taskId).Scan(&tagId)
@@ -627,7 +671,7 @@ func (n NotesRepository) GetHistoryTodos(userID uint) ([]models.HistoryTodo, err
 	const op = "repository.notes_repository.GetHistoryTodos"
 	query := (`SELECT 
     COALESCE(t.title, a.title) AS title,
-	th.old_value
+	th.old_value,
     th.action, COALESCE(th.todoid, th.archived_todoid) as id
 	FROM todos_history th
 	LEFT JOIN notes.todos t ON t.id = th.todoid AND t.userid = $1

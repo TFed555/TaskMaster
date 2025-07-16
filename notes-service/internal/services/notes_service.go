@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"notes-service/internal/models"
 	"notes-service/internal/pkg/domain_models"
+	"notes-service/internal/pkg/utils"
 	"notes-service/internal/repository"
 )
 
@@ -13,7 +14,7 @@ type NotesService interface {
 	GetTodos(urlParams url.Values, userID uint) ([]models.Todo, error)
 	GetArchivedTodos(urlParams url.Values, userID uint) ([]models.Todo, error)
 	CreateTask(todoBody domain_models.Todo) (int, error)
-	UpdateTask(todoBody domain_models.Todo) (int, error)
+	UpdateTask(todoBody domain_models.Todo, changedColumns utils.ChangedColumns) (int, error)
 	ArchiveTask(ID int) (int, error)
 	GetOneTodo(taskId int) (*models.Todo, error)
 	DeleteTodo(taskId int) (bool, error)
@@ -74,7 +75,7 @@ func (s NotesServiceImpl) ArchiveTask(ID int) (int, error) {
 	 return id, nil
 }
 
-func (s NotesServiceImpl) UpdateTask(todoBody domain_models.Todo) (int, error) {
+func (s NotesServiceImpl) UpdateTask(todoBody domain_models.Todo, changedColumns utils.ChangedColumns) (int, error) {
 	todo := models.Todo{
 		ID: todoBody.ID,
 		Title: todoBody.Title,
@@ -85,7 +86,7 @@ func (s NotesServiceImpl) UpdateTask(todoBody domain_models.Todo) (int, error) {
 		CompletedAt: todoBody.CompletedAt,
 		UserId: todoBody.UserId,
 	}
-	id, err := s.notesRepository.UpdateTodo(todo)
+	id, err := s.notesRepository.UpdateTodo(todo, changedColumns)
 	if err != nil {
 		return -1, err
 	}

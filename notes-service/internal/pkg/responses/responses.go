@@ -29,7 +29,7 @@ type UpdateRequest struct {
 	Category    string  `json:"category,omitempty"`
 	Description string  `json:"description,omitempty"`
 	CreatedAt   string  `json:"createdAt,omitempty"`
-	CompletedAt string `json:"completedAt,omitempty"`
+	CompletedAt *string `json:"completedAt,omitempty"`
 	ID          int     `json:"id"`
 }
 
@@ -76,7 +76,7 @@ type AddTagRequest struct {
 
 type OneAuditTrial struct {
 	ID	  int    `json:"id"`
-	OldTitle string `json:"oldtitle,omitempty"`
+	OldTitle *string `json:"oldtitle,omitempty"`
 	Title string `json:"title"`
 	Status string `json:"status"`
 }

@@ -26,7 +26,7 @@ type Tag struct {
 
 type HistoryTodo struct {
   ID	int		`db:"id"`
-  OldTitle string `db:"title"`
+  OldTitle *string `db:"old_value"`
   Title string `db:"title"`
   Status string `db:"action"`
 }

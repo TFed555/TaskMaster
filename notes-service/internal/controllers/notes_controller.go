@@ -11,7 +11,7 @@ import (
 	"shared/middleware"
 	_"shared/utils/cookies"
 	"strconv"
-
+	"notes-service/internal/pkg/utils"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -160,8 +160,6 @@ func (n NotesController) UpdateTodo(w http.ResponseWriter, r *http.Request) {
 	    return
 	}
 	log.Printf("Controller received userID: %v", userID)
-
-
 	
 	todoId := chi.URLParam(r, "id")
 	if todoId == "" {
@@ -190,19 +188,26 @@ func (n NotesController) UpdateTodo(w http.ResponseWriter, r *http.Request) {
 		Description: req.Description,
 		Category: req.Category,
 		CreatedAt: req.CreatedAt,
-		CompletedAt: &req.CompletedAt,
+		CompletedAt: req.CompletedAt,
 		UserId: &userId,
 	}
 
-	updatedId, err := n.notesService.UpdateTask(todoBody)
+	
+	changedColumns := utils.FilterFields([]utils.Field{
+		{Name: "title", Value: todoBody.Title},
+		{Name: "priority", Value: todoBody.Priority},
+		{Name: "description", Value: todoBody.Description},
+		{Name: "category", Value: todoBody.Category},
+		{Name: "createdat", Value: todoBody.CreatedAt},
+		{Name: "completedat", Value: todoBody.CompletedAt},
+	})
+
+	log.Print(changedColumns)
+	updatedId, err := n.notesService.UpdateTask(todoBody, changedColumns)
 
 	if err != nil {
 		log.Printf("%s", err)
 		w.WriteHeader(http.StatusBadRequest)
-		// errMsg := ErrorResponse{
-		// 	Status:  http.StatusInternalServerError,
-		// 	Message: "User does not exists",
-		// }
 		json.NewEncoder(w).Encode("bad")
 		return
 	}
@@ -210,17 +215,6 @@ func (n NotesController) UpdateTodo(w http.ResponseWriter, r *http.Request) {
 	response := responses.CreateResponse{
 		ID: updatedId,
 	}
-
-	// ctx := r.Context()
-	// userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
-	// log.Print("UserID:", userID)
-	// if !ok {
-	//     http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	//     return
-	// }
-	// log.Printf("Controller received userID: %v", userID)
-
-	// n.notesService.Audit("PATCH", false, userID, updatedId)
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
@@ -313,15 +307,6 @@ func (n NotesController) ArchiveTodo(w http.ResponseWriter, r *http.Request) {
 		ID: id,
 	}
 
-	ctx := r.Context()
-	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
-	log.Print("UserID:", userID)
-	if !ok {
-	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	    return
-	}
-	log.Printf("Controller received userID: %v", userID)
-
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	json.NewEncoder(w).Encode(response)
@@ -402,17 +387,6 @@ func (n NotesController) DeleteTodo(w http.ResponseWriter, r *http.Request) {
 		Message: "Deleted successfully",
 	}
 
-	ctx := r.Context()
-	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
-	log.Print("UserID:", userID)
-	if !ok {
-	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	    return
-	}
-	log.Printf("Controller received userID: %v", userID)
-
-	n.notesService.Audit("DELETE", true, userID, id)
-
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	json.NewEncoder(w).Encode(response)
@@ -441,17 +415,6 @@ func (n NotesController) RestoreTodo(w http.ResponseWriter, r *http.Request) {
 	response := responses.CreateResponse{
 		ID: newId,
 	}
-
-	ctx := r.Context()
-	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
-	log.Print("UserID:", userID)
-	if !ok {
-	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	    return
-	}
-	log.Printf("Controller received userID: %v", userID)
-
-	n.notesService.Audit("PUT", false, userID, newId)
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
