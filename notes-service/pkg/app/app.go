@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"notes-service/internal/controllers"
@@ -9,9 +10,9 @@ import (
 	"notes-service/internal/services"
 	"shared/config/dbconfig"
 	"shared/middleware"
-	"fmt"
-	"google.golang.org/grpc"
+
 	_ "github.com/lib/pq"
+	"google.golang.org/grpc"
 )
 
 func Run() error {

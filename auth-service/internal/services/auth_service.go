@@ -8,6 +8,7 @@ import (
 	"auth-service/internal/repository"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -22,7 +23,6 @@ type AuthService interface {
     Authorize(params domain_models.AuthorizeParams) (models.User, domain_models.Tokens, error)
     Refresh(refreshToken string) (string, string, error)
     ValidateToken(tokenValue string) (bool, string)
-    Logout(userID uint) (bool, error)
 	UpdateAccessToken(refreshToken string) (bool, string, error)
 	ParseUserId(token string) (uint, string)
 	UpdateUser(domain_models.UpdateUserParams) (int, error)
@@ -31,14 +31,13 @@ type AuthService interface {
 
 type AuthServiceImpl struct {
 	userRepo repository.UserRepository
-	tokenRepo repository.TokenRepository
 	jwtFunc jwt.JWTFunctional
 	mediaClient grpc_client.GRPCMediaService
 }
 
-func NewAuthService(userRepo repository.UserRepository, tokenRepo repository.TokenRepository, 
+func NewAuthService(userRepo repository.UserRepository, 
 			jwtFunc jwt.JWTFunctional, mediaClient grpc_client.GRPCMediaService) AuthService {
-	return &AuthServiceImpl{userRepo: userRepo, tokenRepo: tokenRepo, 
+	return &AuthServiceImpl{userRepo: userRepo,
 			jwtFunc: jwtFunc, mediaClient: mediaClient,}
 }
 
@@ -60,15 +59,6 @@ func (s AuthServiceImpl) Register(params domain_models.RegisterParams) (int, dom
 	accesstoken, refreshtoken, err := s.jwtFunc.GenerateJWTRefreshTokens(user.ID)
 	if err != nil {
 		return -1, domain_models.Tokens{}, err
-	}
-	refreshToken := &models.RefreshToken{
-		UserID: user.ID,
-		Token:  refreshtoken,
-		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
-	}
-
-	if err := s.tokenRepo.Create(refreshToken); err != nil {
-		return -1, domain_models.Tokens{}, fmt.Errorf("failed to save refresh token: %w", err)
 	}
 
 	tokens := domain_models.Tokens{
@@ -112,14 +102,6 @@ func (s AuthServiceImpl) Authorize(params domain_models.AuthorizeParams) (models
 	if err != nil {
 		return models.User{}, domain_models.Tokens{}, err
 	}
-	refreshToken := &models.RefreshToken{
-		UserID: user.ID,
-		Token:  refreshtoken,
-		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
-	}
-	if err := s.tokenRepo.Create(refreshToken); err != nil {
-		return models.User{}, domain_models.Tokens{}, fmt.Errorf("Failed to save refresh token: %w", err)
-	}
 
 	tokens := domain_models.Tokens{
 		AccessToken: accesstoken,
@@ -131,19 +113,22 @@ func (s AuthServiceImpl) Authorize(params domain_models.AuthorizeParams) (models
 	return user, tokens, err
 }
 
-func (s AuthServiceImpl) Refresh(refreshToken string) (accesstoken string, refreshtoken string, err error) {
-	token, err :=s.tokenRepo.GetToken(refreshToken)
-	if err != nil {
-		return "", "", err
-	}
-	if time.Now().After(token.ExpiresAt) {
-		return "", "", fmt.Errorf("Token time expired")
+func (s AuthServiceImpl) Refresh(refreshToken string) (string, string, error) {
+	_, errMsg := s.ValidateToken(refreshToken)
+	if errMsg != "" {
+		return "", "", errors.New("Invalid token")
 	}
 
-	t1, t2, err := s.jwtFunc.GenerateJWTRefreshTokens(token.UserID)
+	userID, errMsg := s.ParseUserId(refreshToken)
+	if errMsg != "" {
+		return "", "", errors.New("Can't get user ID")
+	}
+
+	t1, t2, err := s.jwtFunc.GenerateJWTRefreshTokens(userID)
 	if err != nil {
 		return "","",err
 	}
+
 	return t1, t2, nil
 }
 
@@ -192,23 +177,16 @@ func (s AuthServiceImpl) ValidateToken(tokenValue string) (bool, string) {
 	return true, ""
 }
 
-func (s AuthServiceImpl) Logout(userID uint) (bool, error) {
-	success, err := s.tokenRepo.DeleteToken(userID)
-	if err != nil {
-		return false, err
-	}
-	return success, nil
-}
-
 
 func (s AuthServiceImpl) UpdateAccessToken(refreshToken string) (bool, string, error) {
-	res, err := s.tokenRepo.GetToken(refreshToken)
-	if err != nil {
-		return false, "", err
+	userID, err:= s.ParseUserId(refreshToken)
+	if err != "" {
+		return false, "", errors.New("Can't get UserID")
 	}
-	if res.Token != "" {
-		newValue, err := s.jwtFunc.GenerateJWTAccessToken(res.UserID)
+	if refreshToken != "" {
+		newValue, err := s.jwtFunc.GenerateJWTAccessToken(userID)
 		if err != nil {
+			log.Print("Generation failed")
 			return false, "", err
 		}
 
@@ -216,7 +194,7 @@ func (s AuthServiceImpl) UpdateAccessToken(refreshToken string) (bool, string, e
 		return true, newValue, nil
 	}
 
-	return false, "", err
+	return false, "", errors.New("Can't update access token")
 }
 
 func (s AuthServiceImpl) ParseUserId(token string) (uint, string) {

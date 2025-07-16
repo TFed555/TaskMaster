@@ -37,7 +37,7 @@ require (
 
 require (
 	google.golang.org/grpc v1.73.0
-// shared v0.0.0
+	// shared v0.0.0
 )
 
 // replace shared => ../shared

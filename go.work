@@ -1,7 +1,8 @@
 go 1.24.4
 
 use (
-    ./auth-service
     ./shared
+    ./auth-service
     ./media-service
+    ./notes-service
 )
