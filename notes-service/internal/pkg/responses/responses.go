@@ -88,3 +88,7 @@ type SearchRequest struct {
 	SearchString string `json:"search"`
 	UserID	uint
 }
+
+type CountResponse struct {
+	Count int `json:"count"`
+}

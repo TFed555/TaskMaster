@@ -51,9 +51,8 @@ func (n NotesController) GetTodos(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Print("Не удалось распарсить url")
 	}
-	todos, err := n.notesService.GetTodos(urlParams, userID)
+	todos, count, err := n.notesService.GetTodos(urlParams, userID)
 
-	// todos, err := n.notesService.GetTodos(userID, urlParams)
 
 	if err != nil {
 		log.Println(err)
@@ -63,6 +62,18 @@ func (n NotesController) GetTodos(w http.ResponseWriter, r *http.Request) {
 			"message": "Не удалось получить данные",
 		})
 	}
+
+	if count >= 0 {
+		response := responses.CountResponse{
+			Count: count,
+		}
+
+		w.Header().Set("Content-type", "application/json")
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
 
 	for idx, el := range todos {
 		log.Println(idx, el)
@@ -230,12 +241,23 @@ func (n NotesController) GetArchivedTodos(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		log.Print("Не удалось распарсить url")
 	}
-	todos, err := n.notesService.GetArchivedTodos(urlParams, userID)
+	todos, count, err := n.notesService.GetArchivedTodos(urlParams, userID)
 
 	// todos, err := n.notesService.GetTodos(userID, urlParams)
 
 	if err != nil {
 		log.Println(err)
+	}
+
+	if count > 0 {
+		response := responses.CountResponse{
+			Count: count,
+		}
+
+		w.Header().Set("Content-type", "application/json")
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode(response)
+		return
 	}
 
 	for idx, el := range todos {
@@ -720,61 +742,4 @@ func (n NotesController) GetAuditTrail(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusAccepted)
 	json.NewEncoder(w).Encode(response)
 
-}
-
-func (n NotesController) SearchTodos(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
-	log.Print("UserID:", userID)
-	if !ok {
-	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	    return
-	}
-	log.Printf("Controller received userID: %v", userID)
-
-	var req responses.SearchRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-	req.UserID = userID
-
-	todos, err := n.notesService.SearchTodos(req.SearchString, req.UserID)
-	if err != nil {
-		log.Printf("%s", err)
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("bad request")
-		return
-	}
-
-	masTodos := make([]responses.OneTodoResponse, 0)
-
-	for i := range todos {
-		el := &todos[i]
-		todo := responses.OneTodoResponse{
-			Title:       el.Title,
-			Priority:    el.Priority,
-			Category:    el.Category,
-			Description: el.Description,
-			CreatedAt:   el.CreatedAt,
-			CompletedAt: el.CompletedAt,
-			ID:          *el.ID,
-		}
-		for _, el_t := range el.Tags {
-			tag := responses.OneTagResponse{
-				ID: el_t.ID,
-				Name: el_t.Name,
-			}
-			todo.Tags = append(todo.Tags, tag)
-		}
-		masTodos = append(masTodos, todo)
-	}
-
-	response := responses.TodoResponse{
-		Todos: &masTodos,
-	}
-
-	w.Header().Set("Content-type", "application/json")
-	w.WriteHeader(http.StatusAccepted)
-	json.NewEncoder(w).Encode(response)
 }

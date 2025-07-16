@@ -90,25 +90,20 @@ func (s AuthServiceImpl) Authorize(params domain_models.AuthorizeParams) (models
 			user.ImgPath = &picLink
 		}
 	}
-
 	if err != nil {
 		return models.User{}, domain_models.Tokens{}, fmt.Errorf("User not found")
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(params.Password)); err != nil {
 		return models.User{}, domain_models.Tokens{}, fmt.Errorf("Invalid password")
 	}
-
 	accesstoken, refreshtoken, err := s.jwtFunc.GenerateJWTRefreshTokens(user.ID)
 	if err != nil {
 		return models.User{}, domain_models.Tokens{}, err
 	}
-
 	tokens := domain_models.Tokens{
 		AccessToken: accesstoken,
 		RefreshToken: refreshtoken,
 	}
-
-	log.Printf("Called from auth_service, access_token: %s", tokens.AccessToken)
 
 	return user, tokens, err
 }

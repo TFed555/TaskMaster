@@ -10,8 +10,8 @@ import (
 )
 
 type NotesService interface {
-	GetTodos(urlParams url.Values, userID uint) ([]models.Todo, error)
-	GetArchivedTodos(urlParams url.Values, userID uint) ([]models.Todo, error)
+	GetTodos(urlParams url.Values, userID uint) ([]models.Todo, int, error)
+	GetArchivedTodos(urlParams url.Values, userID uint) ([]models.Todo, int, error)
 	CreateTask(todoBody domain_models.Todo) (int, error)
 	UpdateTask(todoBody domain_models.Todo) (int, error)
 	ArchiveTask(ID int) (int, error)
@@ -26,7 +26,6 @@ type NotesService interface {
 	ReduceTag(tagTodo domain_models.TagTodo) (bool, error)
 	Audit(method string, isArchived bool, userID uint, todoId int) (error)
 	GetAuditTrail(userID uint) ([]models.HistoryTodo, error)
-	SearchTodos(searchString string, userID uint) ([]models.Todo, error)
 }
 
 type NotesServiceImpl struct {
@@ -39,12 +38,12 @@ func NewNotesService(notesRepository repository.NotesRepository) NotesService {
 	}
 }
 
-func (s NotesServiceImpl) GetTodos(urlParams url.Values, userID uint) ([]models.Todo, error) {
-	todos, err := s.notesRepository.GetTodos(urlParams, "todos", userID)
+func (s NotesServiceImpl) GetTodos(urlParams url.Values, userID uint) ([]models.Todo, int, error) {
+	todos, count, err := s.notesRepository.GetTodos(urlParams, "todos", userID)
 	if err != nil {
-		return nil, err
+		return nil, count, err
 	}
-	return todos, nil
+	return todos, count, nil
 }
 
 func (s NotesServiceImpl) CreateTask(todoBody domain_models.Todo) (int, error) {
@@ -91,12 +90,12 @@ func (s NotesServiceImpl) UpdateTask(todoBody domain_models.Todo) (int, error) {
 	return id, nil
 }
 
-func (s NotesServiceImpl) GetArchivedTodos(urlParams url.Values, userID uint) ([]models.Todo, error) {
-	todos, err := s.notesRepository.GetTodos(urlParams, "archived_todos", userID)
+func (s NotesServiceImpl) GetArchivedTodos(urlParams url.Values, userID uint) ([]models.Todo, int, error) {
+	todos, count, err := s.notesRepository.GetTodos(urlParams, "archived_todos", userID)
 	if err != nil {
-		return nil, err
+		return nil, count, err
 	}
-	return todos, nil
+	return todos, count, nil
 }
 
 func (s NotesServiceImpl) GetOneTodo(taskId int) (*models.Todo, error) {

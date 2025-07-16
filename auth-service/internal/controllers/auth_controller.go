@@ -79,7 +79,6 @@ func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
 
 func (c AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 	var req responses.LogRequest
-
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
@@ -88,9 +87,7 @@ func (c AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 		Email: req.Email,
 		Password: req.Password,
 	}
-	
 	user, tokens, err := c.authService.Authorize(params)
-
 	if err != nil {
 		statusCode := http.StatusInternalServerError
 		errorMessage := "Internal Server Error"
@@ -118,16 +115,10 @@ func (c AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 		Name:   user.Login,
 		ImgURL: user.ImgPath,
 	}
-
-	// log.Printf("Called from auth_controller, tokens: %s, %s", tokens.AccessToken, tokens.RefreshToken)
-
 	var time_expires_refresh = time.Now().Add(30 * 24 * time.Hour)
 	var time_expires_access = time.Now().Add(1 * time.Minute)
-
 	cookies_func.SetCookies(&w, "refresh_token", tokens.RefreshToken, time_expires_refresh)
 	cookies_func.SetCookies(&w, "access_token", tokens.AccessToken, time_expires_access)
-
-
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	json.NewEncoder(w).Encode(response)
