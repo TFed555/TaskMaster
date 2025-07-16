@@ -284,111 +284,121 @@ func (n NotesRepository) UpdateTodo(todo models.Todo, changedColumns utils.Chang
 
 	columns := changedColumns.StringifyNotEmptyFields()
 	log.Printf("Columns: %s", columns)
-	lenColumns := len(strings.Split(columns, ", "))
-	log.Print(lenColumns)
-	scanArgs := make([]interface{}, lenColumns)
+
+	scanArgs := make([]interface{}, len(strings.Split(columns, ", ")))
 	for i := range scanArgs {
 		var val interface{}
 		scanArgs[i] = &val
 	}
 
-	errSelect := n.db.QueryRow(fmt.Sprintf(`SELECT %s from notes.todos 
-	where id = $1`, columns), todo.ID).Scan(scanArgs...)
+	errSelect := n.db.QueryRow(fmt.Sprintf(`SELECT %s FROM notes.todos WHERE id = $1`, columns), todo.ID).Scan(scanArgs...)
 	if errSelect != nil {
 		return -1, fmt.Errorf("%s: %w", op, errSelect)
 	}
 
-	log.Print(scanArgs...)
-	var valuesFromArgs []string
-
+	var oldValuesStr []string
 	for _, ptr := range scanArgs {
-		valPtr := ptr.(*interface{})
-
-		var strValue string
-		switch v := (*valPtr).(type) {
+		val := *ptr.(*interface{})
+		var strVal string
+		switch v := val.(type) {
 		case string:
-			strValue = v
+			strVal = v
 		case []byte:
-			strValue = string(v)
-		case int, int64, float64, bool:
-			strValue = fmt.Sprintf("%v", v)
-		// case time.Time:
-		//     strValue = v.Format(time.RFC3339)
+			strVal = string(v)
 		case nil:
-			strValue = "NULL"
+			strVal = "NULL"
 		default:
-			strValue = fmt.Sprintf("%v", v)
+			strVal = fmt.Sprintf("%v", v)
 		}
-		// strValue += ""
-		
-		valuesFromArgs = append(valuesFromArgs, strValue)
+		oldValuesStr = append(oldValuesStr, strVal)
 	}
 
-	log.Printf("valuesfromargs: %v", valuesFromArgs)
-	columnsMas := strings.Split(columns, ", ")
-	log.Print("columnsMas: %v", columnsMas)
-	for i, _ := range valuesFromArgs {
-		valuesFromArgs[i] += ":" + columnsMas[i]
+	columnsList := strings.Split(columns, ", ")
+	var oldValuePairs []string
+	for i, col := range columnsList {
+		oldValuePairs = append(oldValuePairs, fmt.Sprintf("%s:%s", col, oldValuesStr[i]))
 	}
-
-	oldValues := strings.Join(valuesFromArgs, ", ")
-	
-	log.Print(oldValues)
-
-	queryf := (`INSERT INTO todos_history 
-			(todoid, archived_todoid, userId, action, old_value, new_value) 
-			VALUES ($1, $2, $3, $4, $5, $6)
-			RETURNING id`)
-	argsf := []any{todo.ID, nil, todo.UserId, "Changed", oldValues, ""}
-	
-	var insertedId int
-	err := n.db.QueryRow(queryf, argsf...).Scan(&insertedId)
-	if err != nil {
-			return -1, fmt.Errorf("%s: %w", op, err)
-	}
-	if insertedId == 0 {
-		return -1, fmt.Errorf("%s: failed to get inserted id", op)
-	}
+	oldValues := strings.Join(oldValuePairs, ", ")
 
 	query := `UPDATE notes.todos SET `
 	values := []string{}
-	args := []any{}
+	args := []interface{}{}
 	count := 0
+
 	if todo.Title != "" {
 		count++
-		values = append(values, fmt.Sprintf("TITLE=$%d", count))
+		values = append(values, fmt.Sprintf("title=$%d", count))
 		args = append(args, todo.Title)
 	}
 	if todo.Priority != "" {
 		count++
-		values = append(values, fmt.Sprintf("PRIORITY=$%d", count))
+		values = append(values, fmt.Sprintf("priority=$%d", count))
 		args = append(args, todo.Priority)
 	}
 	if todo.Description != "" {
 		count++
-		values = append(values, fmt.Sprintf("DESCRIPTION=$%d", count))
+		values = append(values, fmt.Sprintf("description=$%d", count))
 		args = append(args, todo.Description)
 	}
 	if todo.Category != "" {
 		count++
-		values = append(values, fmt.Sprintf("CATEGORY=$%d", count))
+		values = append(values, fmt.Sprintf("category=$%d", count))
 		args = append(args, todo.Category)
 	}
 	if todo.CompletedAt != nil {
 		count++
-		values = append(values, fmt.Sprintf(" COMPLETEDAT=NULLIF($%d, '')::date", count))
-		args = append(args, todo.CompletedAt)
+		values = append(values, fmt.Sprintf("completedat=$%d", count))
+		args = append(args, *todo.CompletedAt)
 	}
+
 	query += strings.Join(values, ", ")
 	count++
-	query += fmt.Sprintf(` WHERE id = $%d RETURNING id`, count)
+	query += fmt.Sprintf(` WHERE id=$%d RETURNING id`, count)
 	args = append(args, todo.ID)
-	log.Printf("%s, %d", op, todo.ID)
+
 	var dbId int
-	err = n.db.QueryRow(query, args...).Scan(&dbId)
+	err := n.db.QueryRow(query, args...).Scan(&dbId)
 	if err != nil {
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
+
+	var newValuesStr []string
+	for _, arg := range args {
+		var strVal string
+		switch v := arg.(type) {
+		case string:
+			strVal = v
+		// case time.Time:
+		//     strVal = v.Format(time.RFC3339)
+		case nil:
+			strVal = "NULL"
+		default:
+			strVal = fmt.Sprintf("%v", v)
+		}
+		newValuesStr = append(newValuesStr, strVal)
+	}
+
+	var newValuePairs []string
+	for i, col := range columnsList {
+		if i < len(newValuesStr) {
+			newValuePairs = append(newValuePairs, fmt.Sprintf("%s:%s", col, newValuesStr[i]))
+		}
+	}
+	newValues := strings.Join(newValuePairs, ", ")
+	log.Print(newValues)
+
+	queryf := `INSERT INTO todos_history 
+		(todoid, archived_todoid, userid, action, old_value, new_value) 
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id`
+	argsf := []interface{}{todo.ID, nil, *todo.UserId, "Changed", oldValues, newValues}
+
+	var insertedId int
+	err = n.db.QueryRow(queryf, argsf...).Scan(&insertedId)
+	if err != nil {
+		return -1, fmt.Errorf("%s: %w", op, err)
+	}
+
 	return dbId, nil
 }
 
@@ -679,7 +689,7 @@ func (n NotesRepository) AuditTodo(id int, userId uint, isArchived bool, method 
 func (n NotesRepository) GetHistoryTodos(userID uint) ([]models.HistoryTodo, error) {
 	const op = "repository.notes_repository.GetHistoryTodos"
 	query := (`SELECT 
-    COALESCE(t.title, a.title) AS title,
+    th.new_value,
 	th.old_value,
     th.action, COALESCE(th.todoid, th.archived_todoid) as id
 	FROM todos_history th
@@ -693,22 +703,6 @@ func (n NotesRepository) GetHistoryTodos(userID uint) ([]models.HistoryTodo, err
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("%s: todos not found", op)
-		}
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-
-	return todos, nil
-}
-
-func (n NotesRepository) SearchTodos(searchString string, userID uint) ([]models.Todo, error) {
-	const op = "repository.notes_repository.SearchTodos"
-	query := (`SELECT * from notes.todos t WHERE
-		t.title = $1 AND t.userid = $2`)
-	todos := []models.Todo{}
-	err := n.db.Select(&todos, query, searchString, userID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return []models.Todo{}, nil
 		}
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
