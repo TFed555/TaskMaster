@@ -2,3 +2,4 @@ minio-data/
 .vscode/
 Postgres.session.sql
 go.work.sum
+**.env
