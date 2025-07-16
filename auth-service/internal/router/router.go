@@ -33,7 +33,7 @@ func InitNewRouter(authController controllers.AuthController, authMiddleware mid
 	router.Route("/api", func(r chi.Router) {
 		r.Post("/registration", authController.Register)
 		r.Post("/login", authController.Authorize)
-
+		r.Get("/refresh", authController.Refresh)
 		r.Group(func(r chi.Router) {
 			r.Use(authMiddleware.SetAuthMiddleware)
 			r.Get("/test/cookie", authController.TestCookie)
@@ -41,7 +41,7 @@ func InitNewRouter(authController controllers.AuthController, authMiddleware mid
 			r.Delete("/login", authController.Logout)
 			r.Delete("/user", authController.DeleteUser)
 			r.Patch("/user", authController.UpdateUser)
-			r.Get("/refresh", authController.Refresh)
+			// r.Get("/refresh", authController.Refresh)
 		})
 	})
 
