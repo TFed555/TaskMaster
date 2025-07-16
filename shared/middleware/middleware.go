@@ -44,17 +44,17 @@ func (c *AuthMiddleware) SetAuthMiddleware(controller http.Handler) http.Handler
 		log.Printf("Called from middleware %s\n", refreshToken)
 		log.Printf("Called from middleware %s", accessToken)
 
+		resultRefresh, _ := c.authService.ValidateToken(refreshToken)
+
+		if !resultRefresh {
+				w.WriteHeader(498)
+				w.Write([]byte("Invalid token"))
+				return
+		}
 
 		result, _ := c.authService.ValidateToken(accessToken)
 
 		if !result {
-			resultRefresh, _ := c.authService.ValidateToken(refreshToken)
-
-			if !resultRefresh {
-				w.WriteHeader(498)
-				w.Write([]byte("Invalid token"))
-				return
-			}
 
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte("Unathorized"))
