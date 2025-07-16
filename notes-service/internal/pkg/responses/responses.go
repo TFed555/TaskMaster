@@ -24,23 +24,23 @@ type CreateResponse struct {
 }
 
 type UpdateRequest struct {
-	Title       string  `json:"title,omitempty"`
-	Priority    string  `json:"priority,omitempty"`
-	Category    string  `json:"category,omitempty"`
-	Description string  `json:"description,omitempty"`
-	CreatedAt   string  `json:"createdAt,omitempty"`
+	Title       string `json:"title,omitempty"`
+	Priority    string `json:"priority,omitempty"`
+	Category    string `json:"category,omitempty"`
+	Description string `json:"description,omitempty"`
+	CreatedAt   string `json:"createdAt,omitempty"`
 	CompletedAt string `json:"completedAt,omitempty"`
-	ID          int     `json:"id"`
+	ID          int    `json:"id"`
 }
 
 type OneTodoResponse struct {
-	Title       string       `json:"title,omitempty"`
-	Priority    string       `json:"priority,omitempty"`
-	Category    string       `json:"category,omitempty"`
-	Description string       `json:"description,omitempty"`
-	CreatedAt   string       `json:"createdAt,omitempty"`
-	CompletedAt *string      `json:"completedAt,omitempty"`
-	ID          int          `json:"id"`
+	Title       string           `json:"title,omitempty"`
+	Priority    string           `json:"priority,omitempty"`
+	Category    string           `json:"category,omitempty"`
+	Description string           `json:"description,omitempty"`
+	CreatedAt   string           `json:"createdAt,omitempty"`
+	CompletedAt *string          `json:"completedAt,omitempty"`
+	ID          int              `json:"id"`
 	Tags        []OneTagResponse `json:"tags,omitempty"`
 }
 
@@ -75,8 +75,8 @@ type AddTagRequest struct {
 }
 
 type OneAuditTrial struct {
-	ID	  int    `json:"id"`
-	Title string `json:"title"`
+	ID     int    `json:"id"`
+	Title  string `json:"title"`
 	Status string `json:"status"`
 }
 
@@ -86,5 +86,10 @@ type AuditTrial struct {
 
 type SearchRequest struct {
 	SearchString string `json:"search"`
-	UserID	uint
+	UserID       uint
+}
+
+type PlanRequest struct {
+	TodoID int    `json:"todoid"`
+	Steps  []map[string]string `json:"steps"`
 }

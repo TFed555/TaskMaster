@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -9,8 +10,9 @@ import (
 	"notes-service/internal/pkg/responses"
 	"notes-service/internal/services"
 	"shared/middleware"
-	_"shared/utils/cookies"
+	_ "shared/utils/cookies"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -722,7 +724,8 @@ func (n NotesController) GetAuditTrail(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (n NotesController) SearchTodos(w http.ResponseWriter, r *http.Request) {
+
+func (n NotesController) CreatePlanTodo(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
 	log.Print("UserID:", userID)
@@ -732,14 +735,22 @@ func (n NotesController) SearchTodos(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Controller received userID: %v", userID)
 
-	var req responses.SearchRequest
+	var req responses.PlanRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	req.UserID = userID
 
-	todos, err := n.notesService.SearchTodos(req.SearchString, req.UserID)
+	var parts []string
+	for _, step := range req.Steps {
+		for key, value := range step {
+			parts = append(parts, fmt.Sprintf("%s:%s", key, value))
+		}
+	}
+	steps := strings.Join(parts, ", ")
+	result := strings.Split(steps,", ")
+
+	id, err := n.notesService.CreatePlan(req.TodoID, result)
 	if err != nil {
 		log.Printf("%s", err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -747,34 +758,7 @@ func (n NotesController) SearchTodos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	masTodos := make([]responses.OneTodoResponse, 0)
-
-	for i := range todos {
-		el := &todos[i]
-		todo := responses.OneTodoResponse{
-			Title:       el.Title,
-			Priority:    el.Priority,
-			Category:    el.Category,
-			Description: el.Description,
-			CreatedAt:   el.CreatedAt,
-			CompletedAt: el.CompletedAt,
-			ID:          *el.ID,
-		}
-		for _, el_t := range el.Tags {
-			tag := responses.OneTagResponse{
-				ID: el_t.ID,
-				Name: el_t.Name,
-			}
-			todo.Tags = append(todo.Tags, tag)
-		}
-		masTodos = append(masTodos, todo)
-	}
-
-	response := responses.TodoResponse{
-		Todos: &masTodos,
-	}
-
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(id)
 }

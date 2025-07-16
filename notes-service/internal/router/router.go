@@ -46,7 +46,7 @@ func InitNewRouter(notesController controllers.NotesController, authMiddleware m
 	router.Post("/api/todos/{id}/tags", notesController.AddTagToTodo)
 	router.Delete("/api/todos/{id}/tags/{tag_id}", notesController.ReduceTag)
 
-	// router.Post("/api/todos/plans", notesController.CreatePlanTodo)
+	router.Post("/api/todos/plan", notesController.CreatePlanTodo)
 
 	return Router{
 		ChiRouter: router,

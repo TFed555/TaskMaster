@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 type NotesRepository struct {
@@ -599,18 +600,19 @@ func (n NotesRepository) GetHistoryTodos(userID uint) ([]models.HistoryTodo, err
 	return todos, nil
 }
 
-func (n NotesRepository) SearchTodos(searchString string, userID uint) ([]models.Todo, error) {
-	const op = "repository.notes_repository.SearchTodos"
-	query := (`SELECT * from notes.todos t WHERE
-		t.title = $1 AND t.userid = $2`)
-	todos := []models.Todo{}
-	err := n.db.Select(&todos, query, searchString, userID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return []models.Todo{}, nil
-		}
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
+func (n NotesRepository) CreatePlanTodo(todoID int, steps []string) (int, error) {
+	const op = "repository.notes_repository.CreatePlanTodo"
 
-	return todos, nil
+	query := (`INSERT INTO plans_todo 
+			(todoid, steps) 
+			VALUES ($1, $2)
+			RETURNING id`)
+	stringArray := pq.StringArray(steps)
+	var insertedId int
+	log.Print(steps)
+	err := n.db.QueryRow(query, todoID, stringArray).Scan(&insertedId)
+	if err != nil {
+		return -1, fmt.Errorf("%s: %w", op, err)
+	}
+	return insertedId, nil
 }
