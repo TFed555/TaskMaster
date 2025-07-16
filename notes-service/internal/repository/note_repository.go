@@ -281,6 +281,27 @@ func (n NotesRepository) ArchiveTodo(ID int) (int, error) {
 func (n NotesRepository) UpdateTodo(todo models.Todo) (int, error) {
 
 	const op = "repository.notes_repository.UpdateTodo"
+	oldName := ""
+	err := n.db.QueryRow(`SELECT title from notes.todos where id = $1`, todo.ID).Scan(&oldName)
+	if err != nil {
+		return -1, fmt.Errorf("%s: %w", op, err)
+	}
+	newName := todo.Title
+
+	queryf := (`INSERT INTO todos_history 
+			(todoid, archived_todoid, userId, action, old_value, new_value) 
+			VALUES ($1, $2, $3, $4, $5, $6)
+			RETURNING id`)
+	argsf := []any{todo.ID, nil, todo.UserId, "Changed", oldName, newName}
+	
+	var insertedId int
+	err = n.db.QueryRow(queryf, argsf...).Scan(&insertedId)
+	if err != nil {
+			return -1, fmt.Errorf("%s: %w", op, err)
+	}
+	if insertedId == 0 {
+		return -1, fmt.Errorf("%s: failed to get inserted id", op)
+	}
 
 	query := `UPDATE notes.todos SET `
 	values := []string{}
@@ -317,7 +338,7 @@ func (n NotesRepository) UpdateTodo(todo models.Todo) (int, error) {
 	args = append(args, todo.ID)
 	log.Printf("%s, %d", op, todo.ID)
 	var dbId int
-	err := n.db.QueryRow(query, args...).Scan(&dbId)
+	err = n.db.QueryRow(query, args...).Scan(&dbId)
 	if err != nil {
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
@@ -354,11 +375,22 @@ func (n NotesRepository) DeleteTodo(taskId int) (bool, error) {
 
 func (n NotesRepository) RestoreTodo(taskId int) (int, error) {
 	const op = "repository.notes_repository.RestoreTodo"
+	tx, err := n.db.Begin()
+	if err != nil {
+		return -1, fmt.Errorf("%s: %w", op, err)
+	}
+	  defer func() {
+        if err != nil {
+            tx.Rollback()
+        }
+    }()
+
 
 	archivedTodo, err := n.GetTodoByID(taskId, "archived_todos")
 	if err != nil {
 		return -1, fmt.Errorf("%s: %w", op, err)
 	}
+
 
 	query := `INSERT INTO notes.todos (userid, title, priority, description, category, createdat`
 	values := `VALUES ($1, $2, $3, $4, $5, $6`
@@ -376,13 +408,30 @@ func (n NotesRepository) RestoreTodo(taskId int) (int, error) {
 	}
 	query += ` )` + values + ` ) RETURNING id`
 	var addedId int
-	err = n.db.QueryRow(query, args...).Scan(&addedId)
+	err = tx.QueryRow(query, args...).Scan(&addedId)
 	if err != nil {
 		return -1, fmt.Errorf("%s: %w", op, err)
 	}
+
+	_, err = tx.Exec(`UPDATE todos_history 
+        SET todoid = $1, 
+            archived_todoid = NULL WHERE archived_todoid = $2`, addedId, taskId)
+		if err != nil {
+        	return -1, fmt.Errorf("%s: %w", op, err)
+    	}
+
+	_, err = tx.Exec(`INSERT INTO todos_history 
+        (todoid, archived_todoid, userId, action) 
+        VALUES ($1, $2, $3, 'Restored')`, 
+        addedId, taskId, archivedTodo.UserId)
+    if err != nil {
+        return -1, fmt.Errorf("%s: %w", op, err)
+    }
+
+
 	nextQuery := `DELETE FROM notes.archived_todos WHERE id = $1`
 
-	res, err := n.db.Exec(nextQuery, taskId)
+	res, err := tx.Exec(nextQuery, taskId)
 	if err != nil {
 		return -1, fmt.Errorf("%s: %w", op, err)
 	}
@@ -394,12 +443,10 @@ func (n NotesRepository) RestoreTodo(taskId int) (int, error) {
 		return -1, fmt.Errorf("%s: %w", op, err)
 	}
 
-	_, err = n.db.Exec(`UPDATE todos_history 
-        SET todoid = $1, 
-            archived_todoid = NULL WHERE todoid = $2`, addedId, taskId)
-		if err != nil {
-        	return -1, fmt.Errorf("%s: %w", op, err)
-    	}
+	if err = tx.Commit(); err != nil {
+        return -1, fmt.Errorf("%s: %w", op, err)
+    }
+
 
 	return addedId, nil
 }
@@ -529,39 +576,39 @@ func (n NotesRepository) AuditTodo(id int, userId uint, isArchived bool, method 
 		action = "Restored"
 	}
 
-	if action == "Archived" {
-		query := (`INSERT INTO todos_history 
-			(todoid, archived_todoid, userId, action) 
-			VALUES ($1, $2, $3, $4)
-			RETURNING id`)
-		args := []any{nil, id, userId, action}
-		var insertedId int
-		err := n.db.QueryRow(query, args...).Scan(&insertedId)
-		if err != nil {
-			return fmt.Errorf("%s: %w", op, err)
-		}
-		if insertedId == 0 {
-			return fmt.Errorf("%s: failed to get inserted id", op)
-		}
-		return nil
-	}
+	// if action == "Archived" {
+	// 	query := (`INSERT INTO todos_history 
+	// 		(todoid, archived_todoid, userId, action) 
+	// 		VALUES ($1, $2, $3, $4)
+	// 		RETURNING id`)
+	// 	args := []any{nil, id, userId, action}
+	// 	var insertedId int
+	// 	err := n.db.QueryRow(query, args...).Scan(&insertedId)
+	// 	if err != nil {
+	// 		return fmt.Errorf("%s: %w", op, err)
+	// 	}
+	// 	if insertedId == 0 {
+	// 		return fmt.Errorf("%s: failed to get inserted id", op)
+	// 	}
+	// 	return nil
+	// }
 
-	if action == "Changed" || action == "Restored" {
-		query := (`INSERT INTO todos_history 
-			(todoid, archived_todoid, userId, action) 
-			VALUES ($1, $2, $3, $4)
-			RETURNING id`)
-		args := []any{id, nil, userId, action}
-		var insertedId int
-		err := n.db.QueryRow(query, args...).Scan(&insertedId)
-		if err != nil {
-			return fmt.Errorf("%s: %w", op, err)
-		}
-		if insertedId == 0 {
-			return fmt.Errorf("%s: failed to get inserted id", op)
-		}
-		return nil
-	}
+	// if action == "Changed" {
+	// 	query := (`INSERT INTO todos_history 
+	// 		(todoid, archived_todoid, userId, action, old_value, new_value) 
+	// 		VALUES ($1, $2, $3, $4)
+	// 		RETURNING id`)
+	// 	args := []any{id, nil, userId, action, oldName, newName}
+	// 	var insertedId int
+	// 	err := n.db.QueryRow(query, args...).Scan(&insertedId)
+	// 	if err != nil {
+	// 		return fmt.Errorf("%s: %w", op, err)
+	// 	}
+	// 	if insertedId == 0 {
+	// 		return fmt.Errorf("%s: failed to get inserted id", op)
+	// 	}
+	// 	return nil
+	// }
 
 	if action == "Deleted" {
 		log.Printf("%s: %d", op, id)
@@ -580,6 +627,7 @@ func (n NotesRepository) GetHistoryTodos(userID uint) ([]models.HistoryTodo, err
 	const op = "repository.notes_repository.GetHistoryTodos"
 	query := (`SELECT 
     COALESCE(t.title, a.title) AS title,
+	th.old_value
     th.action, COALESCE(th.todoid, th.archived_todoid) as id
 	FROM todos_history th
 	LEFT JOIN notes.todos t ON t.id = th.todoid AND t.userid = $1

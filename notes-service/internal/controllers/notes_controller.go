@@ -152,6 +152,17 @@ func (n NotesController) CreateTodo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (n NotesController) UpdateTodo(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	log.Print("UserID:", userID)
+	if !ok {
+	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	    return
+	}
+	log.Printf("Controller received userID: %v", userID)
+
+
+	
 	todoId := chi.URLParam(r, "id")
 	if todoId == "" {
 		log.Print("Не удалось получить id задачи")
@@ -171,6 +182,7 @@ func (n NotesController) UpdateTodo(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
+	userId := int(userID)
 	todoBody := domain_models.Todo{
 		ID: &id,
 		Title: req.Title,
@@ -179,6 +191,7 @@ func (n NotesController) UpdateTodo(w http.ResponseWriter, r *http.Request) {
 		Category: req.Category,
 		CreatedAt: req.CreatedAt,
 		CompletedAt: &req.CompletedAt,
+		UserId: &userId,
 	}
 
 	updatedId, err := n.notesService.UpdateTask(todoBody)
@@ -198,16 +211,16 @@ func (n NotesController) UpdateTodo(w http.ResponseWriter, r *http.Request) {
 		ID: updatedId,
 	}
 
-	ctx := r.Context()
-	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
-	log.Print("UserID:", userID)
-	if !ok {
-	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	    return
-	}
-	log.Printf("Controller received userID: %v", userID)
+	// ctx := r.Context()
+	// userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	// log.Print("UserID:", userID)
+	// if !ok {
+	//     http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	//     return
+	// }
+	// log.Printf("Controller received userID: %v", userID)
 
-	n.notesService.Audit("PATCH", false, userID, updatedId)
+	// n.notesService.Audit("PATCH", false, userID, updatedId)
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
@@ -707,6 +720,7 @@ func (n NotesController) GetAuditTrail(w http.ResponseWriter, r *http.Request) {
 		todo := responses.OneAuditTrial{
 			ID: el.ID,
 			Title: el.Title,
+			OldTitle: el.OldTitle,
 			Status: el.Status,
 		}
 		mas_history = append(mas_history, todo)

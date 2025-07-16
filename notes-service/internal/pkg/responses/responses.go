@@ -76,6 +76,7 @@ type AddTagRequest struct {
 
 type OneAuditTrial struct {
 	ID	  int    `json:"id"`
+	OldTitle string `json:"oldtitle,omitempty"`
 	Title string `json:"title"`
 	Status string `json:"status"`
 }

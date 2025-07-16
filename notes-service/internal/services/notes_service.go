@@ -83,6 +83,7 @@ func (s NotesServiceImpl) UpdateTask(todoBody domain_models.Todo) (int, error) {
 		Description: todoBody.Description,
 		CreatedAt: todoBody.CreatedAt,
 		CompletedAt: todoBody.CompletedAt,
+		UserId: todoBody.UserId,
 	}
 	id, err := s.notesRepository.UpdateTodo(todo)
 	if err != nil {
