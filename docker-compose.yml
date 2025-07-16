@@ -1,4 +1,4 @@
-version: '3.8'
+#version: '3.8'
 
 services:
   db:
@@ -30,6 +30,19 @@ services:
       - 9001:9001
     depends_on: 
       - db
+      - llm
+
+    
+
+  llm:
+    build:
+      context: ./llm_Service
+      dockerfile: Dockerfile
+    
+    command: "uvicorn main:llm --host 0.0.0.0 --port 8001"
+    ports:
+      - "8001:8001"
+
 
   # elasticsearch:
   #   image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
