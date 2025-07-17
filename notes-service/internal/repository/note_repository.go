@@ -593,7 +593,7 @@ func (n NotesRepository) AuditTodo(id int, userId uint, isArchived bool, method 
 	return nil
 }
 
-func (n NotesRepository) GetHistoryTodos(userID uint) ([]models.HistoryTodo, error) {
+func (n NotesRepository) GetHistoryTodos(urlParams url.Values, userID uint) ([]models.HistoryTodo, error) {
 	const op = "repository.notes_repository.GetHistoryTodos"
 	query := (`SELECT 
     COALESCE(t.title, a.title) AS title,
@@ -602,10 +602,27 @@ func (n NotesRepository) GetHistoryTodos(userID uint) ([]models.HistoryTodo, err
 	LEFT JOIN notes.todos t ON t.id = th.todoid AND t.userid = $1
 	LEFT JOIN notes.archived_todos a ON a.id = th.archived_todoid AND a.userid = $1
 	WHERE (t.id IS NOT NULL OR a.id IS NOT NULL)`)
+	counter := 1
+	args := []any{userID}
 
 	query += (` ORDER BY changedat DESC`)
+
+	if offset := urlParams.Get("offset"); offset != "" {
+			counter++
+			query += fmt.Sprintf(" OFFSET $%d", counter)
+			args = append(args, offset)
+			log.Printf("Offset: %s", offset)
+		}
+
+	if limit := urlParams.Get("limit"); limit != "" {
+			counter++
+			query += fmt.Sprintf(" LIMIT $%d ", counter)
+			args = append(args, limit)
+			log.Printf("Limit: %s", limit)
+		}
+	
 	todos := []models.HistoryTodo{}
-	err := n.db.Select(&todos, query, userID)
+	err := n.db.Select(&todos, query, args...)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("%s: todos not found", op)

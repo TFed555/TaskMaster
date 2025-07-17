@@ -713,7 +713,13 @@ func (n NotesController) GetAuditTrail(w http.ResponseWriter, r *http.Request) {
 	    return
 	}
 	log.Printf("Controller received userID: %v", userID)
-	history_todos, err := n.notesService.GetAuditTrail(userID)
+
+	urlParams, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		log.Print("Не удалось распарсить url")
+	}
+
+	history_todos, err := n.notesService.GetAuditTrail(urlParams, userID)
 	if err != nil {
 		log.Println(err)
 		w.Header().Set("Content-type", "application/json")

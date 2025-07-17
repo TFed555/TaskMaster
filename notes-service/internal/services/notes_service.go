@@ -25,7 +25,7 @@ type NotesService interface {
 	AddTagToTodo(tagTodo domain_models.TagTodo) (bool, error)
 	ReduceTag(tagTodo domain_models.TagTodo) (bool, error)
 	Audit(method string, isArchived bool, userID uint, todoId int) (error)
-	GetAuditTrail(userID uint) ([]models.HistoryTodo, error)
+	GetAuditTrail(urlParams url.Values, userID uint) ([]models.HistoryTodo, error)
 }
 
 type NotesServiceImpl struct {
@@ -180,8 +180,8 @@ func (s NotesServiceImpl) Audit(method string, isArchived bool, userID uint, tod
     return s.notesRepository.AuditTodo(todoId, userID, isArchived, method)
 }
 
-func (s NotesServiceImpl) GetAuditTrail(userID uint) ([]models.HistoryTodo, error) {
-	todos, err := s.notesRepository.GetHistoryTodos(userID)
+func (s NotesServiceImpl) GetAuditTrail(urlParams url.Values, userID uint) ([]models.HistoryTodo, error) {
+	todos, err := s.notesRepository.GetHistoryTodos(urlParams, userID)
 	if err != nil {
 		return []models.HistoryTodo{}, err
 	}
