@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"bytes"
 	"encoding/json"
-	"fmt"
+	_ "fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -12,7 +14,7 @@ import (
 	"shared/middleware"
 	_ "shared/utils/cookies"
 	"strconv"
-	"strings"
+	_ "strings"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -104,14 +106,15 @@ func (n NotesController) GetTodos(w http.ResponseWriter, r *http.Request) {
 }
 
 func (n NotesController) CreateTodo(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
-	log.Print("UserID:", userID)
-	if !ok {
-	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	    return
-	}
-	log.Printf("Controller received userID: %v", userID)
+	// ctx := r.Context()
+	// userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	// log.Print("UserID:", userID)
+	// if !ok {
+	//     http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	//     return
+	// }
+	// log.Printf("Controller received userID: %v", userID)
+	userID := 1
 
 	var req responses.CreateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -726,37 +729,54 @@ func (n NotesController) GetAuditTrail(w http.ResponseWriter, r *http.Request) {
 
 
 func (n NotesController) CreatePlanTodo(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
-	log.Print("UserID:", userID)
-	if !ok {
-	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	    return
+	// ctx := r.Context()
+	// userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	// log.Print("UserID:", userID)
+	// if !ok {
+	//     http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	//     return
+	// }
+	// log.Printf("Controller received userID: %v", userID)
+	log.Print("Пришло в контроллер")
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+    log.Printf("Ошибка при чтении тела запроса: %v", err)
+    http.Error(w, "Internal server error", http.StatusInternalServerError)
+    return
 	}
-	log.Printf("Controller received userID: %v", userID)
+
+// Восстанавливаем тело запроса для дальнейшего использования
+	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
+// Логируем тело запроса
+	log.Printf("Тело запроса: %s", string(bodyBytes))
 
 	var req responses.PlanRequest
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Print("Пришла хуйня")
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
+	log.Print("Норм пришло")
 
-	var parts []string
-	for _, step := range req.Steps {
-		for key, value := range step {
-			parts = append(parts, fmt.Sprintf("%s:%s", key, value))
-		}
-	}
-	steps := strings.Join(parts, ", ")
-	result := strings.Split(steps,", ")
+	// var parts []string
+	// for _, step := range req.Steps {
+	// 	for key, value := range step {
+	// 		parts = append(parts, fmt.Sprintf("%s:%s", key, value))
+	// 	}
+	// }
+	// steps := strings.Join(parts, ", ")
+	// result := strings.Split(steps,", ")
 
-	id, err := n.notesService.CreatePlan(req.TodoID, result)
+	id, err := n.notesService.CreatePlan(req.TodoID, req.Steps)
 	if err != nil {
 		log.Printf("%s", err)
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode("bad request")
 		return
 	}
+	log.Print("Created successfully")
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusAccepted)

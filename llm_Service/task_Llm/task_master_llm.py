@@ -3,16 +3,16 @@ import json
 from input_Protect.middleware import MiddleWare
 
 class TaskMasterLLM(MiddleWare):
-    '''__llm = Llama.from_pretrained(
+    __llm = Llama.from_pretrained(
        	repo_id="bartowski/Ministral-8B-Instruct-2410-GGUF",
 	    filename="Ministral-8B-Instruct-2410-Q4_K_S.gguf",
-    )'''
+    )
     
     
     
     def getPlan(self,task,description,todoId):
 
-        '''response = self.__llm.create_chat_completion(
+        response = self.__llm.create_chat_completion(
         messages=[
             {
                 "role": "user",
@@ -38,5 +38,6 @@ class TaskMasterLLM(MiddleWare):
         temperature=0.35
         )
         return json.loads(response["choices"][0]["message"]["content"])
-        '''
-        return {"todoID":todoId,"steps":["LLM disconnected"]}#delete
+        
+        # js = json.dumps({"todoid":todoId,"steps":["LLM disconnected"]})
+        # return js#delete

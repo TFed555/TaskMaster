@@ -15,7 +15,7 @@ uploadTask = APIRouter(prefix = "/api/task_llm",tags=["Отправка цели
 def  sendToChequeInfo(reqTaskLLM: ReqTaskLLM):
     urlHost = "https://localhost:8082"
     plan = taskMasterLLM.getPlan(task=reqTaskLLM.task,description=reqTaskLLM.description,todoId = reqTaskLLM.todoID)
-    url = "https://localhost:8082/api/todos/plan"
+    url = "http://notes_service:8082/api/todos/plan"
     requests.post(url=url, data=plan)
     return "Send successfully"
  

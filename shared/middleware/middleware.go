@@ -49,7 +49,7 @@ func (c *AuthMiddleware) SetAuthMiddleware(controller http.Handler) http.Handler
 
 		if !resultRefresh {
 			w.WriteHeader(498)
-			w.Write([]byte(err))
+			w.Write([]byte("Invalid token"))
 			return
 		}
 

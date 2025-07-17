@@ -91,5 +91,5 @@ type SearchRequest struct {
 
 type PlanRequest struct {
 	TodoID int    `json:"todoid"`
-	Steps  []map[string]string `json:"steps"`
+	Steps  []string `json:"steps"`
 }
