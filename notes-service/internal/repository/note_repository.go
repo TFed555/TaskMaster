@@ -80,7 +80,7 @@ func (n NotesRepository) GetTodos(urlParams url.Values, tableName string, userID
 
 	if dataToFilter := urlParams.Get("createdAt"); dataToFilter != "" {
 		counter++
-		query += fmt.Sprintf(" %s createdat %s $%d::TIMESTAMPTZ ", st, sqlFilter, counter)
+		query += fmt.Sprintf(" %s createdat::TIMESTAMP::DATE %s $%d::TIMESTAMP ", st, sqlFilter, counter)
 		args = append(args, dataToFilter)
 		log.Printf("Date: %s", dataToFilter)
 	}
