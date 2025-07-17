@@ -106,15 +106,15 @@ func (n NotesController) GetTodos(w http.ResponseWriter, r *http.Request) {
 }
 
 func (n NotesController) CreateTodo(w http.ResponseWriter, r *http.Request) {
-	// ctx := r.Context()
-	// userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
-	// log.Print("UserID:", userID)
-	// if !ok {
-	//     http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	//     return
-	// }
-	// log.Printf("Controller received userID: %v", userID)
-	userID := 1
+	ctx := r.Context()
+	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	log.Print("UserID:", userID)
+	if !ok {
+	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	    return
+	}
+	log.Printf("Controller received userID: %v", userID)
+	// userID := 1
 
 	var req responses.CreateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -320,14 +320,14 @@ func (n NotesController) ArchiveTodo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (n NotesController) GetOneTodo(w http.ResponseWriter, r *http.Request) {
-	// ctx := r.Context()
-	// 	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
-	// log.Print("UserID:", userID)
-	// if !ok {
-	//     http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	//     return
-	// }
-	// log.Printf("Controller received userID: %v", userID)
+	ctx := r.Context()
+		userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	log.Print("UserID:", userID)
+	if !ok {
+	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	    return
+	}
+	log.Printf("Controller received userID: %v", userID)
 
 	taskId := chi.URLParam(r, "id")
 	if taskId == "" {
@@ -729,14 +729,14 @@ func (n NotesController) GetAuditTrail(w http.ResponseWriter, r *http.Request) {
 
 
 func (n NotesController) CreatePlanTodo(w http.ResponseWriter, r *http.Request) {
-	// ctx := r.Context()
-	// userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
-	// log.Print("UserID:", userID)
-	// if !ok {
-	//     http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	//     return
-	// }
-	// log.Printf("Controller received userID: %v", userID)
+	ctx := r.Context()
+	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	log.Print("UserID:", userID)
+	if !ok {
+	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	    return
+	}
+	log.Printf("Controller received userID: %v", userID)
 	log.Print("Пришло в контроллер")
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {

@@ -27,7 +27,7 @@ func InitNewRouter(notesController controllers.NotesController, authMiddleware m
 		MaxAge:           300,
 	}))
 
-	// router.Use(authMiddleware.SetAuthMiddleware)
+	router.Use(authMiddleware.SetAuthMiddleware)
 	router.Get("/api/test", notesController.Test)
 
 	router.Get("/api/todos", notesController.GetTodos)
