@@ -729,14 +729,14 @@ func (n NotesController) GetAuditTrail(w http.ResponseWriter, r *http.Request) {
 
 
 func (n NotesController) CreatePlanTodo(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
-	log.Print("UserID:", userID)
-	if !ok {
-	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	    return
-	}
-	log.Printf("Controller received userID: %v", userID)
+	// ctx := r.Context()
+	// userID, ok:= ctx.Value(middleware.UserIdKey).(uint)
+	// log.Print("UserID:", userID)
+	// if !ok {
+	//     http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	//     return
+	// }
+	// log.Printf("Controller received userID: %v", userID)
 	log.Print("Пришло в контроллер")
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -745,10 +745,8 @@ func (n NotesController) CreatePlanTodo(w http.ResponseWriter, r *http.Request) 
     return
 	}
 
-// Восстанавливаем тело запроса для дальнейшего использования
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
-// Логируем тело запроса
 	log.Printf("Тело запроса: %s", string(bodyBytes))
 
 	var req responses.PlanRequest
@@ -759,6 +757,7 @@ func (n NotesController) CreatePlanTodo(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	log.Print("Норм пришло")
+	log.Printf("Controller received userID: %v", req.UserID)
 
 	// var parts []string
 	// for _, step := range req.Steps {

@@ -92,4 +92,5 @@ type SearchRequest struct {
 type PlanRequest struct {
 	TodoID int    `json:"todoid"`
 	Steps  []string `json:"steps"`
+	UserID	int 	`json:"userid"`
 }

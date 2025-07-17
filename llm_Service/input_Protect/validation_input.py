@@ -5,5 +5,6 @@ from pydantic import BaseModel, Field
 class ReqTaskLLM(BaseModel):
     todoID: int = Field(default=...)
     token:str = Field(default=...)
+    userId: int = Field(default=...)
     task: str = Field(default=...,description="Цель пользователя")
     description: str = Field(default=...,description="Описание цели пользователя")
