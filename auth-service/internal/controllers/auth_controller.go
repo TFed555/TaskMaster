@@ -62,7 +62,7 @@ func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var time_expires_refresh = time.Now().Add(30 * 24 * time.Hour)
-	var time_expires_access = time.Now().Add(1 * time.Minute)
+	var time_expires_access = time.Now().Add(15 * time.Minute)
 
 	cookies_func.SetCookies(&w, "access_token", tokens.AccessToken, time_expires_access)
 	cookies_func.SetCookies(&w, "refresh_token", tokens.RefreshToken, time_expires_refresh)
@@ -116,7 +116,7 @@ func (c AuthController) Authorize(w http.ResponseWriter, r *http.Request) {
 		ImgURL: user.ImgPath,
 	}
 	var time_expires_refresh = time.Now().Add(30 * 24 * time.Hour)
-	var time_expires_access = time.Now().Add(1 * time.Minute)
+	var time_expires_access = time.Now().Add(15 * time.Minute)
 	cookies_func.SetCookies(&w, "refresh_token", tokens.RefreshToken, time_expires_refresh)
 	cookies_func.SetCookies(&w, "access_token", tokens.AccessToken, time_expires_access)
 	w.Header().Set("Content-type", "application/json")
@@ -156,7 +156,7 @@ func (c AuthController) Refresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var time_expires_refresh = time.Now().Add(30 * 24 * time.Hour)
-	var time_expires_access = time.Now().Add(1 * time.Minute)
+	var time_expires_access = time.Now().Add(15 * time.Minute)
 
 	cookies_func.SetCookies(&w, "refresh_token", refreshtoken, time_expires_refresh)
 	cookies_func.SetCookies(&w, "access_token", accesstoken, time_expires_access)
