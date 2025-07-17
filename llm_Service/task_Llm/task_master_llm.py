@@ -37,7 +37,11 @@ class TaskMasterLLM(MiddleWare):
         },
         temperature=0.35
         )
-        return json.loads(response["choices"][0]["message"]["content"])
+
+        js = json.dumps(response["choices"][0]["message"]["content"])
+        js["todoid"] = todoId
+
+        return js
         
         # js = json.dumps({"todoid":todoId,"steps":["LLM disconnected"]})
         # return js#delete
