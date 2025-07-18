@@ -23,24 +23,24 @@ services:
         timeout: 5s
         retries: 10
 
-  # minio:
-  #   image: minio/minio
-  #   container_name: minio
-  #   entrypoint: sh
-  #   command: >
-  #     -c 'mkdir -p /data/test-bucket && minio server /data'
-  #   volumes:
-  #     - ./minio-data:/data
-  #   env_file:
-  #     - .env
-  #   ports:
-  #     - 9000:9000
-  #     - 9001:9001
-  #   networks:
-  #     - app-network
-  #   depends_on: 
-  #     - db
-  #     - llm
+  minio:
+    image: minio/minio
+    container_name: minio
+    entrypoint: sh
+    command: >
+      -c 'mkdir -p /data/test-bucket && minio server /data'
+    volumes:
+      - ./minio-data:/data
+    env_file:
+      - .env
+    ports:
+      - 9000:9000
+      - 9001:9001
+    networks:
+      - app-network
+    depends_on: 
+      - db
+      - llm
 
     
 
@@ -56,31 +56,31 @@ services:
      - app-network
 
   
-  # media_service:
-  #   build:
-  #     context: .
-  #     dockerfile: media-service/Dockerfile
-  #   ports:
-  #     - "8084:8084"
-  #     - "50050:50050"
-  #   expose:
-  #     - "50050:50050"
-  #   networks:
-  #     - app-network
-  #   volumes:
-  #     - ./:/app
-  #     - ./media-service/.env.local:/app/.env.local:ro
-  #     - ./.env:/app/.env
-  #     - ./shared:/app/shared
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy 
-  #   healthcheck:
-  #       test: ["CMD", "curl", "-f", "http://localhost:8084/health"]
-  #       interval: 10s
-  #       timeout: 5s
-  #       retries: 10
-  #   restart: unless-stopped
+  media_service:
+    build:
+      context: .
+      dockerfile: media-service/Dockerfile
+    ports:
+      - "8084:8084"
+      - "50050:50050"
+    expose:
+      - "50050:50050"
+    networks:
+      - app-network
+    volumes:
+      - ./:/app
+      - ./media-service/.env.local:/app/.env.local:ro
+      - ./.env:/app/.env
+      - ./shared:/app/shared
+    depends_on:
+      db:
+        condition: service_healthy 
+    healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:8084/health"]
+        interval: 10s
+        timeout: 5s
+        retries: 10
+    restart: unless-stopped
       
   auth_service:
     build: 

@@ -44,7 +44,7 @@ func GetJWTSecretKey() []byte {
 
 func (j *JWTFunctional) GenerateJWTRefreshTokens(userID uint) (accessToken string, refreshToken string, err error){
 	var jwtSecretKey = j.secretKey
-
+	fmt.Println("Go key:", jwtSecretKey)
 	payload := jwt.MapClaims {
 		"sub": userID,
 		"exp": jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
