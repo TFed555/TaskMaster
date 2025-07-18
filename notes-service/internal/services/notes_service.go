@@ -25,7 +25,7 @@ type NotesService interface {
 	AddTagToTodo(tagTodo domain_models.TagTodo) (bool, error)
 	ReduceTag(tagTodo domain_models.TagTodo) (bool, error)
 	Audit(method string, isArchived bool, userID uint, todoId int) (error)
-	GetAuditTrail(userID uint) ([]models.HistoryTodo, error)
+	GetAuditTrail(urlParams url.Values, userID uint) ([]models.HistoryTodo, error)
 	CreatePlan(todoID int, steps []string) (int, error)
 }
 
