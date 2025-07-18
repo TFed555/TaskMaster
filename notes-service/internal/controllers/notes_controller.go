@@ -55,9 +55,8 @@ func (n NotesController) GetTodos(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Print("Не удалось распарсить url")
 	}
-	todos, err := n.notesService.GetTodos(urlParams, userID)
+	todos, count, err := n.notesService.GetTodos(urlParams, userID)
 
-	// todos, err := n.notesService.GetTodos(userID, urlParams)
 
 	if err != nil {
 		log.Println(err)
@@ -67,6 +66,18 @@ func (n NotesController) GetTodos(w http.ResponseWriter, r *http.Request) {
 			"message": "Не удалось получить данные",
 		})
 	}
+
+	if count >= 0 {
+		response := responses.CountResponse{
+			Count: count,
+		}
+
+		w.Header().Set("Content-type", "application/json")
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
 
 	for idx, el := range todos {
 		log.Println(idx, el)
@@ -127,7 +138,7 @@ func (n NotesController) CreateTodo(w http.ResponseWriter, r *http.Request) {
 		UserId: &userId,
 		Title: req.Title,
 		Priority: req.Priority,
-		Description: req.Description,
+		Description: &req.Description,
 		Category: req.Category,
 		CreatedAt: req.CreatedAt,
 		CompletedAt: req.CompletedAt,
@@ -235,12 +246,23 @@ func (n NotesController) GetArchivedTodos(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		log.Print("Не удалось распарсить url")
 	}
-	todos, err := n.notesService.GetArchivedTodos(urlParams, userID)
+	todos, count, err := n.notesService.GetArchivedTodos(urlParams, userID)
 
 	// todos, err := n.notesService.GetTodos(userID, urlParams)
 
 	if err != nil {
 		log.Println(err)
+	}
+
+	if count > 0 {
+		response := responses.CountResponse{
+			Count: count,
+		}
+
+		w.Header().Set("Content-type", "application/json")
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode(response)
+		return
 	}
 
 	for idx, el := range todos {
@@ -696,7 +718,13 @@ func (n NotesController) GetAuditTrail(w http.ResponseWriter, r *http.Request) {
 	    return
 	}
 	log.Printf("Controller received userID: %v", userID)
-	history_todos, err := n.notesService.GetAuditTrail(userID)
+
+	urlParams, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		log.Print("Не удалось распарсить url")
+	}
+
+	history_todos, err := n.notesService.GetAuditTrail(urlParams, userID)
 	if err != nil {
 		log.Println(err)
 		w.Header().Set("Content-type", "application/json")

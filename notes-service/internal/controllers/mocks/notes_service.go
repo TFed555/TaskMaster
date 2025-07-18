@@ -204,7 +204,7 @@ func (_m *NotesService) DeleteTodo(taskId int) (bool, error) {
 }
 
 // GetArchivedTodos provides a mock function with given fields: urlParams, userID
-func (_m *NotesService) GetArchivedTodos(urlParams url.Values, userID uint) ([]models.Todo, error) {
+func (_m *NotesService) GetArchivedTodos(urlParams url.Values, userID uint) ([]models.Todo, int, error) {
 	ret := _m.Called(urlParams, userID)
 
 	if len(ret) == 0 {
@@ -212,8 +212,9 @@ func (_m *NotesService) GetArchivedTodos(urlParams url.Values, userID uint) ([]m
 	}
 
 	var r0 []models.Todo
-	var r1 error
-	if rf, ok := ret.Get(0).(func(url.Values, uint) ([]models.Todo, error)); ok {
+	var r1 int
+	var r2 error
+	if rf, ok := ret.Get(0).(func(url.Values, uint) ([]models.Todo, int, error)); ok {
 		return rf(urlParams, userID)
 	}
 	if rf, ok := ret.Get(0).(func(url.Values, uint) []models.Todo); ok {
@@ -224,13 +225,19 @@ func (_m *NotesService) GetArchivedTodos(urlParams url.Values, userID uint) ([]m
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(url.Values, uint) error); ok {
+	if rf, ok := ret.Get(1).(func(url.Values, uint) int); ok {
 		r1 = rf(urlParams, userID)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(int)
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(2).(func(url.Values, uint) error); ok {
+		r2 = rf(urlParams, userID)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // GetAuditTrail provides a mock function with given fields: userID
@@ -324,7 +331,7 @@ func (_m *NotesService) GetTags(userID uint) ([]models.Tag, error) {
 }
 
 // GetTodos provides a mock function with given fields: urlParams, userID
-func (_m *NotesService) GetTodos(urlParams url.Values, userID uint) ([]models.Todo, error) {
+func (_m *NotesService) GetTodos(urlParams url.Values, userID uint) ([]models.Todo, int, error) {
 	ret := _m.Called(urlParams, userID)
 
 	if len(ret) == 0 {
@@ -332,8 +339,9 @@ func (_m *NotesService) GetTodos(urlParams url.Values, userID uint) ([]models.To
 	}
 
 	var r0 []models.Todo
-	var r1 error
-	if rf, ok := ret.Get(0).(func(url.Values, uint) ([]models.Todo, error)); ok {
+	var r1 int
+	var r2 error
+	if rf, ok := ret.Get(0).(func(url.Values, uint) ([]models.Todo, int, error)); ok {
 		return rf(urlParams, userID)
 	}
 	if rf, ok := ret.Get(0).(func(url.Values, uint) []models.Todo); ok {
@@ -344,13 +352,19 @@ func (_m *NotesService) GetTodos(urlParams url.Values, userID uint) ([]models.To
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(url.Values, uint) error); ok {
+	if rf, ok := ret.Get(1).(func(url.Values, uint) int); ok {
 		r1 = rf(urlParams, userID)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(int)
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(2).(func(url.Values, uint) error); ok {
+		r2 = rf(urlParams, userID)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // ReduceTag provides a mock function with given fields: tagTodo
@@ -402,36 +416,6 @@ func (_m *NotesService) RestoreTodo(taskId int) (int, error) {
 
 	if rf, ok := ret.Get(1).(func(int) error); ok {
 		r1 = rf(taskId)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// SearchTodos provides a mock function with given fields: searchString, userID
-func (_m *NotesService) SearchTodos(searchString string, userID uint) ([]models.Todo, error) {
-	ret := _m.Called(searchString, userID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SearchTodos")
-	}
-
-	var r0 []models.Todo
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string, uint) ([]models.Todo, error)); ok {
-		return rf(searchString, userID)
-	}
-	if rf, ok := ret.Get(0).(func(string, uint) []models.Todo); ok {
-		r0 = rf(searchString, userID)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]models.Todo)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string, uint) error); ok {
-		r1 = rf(searchString, userID)
 	} else {
 		r1 = ret.Error(1)
 	}

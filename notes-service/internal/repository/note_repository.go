@@ -23,7 +23,7 @@ func NewNotesRepository(db *sqlx.DB) NotesRepository {
 	}
 }
 
-func (n NotesRepository) GetTodos(urlParams url.Values, tableName string, userID uint) ([]models.Todo, error) {
+func (n NotesRepository) GetTodos(urlParams url.Values, tableName string, userID uint) ([]models.Todo, int, error) {
 	const op = "repository.notes_repository.GetTodos"
 	args := []any{}
 	// parserCreatedAt, err := time.Parse(time.RFC3339, createdAt)
@@ -38,11 +38,17 @@ func (n NotesRepository) GetTodos(urlParams url.Values, tableName string, userID
 		sqlFilter = "="
 	}
 
+	columns := `id, title, priority, category, description, createdat, completedat, userid`
+
 	log.Printf("Filter: %s", sqlFilter)
 
+	countTodos := urlParams.Get("count") == "true"
+	if countTodos {
+		columns = `COUNT(*)`
+	}
 
 	query := fmt.Sprintf(`
-		SELECT id, title, priority, category, description, createdat, completedat, userid FROM notes.%s `, tableName)
+		SELECT %s FROM notes.%s `, columns, tableName)
 
 	todos := []models.Todo{}
 	counter := 0
@@ -56,6 +62,7 @@ func (n NotesRepository) GetTodos(urlParams url.Values, tableName string, userID
 		args = append(args, userID)
 		log.Printf("UserID: %d", userID)
 	// }
+
 	if title := urlParams.Get("title"); title != "" {
 		counter ++
 		searchPattern := "%" + title + "%"
@@ -71,10 +78,12 @@ func (n NotesRepository) GetTodos(urlParams url.Values, tableName string, userID
 		log.Printf("Category: %s", category)
 	}
 
-
+	//6 3 4 5 7
+	//7 8 9 10 12
+	//10 11 12 13 14
 	if dataToFilter := urlParams.Get("createdAt"); dataToFilter != "" {
 		counter++
-		query += fmt.Sprintf(" %s createdat %s $%d::TIMESTAMPTZ ", st, sqlFilter, counter)
+		query += fmt.Sprintf(" %s createdat::TIMESTAMP::DATE %s $%d::TIMESTAMP ", st, sqlFilter, counter)
 		args = append(args, dataToFilter)
 		log.Printf("Date: %s", dataToFilter)
 	}
@@ -88,48 +97,58 @@ func (n NotesRepository) GetTodos(urlParams url.Values, tableName string, userID
 		}
 	}
 
-	
-	if sortBy := urlParams.Get("sortBy"); sortBy != "" {
-		switch sortBy {
-		case "date":
-			query += (" ORDER BY createdat DESC")
-		case "priority":
-			query += (" ORDER BY array_position(ARRAY['high', 'medium', 'low'], priority)")
-		case "category":
-			query += (" ORDER BY category")
+	if !countTodos {
+		if sortBy := urlParams.Get("sortBy"); sortBy != "" {
+			switch sortBy {
+			case "date":
+				query += (" ORDER BY createdat DESC, id")
+			case "priority":
+				query += (" ORDER BY array_position(ARRAY['high', 'medium', 'low'], priority), id")
+			case "category":
+				query += (" ORDER BY category, id")
+			}
+		}
+
+		if offset := urlParams.Get("offset"); offset != "" {
+			counter++
+			query += fmt.Sprintf(" OFFSET $%d", counter)
+			args = append(args, offset)
+			log.Printf("Offset: %s", offset)
+		}
+
+		if limit := urlParams.Get("limit"); limit != "" {
+			counter++
+			query += fmt.Sprintf(" LIMIT $%d ", counter)
+			args = append(args, limit)
+			log.Printf("Limit: %s", limit)
 		}
 	}
 
-	if offset := urlParams.Get("offset"); offset != "" {
-		counter++
-		query += fmt.Sprintf(" OFFSET $%d", counter)
-		args = append(args, offset)
-		log.Printf("Offset: %s", offset)
-	}
-
-	if limit := urlParams.Get("limit"); limit != "" {
-		counter++
-		query += fmt.Sprintf(" LIMIT $%d ", counter)
-		args = append(args, limit)
-		log.Printf("Limit: %s", limit)
-	}
-
-	err := n.db.Select(&todos, query, args...)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("%s: todos not found", op)
+	if countTodos {
+		var count int
+        err := n.db.QueryRow(query, args...).Scan(&count)
+        if err != nil {
+            return nil, -1, fmt.Errorf("%s: %w", op, err)
+        }
+        return nil, count, nil
+	} else {
+		err := n.db.Select(&todos, query, args...)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return nil, -1, fmt.Errorf("%s: todos not found", op)
+			}
+			return nil, -1, fmt.Errorf("%s: %w", op, err)
 		}
-		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	// log.Print(*todos[0].ID)
+	log.Print(query)
 	for i := range todos {
 		el := &todos[i]
 		nextQuery := `SELECT id, name FROM notes.tags WHERE id IN (SELECT tagid FROM notes.todo_tags WHERE todoid = $1)`
 		tags := []models.Tag{}
-		err = n.db.Select(&tags, nextQuery, *el.ID)
+		err := n.db.Select(&tags, nextQuery, *el.ID)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("%s: %v", op, err)
+			return nil, -1, fmt.Errorf("%s: %v", op, err)
 		}
 		if err == nil {
 			el.Tags = append(el.Tags, tags...)
@@ -137,7 +156,7 @@ func (n NotesRepository) GetTodos(urlParams url.Values, tableName string, userID
 		}
 	}
 
-	return todos, nil
+	return todos, -1, nil
 }
 
 func (n NotesRepository) GetTodoByID(ID int, tableName string) (*models.Todo, error) {
@@ -297,7 +316,7 @@ func (n NotesRepository) UpdateTodo(todo models.Todo) (int, error) {
 		values = append(values, fmt.Sprintf("PRIORITY=$%d", count))
 		args = append(args, todo.Priority)
 	}
-	if todo.Description != "" {
+	if todo.Description != nil {
 		count++
 		values = append(values, fmt.Sprintf("DESCRIPTION=$%d", count))
 		args = append(args, todo.Description)
@@ -577,7 +596,7 @@ func (n NotesRepository) AuditTodo(id int, userId uint, isArchived bool, method 
 	return nil
 }
 
-func (n NotesRepository) GetHistoryTodos(userID uint) ([]models.HistoryTodo, error) {
+func (n NotesRepository) GetHistoryTodos(urlParams url.Values, userID uint) ([]models.HistoryTodo, error) {
 	const op = "repository.notes_repository.GetHistoryTodos"
 	query := (`SELECT 
     COALESCE(t.title, a.title) AS title,
@@ -586,10 +605,27 @@ func (n NotesRepository) GetHistoryTodos(userID uint) ([]models.HistoryTodo, err
 	LEFT JOIN notes.todos t ON t.id = th.todoid AND t.userid = $1
 	LEFT JOIN notes.archived_todos a ON a.id = th.archived_todoid AND a.userid = $1
 	WHERE (t.id IS NOT NULL OR a.id IS NOT NULL)`)
+	counter := 1
+	args := []any{userID}
 
 	query += (` ORDER BY changedat DESC`)
+
+	if offset := urlParams.Get("offset"); offset != "" {
+			counter++
+			query += fmt.Sprintf(" OFFSET $%d", counter)
+			args = append(args, offset)
+			log.Printf("Offset: %s", offset)
+		}
+
+	if limit := urlParams.Get("limit"); limit != "" {
+			counter++
+			query += fmt.Sprintf(" LIMIT $%d ", counter)
+			args = append(args, limit)
+			log.Printf("Limit: %s", limit)
+		}
+	
 	todos := []models.HistoryTodo{}
-	err := n.db.Select(&todos, query, userID)
+	err := n.db.Select(&todos, query, args...)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("%s: todos not found", op)

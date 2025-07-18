@@ -10,8 +10,8 @@ import (
 )
 
 type NotesService interface {
-	GetTodos(urlParams url.Values, userID uint) ([]models.Todo, error)
-	GetArchivedTodos(urlParams url.Values, userID uint) ([]models.Todo, error)
+	GetTodos(urlParams url.Values, userID uint) ([]models.Todo, int, error)
+	GetArchivedTodos(urlParams url.Values, userID uint) ([]models.Todo, int, error)
 	CreateTask(todoBody domain_models.Todo) (int, error)
 	UpdateTask(todoBody domain_models.Todo) (int, error)
 	ArchiveTask(ID int) (int, error)
@@ -39,12 +39,12 @@ func NewNotesService(notesRepository repository.NotesRepository) NotesService {
 	}
 }
 
-func (s NotesServiceImpl) GetTodos(urlParams url.Values, userID uint) ([]models.Todo, error) {
-	todos, err := s.notesRepository.GetTodos(urlParams, "todos", userID)
+func (s NotesServiceImpl) GetTodos(urlParams url.Values, userID uint) ([]models.Todo, int, error) {
+	todos, count, err := s.notesRepository.GetTodos(urlParams, "todos", userID)
 	if err != nil {
-		return nil, err
+		return nil, count, err
 	}
-	return todos, nil
+	return todos, count, nil
 }
 
 func (s NotesServiceImpl) CreateTask(todoBody domain_models.Todo) (int, error) {
@@ -91,12 +91,12 @@ func (s NotesServiceImpl) UpdateTask(todoBody domain_models.Todo) (int, error) {
 	return id, nil
 }
 
-func (s NotesServiceImpl) GetArchivedTodos(urlParams url.Values, userID uint) ([]models.Todo, error) {
-	todos, err := s.notesRepository.GetTodos(urlParams, "archived_todos", userID)
+func (s NotesServiceImpl) GetArchivedTodos(urlParams url.Values, userID uint) ([]models.Todo, int, error) {
+	todos, count, err := s.notesRepository.GetTodos(urlParams, "archived_todos", userID)
 	if err != nil {
-		return nil, err
+		return nil, count, err
 	}
-	return todos, nil
+	return todos, count, nil
 }
 
 func (s NotesServiceImpl) GetOneTodo(taskId int) (*models.Todo, error) {
@@ -181,8 +181,8 @@ func (s NotesServiceImpl) Audit(method string, isArchived bool, userID uint, tod
     return s.notesRepository.AuditTodo(todoId, userID, isArchived, method)
 }
 
-func (s NotesServiceImpl) GetAuditTrail(userID uint) ([]models.HistoryTodo, error) {
-	todos, err := s.notesRepository.GetHistoryTodos(userID)
+func (s NotesServiceImpl) GetAuditTrail(urlParams url.Values, userID uint) ([]models.HistoryTodo, error) {
+	todos, err := s.notesRepository.GetHistoryTodos(urlParams, userID)
 	if err != nil {
 		return []models.HistoryTodo{}, err
 	}

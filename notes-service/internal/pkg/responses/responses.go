@@ -24,23 +24,23 @@ type CreateResponse struct {
 }
 
 type UpdateRequest struct {
-	Title       string `json:"title,omitempty"`
-	Priority    string `json:"priority,omitempty"`
-	Category    string `json:"category,omitempty"`
-	Description string `json:"description,omitempty"`
-	CreatedAt   string `json:"createdAt,omitempty"`
+	Title       string  `json:"title,omitempty"`
+	Priority    string  `json:"priority,omitempty"`
+	Category    string  `json:"category,omitempty"`
+	Description *string  `json:"description,omitempty"`
+	CreatedAt   string  `json:"createdAt,omitempty"`
 	CompletedAt string `json:"completedAt,omitempty"`
 	ID          int    `json:"id"`
 }
 
 type OneTodoResponse struct {
-	Title       string           `json:"title,omitempty"`
-	Priority    string           `json:"priority,omitempty"`
-	Category    string           `json:"category,omitempty"`
-	Description string           `json:"description,omitempty"`
-	CreatedAt   string           `json:"createdAt,omitempty"`
-	CompletedAt *string          `json:"completedAt,omitempty"`
-	ID          int              `json:"id"`
+	Title       string       `json:"title,omitempty"`
+	Priority    string       `json:"priority,omitempty"`
+	Category    string       `json:"category,omitempty"`
+	Description string       `json:"description,omitempty"`
+	CreatedAt   string       `json:"createdAt,omitempty"`
+	CompletedAt *string      `json:"completedAt,omitempty"`
+	ID          int          `json:"id"`
 	Tags        []OneTagResponse `json:"tags,omitempty"`
 }
 
@@ -93,4 +93,8 @@ type PlanRequest struct {
 	TodoID int    `json:"todoid"`
 	Steps  []string `json:"steps"`
 	UserID	int 	`json:"userid"`
+}
+
+type CountResponse struct {
+	Count int `json:"count"`
 }
