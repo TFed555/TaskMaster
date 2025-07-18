@@ -77,7 +77,9 @@ func (n NotesRepository) GetTodos(urlParams url.Values, tableName string, userID
 		log.Printf("Category: %s", category)
 	}
 
-
+	//6 3 4 5 7
+	//7 8 9 10 12
+	//10 11 12 13 14
 	if dataToFilter := urlParams.Get("createdAt"); dataToFilter != "" {
 		counter++
 		query += fmt.Sprintf(" %s createdat::TIMESTAMP::DATE %s $%d::TIMESTAMP ", st, sqlFilter, counter)
@@ -98,11 +100,11 @@ func (n NotesRepository) GetTodos(urlParams url.Values, tableName string, userID
 		if sortBy := urlParams.Get("sortBy"); sortBy != "" {
 			switch sortBy {
 			case "date":
-				query += (" ORDER BY createdat DESC")
+				query += (" ORDER BY createdat DESC, id")
 			case "priority":
-				query += (" ORDER BY array_position(ARRAY['high', 'medium', 'low'], priority)")
+				query += (" ORDER BY array_position(ARRAY['high', 'medium', 'low'], priority), id")
 			case "category":
-				query += (" ORDER BY category")
+				query += (" ORDER BY category, id")
 			}
 		}
 
